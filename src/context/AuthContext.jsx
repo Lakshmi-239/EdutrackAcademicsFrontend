@@ -81,6 +81,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         login,
+ 
         logout,
         loading, // Important for AuthGuard
         isAuthenticated: !!user,
