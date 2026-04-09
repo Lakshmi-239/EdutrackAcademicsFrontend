@@ -116,9 +116,7 @@ a {
 }
 
 /* Ensure underlines don't appear on hover unless you want them */
-a:hover {
-  text-decoration: none !important;
-}
+
 body {
   margin: 0;
 }
