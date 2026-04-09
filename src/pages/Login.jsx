@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/Api';
 import toast from 'react-hot-toast';
+import {jwtDecode} from "jwt-decode";
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,20 +18,57 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
 
     try {
-      const data = await api.login(email, password);
-      if (data.token) {
-        login(data.token);
-        toast.success('Welcome back to EduTrack!');
-        navigate('/');
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.Message || 'Invalid email or password.');
-    } finally {
-      setLoading(false);
+    const data = await api.login(email, password);
+    console.log("LOGIN RESPONSE:", data);
+ 
+    const token = data?.token?.accessToken || data?.accessToken;
+ 
+    if (!token) {
+      toast.error("No token received");
+      return;
     }
-  };
+ 
+    login(token);
+ 
+    let role = "";
+ 
+    try {
+      const decoded = jwtDecode(token);
+      console.log("DECODED:", decoded);
+ 
+      role =
+        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]||"";
+    } catch (err) {
+      console.log("Decode error:", err);
+    }
+ 
+    toast.success("Login successful!");
+ 
+    if (role === "Student") {
+      navigate("/Studentdashboard");
+    } else if (role === "Admin") {
+      navigate("/admin");
+    } else if (role === "Instructor") {
+      navigate("/instructor");
+    } else  if(role==="Coordinator"){
+      
+      navigate("/coordinator/dashboard");
+    }
+    else{
+      console.log("unknown role",role);
+    }
+ 
+  } catch (err) {
+    console.log(err);
+    toast.error("Login failed");
+  } finally {
+    setLoading(false); // ✅ ensures loading stops ALWAYS
+  }
+};
+ 
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
