@@ -13,6 +13,10 @@ const MyCourses = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseModules, setCourseModules] = useState([]);
 
+  // Progress & Persistence State
+  const [watchedProgress, setWatchedProgress] = useState({}); 
+  const [completedContentIds, setCompletedContentIds] = useState(new Set());
+
   const studentId = "S001";
   const BASE_URL = "https://localhost:7157/api/Enrollment";
 
@@ -23,7 +27,6 @@ const MyCourses = () => {
         await axios.patch(`${BASE_URL}/sync-status`, null, {
           params: { studentId: studentId }
         });
-        console.log("Dropout sync completed.");
       } catch (err) {
         console.error("Dropout sync failed:", err);
       }
@@ -34,7 +37,17 @@ const MyCourses = () => {
     loadPageData();
   }, [activeTab]);
 
-  // FETCH DATA: Separately calls /progress and /status for each course
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      fetchData();
+      return;
+    }
+    const delayDebounceFn = setTimeout(() => {
+      handleSearch();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
   const fetchData = async () => {
     try {
       const endpoint = activeTab === "available"
@@ -48,23 +61,18 @@ const MyCourses = () => {
         const coursesWithDetails = await Promise.all(
           fetchedCourses.map(async (course) => {
             try {
-              // 1. Fetch numeric progress
               const progRes = await axios.get(`${BASE_URL}/progress`, {
                 params: { StudentId: studentId, CourseId: course.courseId }
               });
-
-              // 2. Fetch enrollment status string from the separate endpoint
               const statusRes = await axios.get(`${BASE_URL}/status`, {
                 params: { StudentId: studentId, CourseId: course.courseId }
               });
-              console.log("Status API Response:", statusRes.data.currentStatus);
               return { 
                 ...course, 
                 progress: progRes.data.progress, 
-                status: statusRes.data.currentStatus // Matches your new action method
+                status: statusRes.data.currentStatus 
               };
             } catch (err) {
-              console.error(`Error fetching details for ${course.courseId}`, err);
               return { ...course, progress: 0, status: "Active" };
             }
           })
@@ -87,6 +95,24 @@ const MyCourses = () => {
     }
   };
 
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      const endpoint = activeTab === "available" 
+        ? `${BASE_URL}/search-by-name` 
+        : `${BASE_URL}/search-my-courses`;
+
+      const response = await axios.get(endpoint, {
+        params: { studentId: studentId, courseName: searchTerm }
+      });
+      setCourses(response.data.data || []);
+    } catch (err) {
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleStartCourse = async (course) => {
     try {
       const response = await axios.get(`${BASE_URL}/content`, {
@@ -95,14 +121,82 @@ const MyCourses = () => {
       if (response.data.status === 200) {
         setCourseModules(response.data.data);
         setSelectedCourse(course);
+        
+        // PERSISTENCE LOGIC: 
+        // If the course is already marked 'Completed' in the DB, 
+        // we fill our local state so the checkboxes are checked on load.
+        if (course.status === "Completed") {
+            const allIds = new Set();
+            response.data.data.forEach(m => m.contents.forEach(c => allIds.add(c.contentID)));
+            setCompletedContentIds(allIds);
+        }
+        
         setShowModal(true);
       }
     } catch (err) {
-      alert("Error loading content. Please check your API connection.");
+      alert("Error loading content.");
     }
   };
 
-  // MARK AS READ: Updates progress and then checks status independently
+  // Extract YouTube ID for Iframe
+  const getYouTubeId = (url) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const renderContentItem = (content) => {
+    const uri = content.contentURI || "";
+    const youtubeId = getYouTubeId(uri);
+    const isDoc = uri.toLowerCase().endsWith(".pdf") || uri.toLowerCase().endsWith(".ppt") || uri.toLowerCase().endsWith(".pptx");
+
+    if (isDoc) {
+      return (
+        <div className="p-5 text-center bg-light border rounded">
+          <h5>{content.title}</h5>
+          <a href={uri} target="_blank" rel="noreferrer" className="btn btn-primary mt-2"
+             onClick={() => setWatchedProgress(prev => ({ ...prev, [content.contentID]: 100 }))}>
+            View / Download Document
+          </a>
+        </div>
+      );
+    }
+
+    if (youtubeId) {
+      return (
+        <div className="ratio ratio-16x9">
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
+            title={content.title}
+            allowFullScreen
+            onLoad={() => {
+                // Auto-enable Mark as Read for YouTube after 5 seconds to simulate viewing
+                setTimeout(() => {
+                    setWatchedProgress(prev => ({ ...prev, [content.contentID]: 100 }));
+                }, 5000);
+            }}
+          ></iframe>
+        </div>
+      );
+    }
+
+    return (
+      <video 
+        key={uri} controls className="w-100 rounded" style={{ height: "400px", backgroundColor: "#000" }}
+        onTimeUpdate={(e) => {
+          if (e.target.duration) {
+            const progress = (e.target.currentTime / e.target.duration) * 100;
+            if (progress > (watchedProgress[content.contentID] || 0)) {
+              setWatchedProgress(prev => ({ ...prev, [content.contentID]: progress }));
+            }
+          }
+        }}
+      >
+        <source src={uri} type="video/mp4" />
+      </video>
+    );
+  };
+
   const handleMarkAsRead = async (contentId) => {
     try {
       const response = await axios.post(`${BASE_URL}/mark-completed`, {
@@ -112,7 +206,8 @@ const MyCourses = () => {
       });
 
       if (response.data.status === 200) {
-        // Fetch the latest status independently after the update
+        setCompletedContentIds(prev => new Set(prev).add(contentId));
+        
         const statusRes = await axios.get(`${BASE_URL}/status`, {
           params: { StudentId: studentId, CourseId: selectedCourse.courseId }
         });
@@ -120,34 +215,29 @@ const MyCourses = () => {
         const newStatus = statusRes.data.currentStatus;
         const newProgress = response.data.progress;
 
-        // Sync main list
         setCourses(prev => prev.map(c => 
           c.courseId === selectedCourse.courseId 
             ? { ...c, progress: newProgress, status: newStatus }
             : c
         ));
         
-        // Sync Modal Reference
-        setSelectedCourse(prev => ({
-          ...prev,
-          progress: newProgress,
-          status: newStatus
-        }));
+        setSelectedCourse(prev => ({ ...prev, progress: newProgress, status: newStatus }));
 
         if (newStatus === "Completed") {
-          alert("🎉 Congratulations! You have completed the course.");
+          alert("🎉 Congratulations! You've completed the course.");
         }
       }
     } catch (err) {
-      alert("Failed to update progress.");
+      alert("Progress update failed.");
     }
   };
 
   const handleEnroll = async (courseId) => {
     try {
-      const response = await axios.post(`${BASE_URL}`, { studentId, courseId: String(courseId) });
-      if (response.data.status === 200) {
-        alert(response.data.data);
+      const add_enroll="https://localhost:7157/api/coordinator/add-enrollment";
+      const response = await axios.post(`${add_enroll}`, { studentId, courseId: String(courseId) });
+      if (response.status === 200) {
+        alert("Enrollment successful!");
         await fetchEnrolledIds();
         await fetchData();
       }
@@ -158,31 +248,25 @@ const MyCourses = () => {
 
   return (
     <div className="container-fluid py-4 px-4 bg-white min-vh-100">
-      <div className="mb-4">
+      {/* Search & Tabs remain unchanged */}
+      <div className="mb-4 d-flex align-items-center">
         <input
           type="text"
           className="form-control w-25 border-secondary"
-          placeholder="Search your courses..."
+          placeholder={activeTab === "available" ? "Search all courses..." : "Search my courses..."}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       <div className="d-flex mb-4 border-bottom">
-        <button
-          className={`btn me-5 pb-2 rounded-0 border-0 ${activeTab === "available" ? "border-bottom border-dark border-3 fw-bold text-dark" : "text-muted"}`}
-          onClick={() => setActiveTab("available")}
-        >Courses</button>
-        <button
-          className={`btn pb-2 rounded-0 border-0 ${activeTab === "enrolled" ? "border-bottom border-dark border-3 fw-bold text-dark" : "text-muted"}`}
-          onClick={() => setActiveTab("enrolled")}
-        >Enrolled</button>
+        <button className={`btn me-5 pb-2 rounded-0 border-0 ${activeTab === "available" ? "border-bottom border-dark border-3 fw-bold text-dark" : "text-muted"}`} onClick={() => setActiveTab("available")}>Courses</button>
+        <button className={`btn pb-2 rounded-0 border-0 ${activeTab === "enrolled" ? "border-bottom border-dark border-3 fw-bold text-dark" : "text-muted"}`} onClick={() => setActiveTab("enrolled")}>Enrolled</button>
       </div>
 
+      {/* Course Cards */}
       <div className="row g-4">
-        {loading ? (
-          <div className="text-center mt-5">Loading...</div>
-        ) : (
+        {loading ? <div className="text-center mt-5">Loading...</div> : (
           courses.map((course) => {
             const isEnrolled = enrolledCourseIds.has(course.courseId);
             return (
@@ -192,11 +276,8 @@ const MyCourses = () => {
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <div className="d-flex align-items-center">
                         <h4 className="fw-bold mb-0 me-3">{course.courseName}</h4>
-                        {/* Status Badge from separate endpoint */}
                         {activeTab === "enrolled" && (
-                          <span className={`badge ${course.status === 'Completed' ? 'bg-success' : 'bg-primary'}`}>
-                            {course.status || 'Active'}
-                          </span>
+                          <span className={`badge ${course.status === 'Completed' ? 'bg-success' : 'bg-primary'}`}>{course.status || 'Assigned'}</span>
                         )}
                       </div>
                       {activeTab === "enrolled" && (
@@ -208,14 +289,12 @@ const MyCourses = () => {
                         </div>
                       )}
                     </div>
-                    <p className="mb-4 text-muted">{course.learningObjective || "Course description details..."}</p>
+                    <p className="mb-4 text-muted">{course.learningObjective}</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <span className="fw-bold">Weeks- {course.durationInWeeks || 8}</span>
                       <h6 className="fw-bold mb-0 me-3">Credits- {course.credits || 0}</h6>
                       {activeTab === "available" ? (
-                        <button className="btn btn-outline-dark px-4" onClick={() => handleEnroll(course.courseId)} disabled={isEnrolled}>
-                          {isEnrolled ? "Enrolled" : "Enroll Now"}
-                        </button>
+                        <button className="btn btn-outline-dark px-4" onClick={() => handleEnroll(course.courseId)} disabled={isEnrolled}>{isEnrolled ? "Enrolled" : "Enroll Now"}</button>
                       ) : (
                         <button className="btn btn-dark px-4 py-2" onClick={() => handleStartCourse(course)} disabled={course.status === "Dropped"}>Start Course</button>
                       )}
@@ -228,7 +307,7 @@ const MyCourses = () => {
         )}
       </div>
 
-      {/* MODAL POPUP */}
+      {/* Content Modal */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
           <div className="modal-dialog modal-xl modal-dialog-centered">
@@ -242,40 +321,36 @@ const MyCourses = () => {
                 {courseModules.map((module, mIdx) => (
                   <div key={module.moduleID || mIdx} className="mb-5">
                     <p className="text-muted mb-2">Section {mIdx + 1}</p>
-                    <div className="border border-light p-3 px-4 mb-4 d-inline-block fs-5 shadow-sm" style={{ minWidth: "350px", backgroundColor: "#fcfcfc" }}>
-                      {module.moduleName}
-                    </div>
+                    <div className="border border-light p-3 px-4 mb-4 d-inline-block fs-5 shadow-sm" style={{ minWidth: "350px", backgroundColor: "#fcfcfc" }}>{module.moduleName}</div>
 
-                    {module.contents && module.contents.map((content, cIdx) => (
-                      <div key={content.contentID || cIdx} className="ms-5 mb-5">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h4 className="fw-normal">{content.title}</h4>
-                          <div className="d-flex align-items-center">
-                            <span className="me-2 text-muted small">Mark as Read</span>
-                            <input 
-                              type="checkbox" 
-                              className="form-check-input ms-2" 
-                              style={{ width: "25px", height: "25px", border: "2px solid #ccc" }}
-                              onChange={() => handleMarkAsRead(content.contentID)}
-                            />
-                          </div>
-                        </div>
+                    {module.contents && module.contents.map((content, cIdx) => {
+                      // 90% Threshold Logic
+                      const isThresholdMet = (watchedProgress[content.contentID] || 0) >= 90;
+                      // Persistance Logic: Checks local state set during handleStartCourse
+                      const isAlreadyDone = completedContentIds.has(content.contentID) || selectedCourse?.status === "Completed";
 
-                        {/* Video Player Placeholder */}
-                        <div className="bg-light border position-relative rounded" style={{ height: "350px", width: "100%", backgroundColor: "#e9e9e9" }}>
-                          <div className="position-absolute top-50 start-50 translate-middle border border-danger p-3 bg-white" style={{ cursor: "pointer" }}>
-                            <span className="text-danger fs-1">▶</span>
-                          </div>
-                          <div className="position-absolute bottom-0 start-50 translate-middle-x w-75 mb-4 px-3">
-                            <div className="bg-secondary" style={{ height: "4px", width: "100%" }}></div>
-                            <div className="d-flex justify-content-between small mt-2 fw-bold text-dark">
-                              <span>0:00</span>
-                              <span>{content.duration || "12:37"}</span>
+                      return (
+                        <div key={content.contentID || cIdx} className="ms-5 mb-5 border-bottom pb-4">
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h4 className="fw-normal">{content.title}</h4>
+                            <div className="d-flex align-items-center">
+                              <span className={`me-2 small ${isAlreadyDone ? "text-success fw-bold" : "text-muted"}`}>
+                                {isAlreadyDone ? "Completed" : isThresholdMet ? "Ready to Mark" : "Watch 90% to Enable"}
+                              </span>
+                              <input 
+                                type="checkbox" 
+                                className="form-check-input ms-2" 
+                                style={{ width: "25px", height: "25px", cursor: isAlreadyDone ? "default" : "pointer" }}
+                                checked={isAlreadyDone}
+                                disabled={isAlreadyDone || !isThresholdMet} 
+                                onChange={() => handleMarkAsRead(content.contentID)}
+                              />
                             </div>
                           </div>
+                          {renderContentItem(content)}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
