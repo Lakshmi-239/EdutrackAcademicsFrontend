@@ -19,6 +19,17 @@ import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
 import Attendance from "./pages/Attendance";
 
+import InstructorDashboard from './pages/InstructorDashboard';
+import LayOut from './components/Instructor/Lay_Out';
+import InstructorCoursePage from './pages/InstructorCoursePage';
+import InstructorAttendancePage from './pages/InstructorAttendancePage';
+import InstructorAssessmentPage from './pages/InstructorAssessmentPage';
+import InstructorModulePage from './pages/InstructorModulePage';
+import ManageQuestionsPage from './components/InstructorAssessment/ManageAssessmentPage';
+import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
+import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
+import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
+
  function App() {
   return (
     <AuthProvider>
@@ -45,6 +56,19 @@ import Attendance from "./pages/Attendance";
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
+          </Route>
+
+          <Route path="/" element={<Navigate to="/instructordashboard" />} />
+          <Route element={<LayOut />}>
+            <Route path="/instructordashboard" element={<InstructorDashboard />} />
+            <Route path="/Icourses" element={<InstructorCoursePage />} />
+            <Route path="/Imodules" element={<InstructorModulePage />} />
+            <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
+            <Route path="/Iattendances" element={<InstructorAttendancePage />} />
+            <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
+            <Route path="/submissions/:id" element={<SubmissionsPage />} />
+            <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />
+            <Route path="/assessment/:id/add-question" element={<AddQuestionPage />} />
           </Route>
 
           {/* Route WITHOUT Sidebar/Navbar */}

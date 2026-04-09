@@ -24,6 +24,103 @@ export const api = {
       throw error;
     }
   },
+
+  // Add these to your export const api = { ... }
+getAssignedBatches: (instructorId) => 
+    axios.get(`${BASE_URL}/coordinator/instructor/${instructorId}/batches`),
+
+getInstructorDashboard: (instructorId) => 
+    axios.get(`${BASE_URL}/coordinator/instructor/${instructorId}/dashboard`),
+
+getInstructorBatches: (instructorId) => 
+    axios.get(`${BASE_URL}/coordinator/instructor/${instructorId}/batches`),
+
+getStudentsInBatch: (batchId) => 
+    axios.get(`${BASE_URL}/coordinator/batch/${batchId}/students`),
+
+
+  // Module Actions
+    getModulesByCourse: (courseId) => axios.get(`${BASE_URL}/modules/${courseId}`),
+    createModule: (data) => axios.post(`${BASE_URL}/module`, data),
+    deleteModule: (moduleId) => axios.delete(`${BASE_URL}/module/${moduleId}`),
+
+  // getModules: (courseId) => axios.get(`${BASE_URL}/instructorModuleContent/modules/${courseId}`),
+  // createModule: (data) => axios.post(`${BASE_URL}/instructorModuleContent/module`, data),
+  // updateModule: (id, data) => axios.put(`${BASE_URL}/instructorModuleContent/module/${id}`, data),
+  // deleteModule: (id) => axios.delete(`${BASE_URL}/instructorModuleContent/module/${id}`),
+
+  // // Content Actions
+  // getContent: (moduleId) => axios.get(`${BASE_URL}/instructorModuleContent/content/module/${moduleId}`),
+  // createContent: (data) => axios.post(`${BASE_URL}/instructorModuleContent/content`, data),
+  // publishContent: (id) => axios.put(`${BASE_URL}/instructorModuleContent/content/publish/${id}`),
+  // deleteContent: (id) => axios.delete(`${BASE_URL}/instructorModuleContent/content/${id}`),
+
+  // attendance
+  getBatches: () => axios.get(`${BASE_URL}/batches`),
+    
+    getEnrollmentsByBatch: (batchId) => 
+        axios.get(`${BASE_URL}/batch/${batchId}/enrollments`),
+    
+    markBatchAttendance: (data) => 
+        axios.post(`${BASE_URL}/instructorAttendance/batchAttendance`, data),
+    
+    getAttendanceHistory: () => 
+        axios.get(`${BASE_URL}/instructorAttendance/attendance`),
+    
+    patchStatus: (attendanceId, enrollmentId, status) => 
+        axios.patch(`${BASE_URL}/instructorAttendance/attendance/${attendanceId}`, { enrollmentId, status }),
+    
+    deleteAttendance: (id, reason) => 
+        axios.delete(`${BASE_URL}/instructorAttendance/attendance/${id}?reason=${reason}`),
+
+  // Instructor Assessment
+
+  createAssessment: async (assessmentData) => {
+    const response = await axios.post(`${BASE_URL}/instructorAssessmentQuestion/assessment`, assessmentData);
+    return response.data;
+  },
+getAllAssessments: async () => {
+    // Matches your [HttpGet("assessments")] in InstructorAssessmentController
+    const response = await axios.get(`${BASE_URL}/instructorAssessmentQuestion/assessments`);
+    return response.data;
+},
+deleteAssessment: async (id) => {
+    const response = await axios.delete(`${BASE_URL}/instructorAssessmentQuestion/assessment/${id}`);
+    return response.data;
+  },
+getQuestionsByAssessment: async (assessmentId) => {
+    const response = await axios.get(`${BASE_URL}/instructorAssessmentQuestion/questions/assessment/${assessmentId}`);
+    return response.data;
+  },
+addQuestion: async (dto) => {
+    const response = await axios.post(`${BASE_URL}/instructorAssessmentQuestion/question`, dto);
+    return response.data;
+},
+updateQuestion: async (questionId, data) => {
+    const response = await axios.put(
+      `${BASE_URL}/instructorAssessmentQuestion/question/${questionId}`, 
+      data
+    );
+    return response.data;
+  },
+deleteQuestion: async (questionId) => {
+    return await axios.delete(`${BASE_URL}/instructorAssessmentQuestion/question/${questionId}`); 
+},
+  getQuestionById: async (questionId) => {
+    const response = await axios.get(`${BASE_URL}/instructorAssessmentQuestion/question/${questionId}`);
+    return response.data;
+  },
+getSubmissionsByAssessment: async (assessmentId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/Submission/assessment/${assessmentId}`);
+      return response.data; // This returns { status: 200, data: [...] }
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      throw error;
+    }
+  },
+
+
 registerStudent: async (studentData) => {
   try {
     const formData = new FormData();
