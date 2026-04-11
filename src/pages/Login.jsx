@@ -4,7 +4,6 @@ import { Mail, Lock, Eye, EyeOff, GraduationCap, ChevronRight } from 'lucide-rea
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/Api';
 import Swal from 'sweetalert2';
-import {jwtDecode} from "jwt-decode";
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -18,16 +17,21 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const data = await api.login(email, password);
       if (data.token) {
         login(data.token);
-        toast.success('Welcome back to EduTrack!');
         navigate('/');
       }
     } catch (err) {
-      toast.error(err.response?.data?.Message || 'Invalid email or password.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Authentication Failed',
+        text: 'Invalid credentials. Please try again.',
+        background: '#0f172a',
+        color: '#f1f5f9',
+        confirmButtonColor: '#2dd4bf', 
+      });
     } finally {
       setLoading(false);
     }
