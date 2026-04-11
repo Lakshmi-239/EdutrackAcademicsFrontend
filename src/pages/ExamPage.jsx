@@ -1,135 +1,3 @@
-// import React, { useState } from 'react';
-// import { Container, Row, Col, Card, Button, Form, Modal } from 'react-bootstrap';
-// import axios from 'axios';
-
-// const ExamPage = ({ examData, studentId, onClose }) => {
-//     const [currentIndex, setCurrentIndex] = useState(0);
-//     const [selectedAnswer, setSelectedAnswer] = useState("");
-//     const [showFeedback, setShowFeedback] = useState(false);
-//     const [showScore, setShowScore] = useState(false);
-//     const [submissionId, setSubmissionId] = useState("");
-//     const [finalResults, setFinalResults] = useState(null);
-
-//     const currentQuestion = examData.questions[currentIndex];
-
-//     // 1. Save Answer & Move Next
-//     const handleSaveAndNext = async () => {
-//         await axios.post(`https://localhost:7157/api/Submission/answer`, {
-//             studentId,
-//             assessmentId: examData.assessmentId,
-//             questionId: currentQuestion.questionId,
-//             answer: selectedAnswer
-//         });
-        
-//         if (currentIndex < examData.questions.length - 1) {
-//             setCurrentIndex(currentIndex + 1);
-//             setSelectedAnswer(""); // Reset for next question
-//         }
-//     };
-
-//     // 2. Final Submit
-//     const handleFinalSubmit = async () => {
-//         const res = await axios.post(`https://localhost:7157/api/Submission/submit`, {
-//             studentId,
-//             assessmentId: examData.assessmentId
-//         });
-//         setSubmissionId(res.data.submissionId);
-//         setShowFeedback(true); // Open Feedback Popup
-//     };
-
-//     // 3. Submit Feedback & View Score
-//     const handleFeedbackSubmit = async (feedbackData) => {
-//         await axios.put(`https://localhost:7157/api/Submission/UpdateFeedback`, {
-//             submissionId,
-//             feedback: feedbackData
-//         });
-
-//         const scoreRes = await axios.get(`https://localhost:7157/api/Submission/Score`, {
-//             params: { studentId, assessmentId: examData.assessmentId }
-//         });
-//         setFinalResults(scoreRes.data);
-//         setShowFeedback(false);
-//         setShowScore(true); // Open Score Popup
-//     };
-
-//     return (
-//         <div style={{
-//             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-//             backgroundColor: 'white', zIndex: 9999, overflowY: 'auto'
-//         }}>
-//             <Container className="py-5">
-//                 <h2 className="border-bottom pb-3 mb-4">{examData.courseName}</h2>
-//                 <Row>
-//                     <Col md={8}>
-//                         <Card className="p-4 shadow-sm border-0 bg-light mb-4">
-//                             <div className="d-flex justify-content-between fw-bold">
-//                                 <span>Q{currentIndex + 1}.</span>
-//                                 <span>Marks: {currentQuestion.marks}</span>
-//                             </div>
-//                             <p className="fs-5 my-4">{currentQuestion.questionText}</p>
-//                             <Form>
-//                                 {['OptionA', 'OptionB', 'OptionC', 'OptionD'].map((opt, i) => (
-//                                     <Form.Check 
-//                                         type="radio" 
-//                                         key={i}
-//                                         label={currentQuestion[opt]} 
-//                                         name="examOption"
-//                                         className="mb-3 p-2 border rounded bg-white"
-//                                         onChange={() => setSelectedAnswer(currentQuestion[opt])}
-//                                     />
-//                                 ))}
-//                             </Form>
-//                         </Card>
-//                         <div className="d-flex justify-content-between">
-//                             <Button variant="secondary" onClick={() => setCurrentIndex(prev => prev - 1)} disabled={currentIndex === 0}>Previous</Button>
-//                             <Button variant="primary" onClick={handleSaveAndNext}>Save & Next</Button>
-//                         </div>
-//                     </Col>
-
-//                     <Col md={4}>
-//                         <Card className="p-3 bg-light border-0 text-center">
-//                             <h5>Question Palette</h5>
-//                             <div className="d-flex flex-wrap gap-2 mb-4 justify-content-center">
-//                                 {examData.questions.map((_, i) => (
-//                                     <Button key={i} variant={i === currentIndex ? "primary" : "outline-dark"} size="sm" style={{width:'40px'}}>{i+1}</Button>
-//                                 ))}
-//                             </div>
-//                             <Button variant="success" className="w-100 py-2" onClick={handleFinalSubmit}>Finish</Button>
-//                         </Card>
-//                     </Col>
-//                 </Row>
-//             </Container>
-
-//             {/* FEEDBACK MODAL */}
-//             <Modal show={showFeedback} centered backdrop="static">
-//                 <Modal.Body className="p-4 text-center">
-//                     <div className="bg-light p-3 mb-4">Your Assessment submitted successfully</div>
-//                     <h5 className="text-start mb-3">Provide your feedback</h5>
-//                     <Form.Control as="textarea" rows={3} placeholder="Your Comments" id="feedbackInput" className="mb-3"/>
-//                     <Button variant="primary" onClick={() => handleFeedbackSubmit(document.getElementById('feedbackInput').value)}>Submit</Button>
-//                 </Modal.Body>
-//             </Modal>
-
-//             {/* SCORE MODAL */}
-//             <Modal show={showScore} centered backdrop="static">
-//                 <Modal.Body className="p-5 text-center bg-light">
-//                     <h4>Result</h4>
-//                     <p>Student Name: {studentId}</p>
-//                     <div className="bg-white p-4 my-3 border shadow-sm">
-//                         <div className="text-muted">Your Score</div>
-//                         <h2 className="display-4 fw-bold text-primary">{finalResults?.score}</h2>
-//                         <hr />
-//                         <p className="fw-bold mb-0">Percentage: {finalResults?.percentage}%</p>
-//                     </div>
-//                     <Button variant="danger" className="px-5 rounded-pill" onClick={onClose}>Close</Button>
-//                 </Modal.Body>
-//             </Modal>
-//         </div>
-//     );
-// };
-
-
-
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Button, Form, Modal ,Badge} from 'react-bootstrap';
 import axios from 'axios';
@@ -171,30 +39,41 @@ const ExamPage = ({ examData, studentId, onExit }) => {
                 assessmentId: examData.details.assessmentID
             });
             setSubmissionId(res.data.submissionId);
+            console.log("Submission ID:", res.data.submissionId);
             setShowFeedback(true); // Open Feedback Modal
         } catch (err) {
             alert("Error submitting assessment");
         }
     };
 
-    // Submit Feedback & Fetch Final Score
     const handleFeedbackSubmit = async () => {
-        try {
-            await axios.put(`${API_URL}/UpdateFeedback`, {
-                submissionId,
-                feedback
-            });
+    try {
+        // Match the DTO structure exactly
+        const feedbackPayload = {
+            StudentId: studentId, // From props/context
+            AssessmentId: examData.details.assessmentID,
+            submissionId: submissionId, 
+            Feedback: feedback 
+        };
 
-            const res = await axios.get(`${API_URL}/Score`, {
-                params: { studentId, assessmentId: examData.details.assessmentID }
-            });
-            setScoreResult(res.data);
-            setShowFeedback(false);
-            setShowScore(true); // Open Score Modal
-        } catch (err) {
-            alert("Error updating feedback");
-        }
-    };
+        await axios.put(`${API_URL}/UpdateFeedback`, feedbackPayload);
+
+        // Now fetch the score
+        const res = await axios.get(`${API_URL}/Score`, {
+            params: { 
+                studentId: studentId, 
+                assessmentId: examData.details.assessmentID 
+            }
+        });
+
+        setScoreResult(res.data);
+        setShowFeedback(false);
+        setShowScore(true); 
+    } catch (err) {
+        console.error("Feedback Error:", err.response?.data);
+        alert("Error updating feedback: " + (err.response?.data?.message || "Check console"));
+    }
+};
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: '#fff', zIndex: 1050, overflowY: 'auto' }}>
