@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, GraduationCap, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/Api';
+import toast from 'react-hot-toast';
+import { jwtDecode } from "jwt-decode";
 import Swal from 'sweetalert2';
 
 export const Login = () => {
@@ -10,24 +12,62 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const data = await api.login(email, password);
-      if (data.token) {
-        login(data.token);
-        navigate('/');
+      console.log("LOGIN RESPONSE:", data);
+
+      // 1. Extract the token string safely
+      const token = data?.token?.accessToken || data?.accessToken || data?.token;
+
+      if (!token || typeof token !== 'string') {
+        toast.error("No valid token received");
+        return;
       }
+
+      // 2. Call context login (this updates AuthContext state)
+      login(token);
+
+      // 3. Decode locally to handle immediate redirection
+      let role = "";
+      try {
+        const decoded = jwtDecode(token);
+        const dotNetRoleClaim = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        role = decoded[dotNetRoleClaim] || decoded.role || "";
+      } catch (err) {
+        console.error("Local decode error:", err);
+      }
+
+      toast.success("Login successful!");
+
+      // 4. Structured Navigation
+      const dashboardRoutes = {
+        "Student": "/Studentdashboard",
+        "Admin": "/admin",
+        "Instructor": "/InstructorDashboard",
+        "Coordinator": "/coordinator/dashboard"
+      };
+
+      if (dashboardRoutes[role]) {
+        navigate(dashboardRoutes[role]);
+      } else {
+        console.warn("Unknown or missing role:", role);
+        navigate("/"); // Fallback
+      }
+
     } catch (err) {
+      console.error("Login Error:", err);
       Swal.fire({
         icon: 'error',
         title: 'Authentication Failed',
-        text: 'Invalid credentials.',
+        text: err.response?.data?.message || 'Invalid credentials.',
         background: '#0f172a',
         color: '#f1f5f9',
         confirmButtonColor: '#22d3ee', 
@@ -62,11 +102,11 @@ export const Login = () => {
           </div>
           
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-sm text-slate-400" style={{ color: '#22d3ee' }}>
+          <p className="text-sm" style={{ color: '#22d3ee' }}>
             Get started with EduTrack !{' '}
             <Link to="/register" 
             style={{color: '#94a3b8'}}
-            className="font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
+            className="font-semibold hover:text-cyan-300 transition-colors ml-1">
               Create account
             </Link>
           </p>
@@ -76,7 +116,7 @@ export const Login = () => {
         <div className="bg-[#0f172a]/70 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-8 shadow-2xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
             
-            {/* Email Field - Label Strictly Left Aligned */}
+            {/* Email Field */}
             <div className="space-y-2" style={{ textAlign: 'left' }}>
               <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-1">
                 Email Address
