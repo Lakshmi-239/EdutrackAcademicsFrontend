@@ -18,9 +18,24 @@ import Notifications from "./pages/Notifications";
 import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
 import Attendance from "./pages/Attendance";
+<<<<<<< HEAD
 // import Dashboard from "./pages/Dashboard";
 // import BatchDetails from './pages/BatchDetails';
 // import AdminReport from './pages/AdminReport';
+=======
+//Coordinator 
+import Sidebar from "./components/Coordinator/Sidebar.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import Programs from "./pages/Programs.jsx";
+import CoursePage from "./pages/CoursePage.jsx";
+import NotificationPanel from './components/Coordinator/NotificationPanel.jsx';
+
+import Instructors from "./pages/Instructors.jsx";
+import Students from "./pages/Students.jsx";
+import Reports from "./pages/Reports.jsx";
+import BatchPage from "./pages/BatchPage.jsx";
+
+>>>>>>> dba063437442e1f7e3efd626a55a98502fd98adf
 
  function App() {
   return (
@@ -42,7 +57,7 @@ import Attendance from "./pages/Attendance";
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
-          <Route path="/" element={<Navigate to="/studentdashboard" />} />
+          {/* <Route path="/" element={<Navigate to="/studentdashboard" />} /> */}
 
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
@@ -54,10 +69,36 @@ import Attendance from "./pages/Attendance";
             {/* PERFORMANCE */}
             {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
+<<<<<<< HEAD
           {/* <Route path="/admin/report" element={<AdminReport />} /> */}
+=======
+          <Route path="/notifications" element={<Notifications />} />
+             <Route
+              path="/coordinator/*"
+              element={
+                <div className="d-flex">
+                  <Sidebar />
+                  <main className="flex-grow-1 p-4 bg-light">
+                    <Routes>
+                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route path="programs" element={<Programs />} />
+                      <Route path="courses" element={<CoursePage />} />
+                    
+                      <Route path="instructors" element={<Instructors />} />
+                      <Route path="students" element={<Students />} />
+                      <Route path="reports" element={<Reports />} />
+                      <Route path="batch" element={<BatchPage />} />
+                      <Route path="notifications" element={<NotificationPanel />} />
+                    </Routes>
+                  </main>
+                </div>
+              }
+            />
+
+>>>>>>> dba063437442e1f7e3efd626a55a98502fd98adf
 
           {/* Route WITHOUT Sidebar/Navbar */}
-          <Route path="/notifications" element={<Notifications />} />
+          
         </Routes>
       </div>
     </AuthProvider>
