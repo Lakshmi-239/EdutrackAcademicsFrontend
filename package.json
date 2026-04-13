@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.14.0",
     "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.407.0",
     "react": "^19.2.4",

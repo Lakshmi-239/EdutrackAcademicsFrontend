@@ -32,7 +32,7 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
       onRefresh();
       onClose();
     } catch (err) {
-      alert("Error saving question.");
+      alert("Maximum Marks limit exceeded");
     } finally {
       setIsSaving(false);
     }

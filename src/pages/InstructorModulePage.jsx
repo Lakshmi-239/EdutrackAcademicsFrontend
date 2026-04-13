@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/Api';
 import ModuleCard from '../components/InstructorModule/ModuleCard';
-import { Search, Plus, RefreshCcw, Layers } from 'lucide-react';
+import CreateModuleModal from '../components/InstructorModule/CreateModuleModal';
+import { Search, Plus, RefreshCcw, Layers, Loader2, SearchX, BookOpen } from 'lucide-react';
 
 export default function InstructorModulePage() {
   const [modules, setModules] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  // Example Course ID - normally you'd get this from a dropdown or URL params
-  const currentCourseId = "C001"; 
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      setSearchTerm('');
-      const data = await api.getModulesByCourse(currentCourseId);
-      // Ensure data is array and map consistent casing
-      const rawData = Array.isArray(data.data) ? data.data : [];
-      setModules(rawData);
-      setFilteredData(rawData);
+      const response = await api.getAllModules(); 
+      const rawData = Array.isArray(response.data) ? response.data : [];
+      
+      const enhancedData = rawData.map(item => ({
+        ...item,
+        moduleID: String(item.moduleID || 'N/A'),
+        courseId: String(item.courseId || 'N/A')
+      }));
+
+      // Grouping logic: Sort by Course ID first, then by Sequence
+      const sortedData = enhancedData.sort((a, b) => 
+        a.courseId.localeCompare(b.courseId) || a.sequenceOrder - b.sequenceOrder
+      );
+
+      setModules(sortedData);
+      setFilteredData(sortedData);
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -30,81 +39,103 @@ export default function InstructorModulePage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Filter Logic
   useEffect(() => {
     const results = modules.filter(item => {
       const searchLower = searchTerm.toLowerCase();
-      const searchableText = [item.ModuleID, item.Name, item.CourseId]
-        .filter(Boolean).join(' ').toLowerCase();
-      return searchableText.includes(searchLower);
+      return (
+        item.name.toLowerCase().includes(searchLower) ||
+        item.courseId.toLowerCase().includes(searchLower) ||
+        (item.learningObjectives && item.learningObjectives.toLowerCase().includes(searchLower))
+      );
     });
     setFilteredData(results);
   }, [searchTerm, modules]);
 
   if (loading) return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="spinner-grow text-primary" role="status"></div>
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100" style={{ backgroundColor: '#F4F7FE' }}>
+      <Loader2 className="animate-spin text-primary mb-3" size={40} />
+      <span className="fw-bold text-muted">Syncing Global Curriculum...</span>
     </div>
   );
 
   return (
-    <div className="container py-4 min-vh-100">
-      {/* HEADER PART */}
-      <div className="d-flex justify-content-between align-items-center mb-4 p-4 rounded-4 bg-white shadow-sm border-start border-4 border-primary">
-        <div>
-          <h2 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-            <Layers className="text-primary" size={28} /> 
-            Course Modules
-          </h2>
-          <p className="text-muted small mb-0">Organize and sequence your course content</p>
+    <div className="container-fluid py-4 px-4 px-lg-5" style={{ backgroundColor: '#F4F7FE', minHeight: '100vh' }}>
+      
+      {showCreateModal && (
+        <CreateModuleModal 
+          onClose={() => setShowCreateModal(false)} 
+          onRefresh={fetchData} 
+        />
+      )}
+
+      {/* --- HEADER --- */}
+      <div className="row mb-4">
+        <div className="col-12 text-start">
+          <div className="p-4 rounded-4 bg-white shadow-sm d-flex justify-content-between align-items-center" 
+               style={{ borderLeft: '5px solid #4318FF' }}> 
+            <div>
+              <h2 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#1B2559' }}>
+                <Layers className="text-primary" size={28} /> Global Course Modules
+              </h2>
+              <p className="text-secondary small mb-0 fw-medium">Managing modules across all registered courses.</p>
+            </div>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0"
+              style={{ background: 'linear-gradient(135deg, #4318FF 0%, #5E3BFF 100%)', fontWeight: '600' }}
+            >
+              <Plus size={20} strokeWidth={3} />
+              <span>Create Module</span>
+            </button>
+          </div>
         </div>
-        
-        <button 
-          className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 transition-all hover-scale"
-          style={{ background: 'linear-gradient(135deg, #a7a7deff 0%, #312ab1ff 100%)', fontWeight: '600' }}
-        >
-          <Plus size={20} color="white" strokeWidth={3} />
-          <span>Add Module</span>
-        </button>
       </div>
 
-      {/* SEARCH BAR */}
-      <div className="row g-0 mb-4 align-items-center bg-white rounded-pill shadow-sm border mx-0 px-3" style={{ height: '50px' }}>
-        <div className="col-md-8 h-100">
-          <div className="d-flex align-items-center h-100">
-            <Search size={18} className="text-muted me-2" />
+      {/* --- SEARCH BAR --- */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card border-0 shadow-sm p-2 rounded-pill bg-white px-3 d-flex flex-row align-items-center">
+            <Search size={18} className="text-muted mx-2" />
             <input 
               type="text" 
               className="form-control border-0 shadow-none bg-transparent" 
-              placeholder="Search by Module Name, ID or Course..." 
+              placeholder="Search by Course ID or Module Title..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+             <button className="btn btn-white rounded-circle p-2 mx-2" onClick={fetchData}>
+                <RefreshCcw size={16} className="text-primary" />
+             </button>
+            <div className="badge rounded-pill px-3 py-2 ms-2" style={{ backgroundColor: '#4318FF' }}>
+              {filteredData.length} Modules
+            </div>
           </div>
-        </div>
-        
-        <div className="col-md-4 d-flex justify-content-end align-items-center gap-2 h-100">
-          <button className="btn btn-light btn-sm rounded-circle p-2" onClick={fetchData}>
-            <RefreshCcw size={14} className="text-primary" />
-          </button>
-          <span className="badge bg-primary-subtle text-primary rounded-pill px-2 ms-2">
-            {filteredData.length} Modules Found
-          </span>
         </div>
       </div>
 
-      {/* GRID */}
-      <div className="row g-4">
+      {/* --- MODULE CARDS GRID WITH COURSE HEADERS --- */}
+      <div className="row">
         {filteredData.length > 0 ? (
-          filteredData.map((item) => (
-            <div className="col-12 col-md-6 col-lg-4" key={item.ModuleID}>
-              <ModuleCard module={item} onRefresh={fetchData} />
-            </div>
-          ))
+          filteredData.map((module, index) => {
+            // Logic to show Course Header only when the Course ID changes
+            const showCourseHeader = index === 0 || module.courseId !== filteredData[index - 1].courseId;
+            
+            return (
+              <React.Fragment key={module.moduleID}>
+                <div className="col-12 mb-3">
+                  <ModuleCard module={module} onRefresh={fetchData} />
+                </div>
+              </React.Fragment>
+            );
+          })
         ) : (
-          <div className="text-center py-5">
-            <div className="display-1 text-light">No Modules</div>
-            <p className="text-muted">Start by creating your first course module.</p>
+          <div className="col-12 text-center py-5 mt-5">
+            <SearchX size={60} className="text-muted opacity-25 mb-3" />
+            <h4 className="fw-bold text-muted">No modules found</h4>
+            <p className="text-secondary">Try adjusting your search or clearing filters.</p>
+            <button className="btn btn-primary rounded-pill px-4" onClick={() => setSearchTerm('')}>
+              Clear Search
+            </button>
           </div>
         )}
       </div>

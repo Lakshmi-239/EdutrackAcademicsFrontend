@@ -1,93 +1,163 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, BookOpen, Settings, Clock, CalendarCheck } from 'lucide-react';
+import { api } from '../../services/Api'; // Adjust path as needed
+import { 
+  Users, 
+  BookOpen, 
+  Clock, 
+  Award, 
+  CalendarCheck, 
+  Hash, 
+  AlertCircle, 
+  CheckCircle,
+  PartyPopper,
+  Loader2
+} from 'lucide-react';
 
-const CourseCard = ({ course, onRefresh }) => {
+const CourseCard = ({ course }) => {
   const navigate = useNavigate();
+  const [batchId, setBatchId] = useState(course.batchId || course.BatchId || null);
+  const [isResolvingBatch, setIsResolvingBatch] = useState(false);
 
-  // Normalize data from backend
-  const bId = course.batchId || course.BatchId || 'N/A';
-  const cName = course.courseName || course.CourseName || 'Unknown Course';
+  // Mapping Backend DTO fields
   const cId = course.courseId || course.CourseId || 'N/A';
-  const isActive = course.isActive !== undefined ? course.isActive : true;
-  const duration = course.duration || course.Duration || "TBD";
-  const attendance = course.attendanceRate || 0;
+  const cName = course.courseName || course.CourseName || 'Untitled Course';
+  const credits = course.credits ?? course.Credits ?? 0;
+  const duration = course.durationInWeeks || course.DurationInWeeks || 0;
+  const academicYear = course.academicYearId || course.AcademicYearId || 'N/A';
   
-  const studentCount = course.studentCount || course.currentStudents || 0;
-  const moduleCount = course.moduleCount || 0;
-  const completedModules = course.completedModules || 0;
+  // Capacity and Enrolled mapping
+  const capacity = course.batchSize || course.BatchSize || 0;
+  const enrolled = course.currentStudents || course.CurrentStudents || 0;
 
-  const statusColor = isActive ? 'success' : 'secondary';
-  const progressRate = moduleCount > 0 ? Math.round((completedModules / moduleCount) * 100) : 0;
+  // Logic: Active ONLY if Enrolled == Capacity
+  const isActiveStatus = (enrolled === capacity && capacity > 0);
+  const statusLabel = isActiveStatus ? 'ACTIVE' : 'INACTIVE';
+  const statusColor = isActiveStatus ? 'success' : 'secondary';
+  const StatusIcon = isActiveStatus ? CheckCircle : AlertCircle;
+
+  // EFFECT: If BatchId is missing, fetch it using your new endpoint
+  useEffect(() => {
+  const fetchBatchId = async () => {
+    // Only fetch if batchId is missing and we have a valid Course ID
+    if (!batchId && cId !== 'N/A') {
+      // CourseCard.jsx - Inside useEffect fetchBatchId
+try {
+  setIsResolvingBatch(true);
+  const response = await api.getBatchByCourse(cId, cName);
+  
+  if (response.data && response.data.batchId) {
+    setBatchId(response.data.batchId);
+  } else {
+    setBatchId("N/A"); // Explicitly set N/A if course exists but batch doesn't
+  }
+} catch (err) {
+  // If the server returns 404, we catch it here
+  if (err.response && err.response.status === 404) {
+    console.warn(`Course ${cId} exists but no batch is assigned yet.`);
+    setBatchId("N/A"); 
+  } else {
+    console.error("Connection Error:", err);
+  }
+} finally {
+  setIsResolvingBatch(false);
+}
+    }
+  };
+  fetchBatchId();
+}, [cId, cName, batchId]);
 
   return (
-    <div 
-      className="card h-100 shadow-sm rounded-4 overflow-hidden transition-all hover-shadow"
-      style={{ 
-        border: `1px solid #e0e0e0`,
-        borderTop: `6px solid var(--bs-${statusColor})` 
-      }}
-    >
+    <div className={`card h-100 shadow-sm rounded-4 border-4 position-relative overflow-hidden hover-shadow transition-all border-${statusColor}`}>
+      
+      {/* Centered Status Header */}
+      <div className={`py-2 text-white text-center fw-bold bg-${statusColor} d-flex align-items-center justify-content-center gap-2 border-bottom border-white border-opacity-25`}>
+        <StatusIcon size={18} />
+        <span style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>{statusLabel}</span>
+      </div>
+
       <div className="card-body p-4 d-flex flex-column">
-        {/* Header */}
-        <div className="mb-3">
-          <div className="d-flex justify-content-between align-items-start mb-1">
-            <span className="badge rounded-pill bg-light text-dark border small">Batch: {bId}</span>
-            <span className={`badge rounded-pill bg-${statusColor}-subtle text-${statusColor} fw-bold`}>
-              {isActive ? 'Active' : 'Closed'}
-            </span>
+        {/* Batch & Year Badges */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <span className="badge bg-light text-dark border border-secondary border-opacity-25 px-2 py-1 extra-small fw-bold d-flex align-items-center">
+            <Hash size={12} className="text-primary me-1" /> 
+            Batch: {isResolvingBatch ? <Loader2 size={10} className="animate-spin ms-1" /> : (batchId || 'N/A')}
+          </span>
+          <span className="badge bg-primary-subtle text-primary border border-primary border-opacity-25 px-2 py-1 extra-small fw-bold">
+            {academicYear}
+          </span>
+        </div>
+
+        {/* Course Name & ID */}
+        <div className="text-center mb-3">
+          <h5 className="fw-bold text-dark mb-0 text-truncate px-2">{cName}</h5>
+          <small className="text-primary fw-bold font-monospace" style={{ fontSize: '0.7rem' }}>
+            ({cId})
+          </small>
+          <div className="d-flex align-items-center justify-content-center gap-2 text-muted mt-2 extra-small">
+            <Clock size={12} /> <span>{duration} Weeks</span>
+            <span className="text-silver">|</span>
+            <Award size={12} /> <span>{credits} Credits</span>
           </div>
-          <h5 className="fw-bold text-dark mb-0 text-truncate">
-            {cName} <span className="ms-1 fw-normal text-muted opacity-50" style={{ fontSize: '0.85rem' }}>- {cId}</span>
-          </h5>
         </div>
 
-        {/* Duration Box */}
-        <div className="mb-4 bg-light rounded-3 p-2 d-flex align-items-center gap-2 text-muted small">
-          <Clock size={14} className="text-primary" />
-          <span className="fw-semibold">Duration: {duration}</span>
-        </div>
-
-        {/* Stats Row (2 Columns as discussed) */}
-        <div className="row text-center mb-3 g-2">
-          <div className="col-6 border-end">
-            <div className="p-1">
-              <div className="text-muted mb-1" style={{ fontSize: '0.7rem' }}>Students</div>
-              <div className="fw-bold text-dark h5 mb-0">{studentCount}</div>
+        {/* Stats Grid */}
+        <div className="row g-2 mb-4">
+          <div className="col-6">
+            <div className="p-2 rounded-3 bg-light border border-secondary border-opacity-25 text-center h-100">
+              <div className="text-muted mb-1 extra-small">Capacity</div>
+              <div className="fw-bold text-dark h5 mb-0">{capacity}</div>
             </div>
           </div>
           <div className="col-6">
-            <div className="p-1">
-              <div className="text-primary mb-1" style={{ fontSize: '0.7rem' }}>Modules</div>
-              <div className="fw-bold text-primary h5 mb-0">{moduleCount}</div>
+            <div className={`p-2 rounded-3 border text-center h-100 ${isActiveStatus ? 'bg-success-subtle border-success' : 'bg-light border-secondary border-opacity-25'}`}>
+              <div className={`${isActiveStatus ? 'text-success' : 'text-muted'} mb-1 extra-small`}>Enrolled</div>
+              <div className={`fw-bold h5 mb-0 ${isActiveStatus ? 'text-success' : 'text-dark'}`}>{enrolled}</div>
             </div>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-3">
-          <div className="d-flex justify-content-between mb-1">
-            <small className="text-muted fw-bold" style={{ fontSize: '0.7rem' }}>Progress</small>
-            <small className="text-dark fw-bold" style={{ fontSize: '0.7rem' }}>{progressRate}%</small>
-          </div>
-          <div className="progress" style={{ height: '6px' }}>
-            <div className={`progress-bar bg-${statusColor}`} style={{ width: `${progressRate}%` }}></div>
-          </div>
+        {/* Dynamic Message Area */}
+        <div style={{ minHeight: '42px' }} className="mb-3">
+          {isActiveStatus ? (
+            <div className="alert alert-success py-2 px-3 m-0 border border-success border-opacity-50 rounded-3 d-flex align-items-center gap-2" style={{ fontSize: '0.7rem' }}>
+              <PartyPopper size={14} className="text-success" />
+              <span className="fw-bold text-success">Ready! Batch is fully enrolled.</span>
+            </div>
+          ) : (
+            <div className="alert alert-warning py-2 px-3 m-0 border border-warning border-opacity-50 rounded-3 d-flex align-items-center gap-2" style={{ fontSize: '0.7rem' }}>
+              <AlertCircle size={14} className="text-warning" />
+              <span className="text-warning-emphasis">Waiting for enrollment ({enrolled}/{capacity})</span>
+            </div>
+          )}
         </div>
+
         {/* Action Buttons */}
         <div className="mt-auto d-flex flex-column gap-2">
           <button 
-            className="btn btn-dark w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 small fw-bold"
-            onClick={() => navigate(`/Ibatches?batchId=${bId}`)}
+            className="btn btn-dark w-100 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm border border-dark"
+            disabled={!batchId}
+            onClick={() => navigate(`/view-batch-students/${batchId}`)}
           >
-            <Users size={16} /> Students / Batch
+            <Users size={18} /> View Students
           </button>
-          <button 
-            className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 small fw-bold"
-            onClick={() => navigate(`/Imodules?courseId=${cId}`)}
-          >
-            <BookOpen size={16} /> Course Modules
-          </button>
+
+          <div className="d-flex gap-2">
+            <button 
+              className={`btn btn-outline-info flex-grow-1 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-1 border-2 ${!batchId ? 'disabled' : ''}`}
+              style={{ fontSize: '0.75rem' }}
+              onClick={() => batchId && navigate(`/Iattendances?batchId=${batchId}`)}
+            >
+              <CalendarCheck size={14} /> Attendance
+            </button>
+            <button 
+              className="btn btn-outline-primary flex-grow-1 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-1 border-2"
+              style={{ fontSize: '0.75rem' }}
+              onClick={() => navigate(`/Imodules?courseId=${cId}`)}
+            >
+              <BookOpen size={14} /> Modules
+            </button>
+          </div>
         </div>
       </div>
     </div>

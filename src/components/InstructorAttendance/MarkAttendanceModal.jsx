@@ -1,157 +1,185 @@
 import React, { useState, useEffect } from 'react';
+import { CheckCircle, XCircle, Loader2, Users, Info } from 'lucide-react';
 import { api } from '../../services/Api';
-import { X, CheckCircle, XCircle, Send, Users } from 'lucide-react';
 
-// Notice the "export default" here - this fixes your SyntaxError
 export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
-    const [batches, setBatches] = useState([]);
-    const [selectedBatch, setSelectedBatch] = useState('');
-    const [students, setStudents] = useState([]);
-    const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
-    const [mode, setMode] = useState('Offline');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [batches, setBatches] = useState([]);
+  const [selectedBatch, setSelectedBatch] = useState('');
+  const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [mode, setMode] = useState('Online');
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) fetchBatches();
-    }, [isOpen]);
+  const instructorId = "I001"; // Hardcoded as per your current setup
 
-    const fetchBatches = async () => {
-        try {
-            const res = await api.getBatches();
-            setBatches(res.data);
-        } catch (err) {
-            console.error("Error loading batches", err);
-        }
+  // Fetch batches only when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      api.getInstructorBatches(instructorId)
+        .then(res => setBatches(res.data || []))
+        .catch(err => console.error("Batch load error:", err));
+    }
+  }, [isOpen]);
+
+  // Fetch students when batch is selected
+  useEffect(() => {
+    if (!selectedBatch) {
+      setStudents([]);
+      return;
+    }
+    const loadStudents = async () => {
+      try {
+        setLoading(true);
+        const res = await api.getStudentsForAttendance(selectedBatch);
+        // Map to internal state with default 'Present' status
+        setStudents(res.data.map(s => ({
+          enrollmentId: s.enrollmentId,
+          studentName: s.studentName,
+          status: 'Present'
+        })));
+      } catch (err) {
+        alert(err.response?.data || "Could not load students for this batch");
+        setStudents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStudents();
+  }, [selectedBatch]);
+
+  const toggleStatus = (id) => {
+    setStudents(prev => prev.map(s => 
+      s.enrollmentId === id ? { ...s, status: s.status === 'Present' ? 'Absent' : 'Present' } : s
+    ));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedBatch || students.length === 0 || mode === 'Offline') return;
+
+    const payload = {
+      batchId: selectedBatch,
+      sessionDate: sessionDate, // Already formatted as YYYY-MM-DD
+      mode: mode,
+      students: students.map(s => ({
+        enrollmentId: s.enrollmentId,
+        status: s.status
+      }))
     };
 
-    const handleBatchChange = async (batchId) => {
-        setSelectedBatch(batchId);
-        if (!batchId) {
-            setStudents([]);
-            return;
-        }
-        try {
-            const res = await api.getEnrollmentsByBatch(batchId);
-            const studentList = res.data.map(id => ({
-                enrollmentID: id,
-                status: 'Present'
-            }));
-            setStudents(studentList);
-        } catch (err) {
-            alert("Failed to load students for this batch");
-        }
-    };
+    try {
+      setSubmitting(true);
+      const res = await api.markBatchAttendance(payload);
+      alert(res.data);
+      onRefresh(); // Refresh parent list
+      onClose();
+    } catch (err) {
+      alert(err.response?.data || "Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    const toggleStatus = (id) => {
-        setStudents(prev => prev.map(s => 
-            s.enrollmentID === id 
-            ? { ...s, status: s.status === 'Present' ? 'Absent' : 'Present' } 
-            : s
-        ));
-    };
+  if (!isOpen) return null;
 
-    const handleSubmit = async () => {
-        if (!selectedBatch) return alert("Please select a batch");
-        setIsSubmitting(true);
-        try {
-            const payload = {
-                batchId: selectedBatch,
-                sessionDate: sessionDate,
-                mode: mode,
-                students: students
-            };
-            await api.markBatchAttendance(payload);
-            onRefresh(); // Refresh the grid behind the modal
-            onClose();   // Close modal
-        } catch (err) {
-            alert(err.response?.data || "Error saving attendance");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  return (
+    <div className="modal d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)', zIndex: 1050 }}>
+      <div className="modal-dialog modal-lg modal-dialog-centered">
+        <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+          
+          <div className="modal-header border-0 p-4 text-white" style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}>
+            <h5 className="fw-bold mb-0 d-flex align-items-center gap-2">
+              <Users size={24} /> Mark Batch Attendance
+            </h5>
+            <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+          </div>
 
-    if (!isOpen) return null;
-
-    return (
-        <div className="modal-backdrop fade show" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', inset: 0, zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="modal-dialog modal-lg w-100 shadow-lg border-0">
-                <div className="modal-content border-0 rounded-4 overflow-hidden">
-                    {/* Header */}
-                    <div className="modal-header border-0 p-4" style={{ background: 'linear-gradient(135deg, #1d976c 0%, #93f9b9 100%)' }}>
-                        <h5 className="modal-title fw-bold text-white d-flex align-items-center gap-2">
-                            <Users size={24} /> Mark Batch Attendance
-                        </h5>
-                        <button type="button" className="btn-close btn-close-white shadow-none" onClick={onClose}></button>
-                    </div>
-
-                    <div className="modal-body p-4 bg-light">
-                        {/* Controls */}
-                        <div className="row g-3 mb-4 bg-white p-3 rounded-3 border shadow-sm mx-0">
-                            <div className="col-md-4">
-                                <label className="form-label small fw-bold text-muted">Batch ID</label>
-                                <select className="form-select rounded-pill border-0 bg-light fw-semibold" value={selectedBatch} onChange={(e) => handleBatchChange(e.target.value)}>
-                                    <option value="">Select Batch</option>
-                                    {batches.map(b => <option key={b.batchId} value={b.batchId}>{b.batchId}</option>)}
-                                </select>
-                            </div>
-                            <div className="col-md-4">
-                                <label className="form-label small fw-bold text-muted">Session Date</label>
-                                <input type="date" className="form-control rounded-pill border-0 bg-light fw-semibold" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
-                            </div>
-                            <div className="col-md-4">
-                                <label className="form-label small fw-bold text-muted">Class Mode</label>
-                                <select className="form-select rounded-pill border-0 bg-light fw-semibold" value={mode} onChange={(e) => setMode(e.target.value)}>
-                                    <option value="Offline">Offline</option>
-                                    <option value="Online">Online</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Student List */}
-                        <div className="bg-white rounded-3 border shadow-sm overflow-hidden" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                            <table className="table table-hover mb-0">
-                                <thead className="table-light sticky-top">
-                                    <tr>
-                                        <th className="px-4 py-3 border-0">Enrollment ID</th>
-                                        <th className="px-4 py-3 border-0 text-end">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {students.length > 0 ? students.map(s => (
-                                        <tr key={s.enrollmentID} className="align-middle">
-                                            <td className="px-4 py-3 fw-medium">{s.enrollmentID}</td>
-                                            <td className="px-4 py-3 text-end">
-                                                <button 
-                                                    onClick={() => toggleStatus(s.enrollmentID)}
-                                                    className={`btn btn-sm rounded-pill px-3 d-inline-flex align-items-center gap-2 border-0 ${s.status === 'Present' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}
-                                                >
-                                                    {s.status === 'Present' ? <CheckCircle size={16} /> : <XCircle size={16} />}
-                                                    {s.status}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )) : (
-                                        <tr><td colSpan="2" className="text-center py-5 text-muted">Select a batch to load students</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="modal-footer border-0 p-4 bg-white">
-                        <button type="button" className="btn btn-light rounded-pill px-4" onClick={onClose}>Cancel</button>
-                        <button 
-                            type="button" 
-                            className="btn btn-success rounded-pill px-4 d-flex align-items-center gap-2 shadow"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || students.length === 0}
-                        >
-                            <Send size={18} /> {isSubmitting ? 'Saving...' : 'Submit Attendance'}
-                        </button>
-                    </div>
-                </div>
+          <div className="modal-body p-4 bg-light">
+            <div className="row g-3 mb-4">
+              <div className="col-md-4">
+                <label className="small fw-bold text-secondary mb-1">Batch Name</label>
+                <select className="form-select border-0 shadow-sm" value={selectedBatch} onChange={(e) => setSelectedBatch(e.target.value)}>
+                  <option value="">Select Batch...</option>
+                  {batches.map(b => (
+                    <option key={b.batchId} value={b.batchId} disabled={!b.isActive}>
+                      {b.batchId} - {b.courseName} {!b.isActive ? '(Inactive)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="small fw-bold text-secondary mb-1">Date</label>
+                <input type="date" className="form-control border-0 shadow-sm" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
+              </div>
+              <div className="col-md-4">
+                <label className="small fw-bold text-secondary mb-1">Mode</label>
+                <select className="form-select border-0 shadow-sm" value={mode} onChange={(e) => setMode(e.target.value)}>
+                  <option value="Online">Online</option>
+                  <option value="Offline">Offline</option>
+                </select>
+              </div>
             </div>
+
+            {mode === 'Offline' && (
+              <div className="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-2 rounded-3">
+                <Info size={18} /> <span>Offline mode is currently unavailable.</span>
+              </div>
+            )}
+
+            <div className="bg-white rounded-4 shadow-sm border overflow-hidden">
+              <table className="table table-borderless align-middle mb-0">
+                <thead className="bg-white border-bottom">
+                  <tr>
+                    <th className="ps-4 py-3 text-secondary small fw-bold">STUDENT INFO</th>
+                    <th className="py-3 text-secondary small fw-bold text-center">ENROLLMENT ID</th>
+                    <th className="pe-4 py-3 text-secondary small fw-bold text-end">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="3" className="text-center py-5"><Loader2 className="spinner text-success" /></td></tr>
+                  ) : students.map((s) => (
+                    <tr key={s.enrollmentId} className="border-bottom border-light">
+                      <td className="ps-4 py-3">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '38px', height: '38px' }}>
+                            {s.studentName.charAt(0)}
+                          </div>
+                          <div className="fw-bold text-dark">{s.studentName}</div>
+                        </div>
+                      </td>
+                      <td className="text-center text-muted small">{s.enrollmentId}</td>
+                      <td className="pe-4 text-end">
+                        <button 
+                          disabled={mode === 'Offline'}
+                          onClick={() => toggleStatus(s.enrollmentId)}
+                          className={`btn btn-sm rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-2 ${
+                            s.status === 'Present' ? 'btn-success shadow-sm' : 'btn-outline-danger'
+                          }`}
+                        >
+                          {s.status === 'Present' ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                          <span>{s.status}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="modal-footer border-0 p-4 bg-light">
+            <button className="btn btn-link text-decoration-none text-secondary" onClick={onClose}>Cancel</button>
+            <button 
+              className="btn btn-success px-5 py-2 rounded-pill fw-bold shadow" 
+              disabled={submitting || students.length === 0 || mode === 'Offline'}
+              onClick={handleSubmit}
+            >
+              {submitting ? 'Syncing...' : 'Sync Attendance'}
+            </button>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

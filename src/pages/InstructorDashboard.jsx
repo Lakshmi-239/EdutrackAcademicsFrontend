@@ -1,159 +1,252 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/Api';
+import { useNavigate } from 'react-router-dom'; 
+import { api } from '../services/Api'; 
 
-const InstructorDashboard = ({ instructorId: propId }) => {
-  const [batches, setBatches] = useState([]);
-  const [selectedBatch, setSelectedBatch] = useState(null);
-  const [students, setStudents] = useState([]);
+const InstructorDashboard = () => {
+  const navigate = useNavigate(); 
+  const [curriculumData, setCurriculumData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [todaysDeadlines, setTodaysDeadlines] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date()); 
+  
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    activeCourses: 0,
+    activeAssessments: 0,
+    totalModules: 0
+  });
 
-  // Use the ID from props OR from localStorage as a fallback
-  const instructorId = propId || localStorage.getItem("userId");
+  const instructorId = "I001";
+  const today = new Date();
+  const currentMonth = today.toLocaleString('default', { month: 'long' });
+  const currentYear = today.getFullYear();
+  const daysInMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
+  const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const fetchDeadlinesByDate = async (date) => {
+    try {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      
+      const response = await api.getAssessmentsByDate(dateStr); 
+      const data = response.data || response;
+      setTodaysDeadlines(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching date-specific assessments:", err);
+      setTodaysDeadlines([]);
+    }
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      // 1. Log for debugging
-      console.log("Dashboard attempting sync for ID:", instructorId);
-
-      if (!instructorId) {
-        setLoading(false);
-        return; // This triggers the "Waiting..." UI
-      }
-
       try {
-        setLoading(true);
-        setError(null);
+        const data = await api.getInstructorCurriculumData(instructorId);
+        const safeData = Array.isArray(data) ? data : [];
+        setCurriculumData(safeData);
 
-        // 2. Fetch Batches
-        const response = await api.getInstructorBatches(instructorId);
-        console.log("API Response Success:", response.data);
+        await fetchDeadlinesByDate(new Date());
 
-        // Handle both direct array and { data: [] } formats
-        const batchList = Array.isArray(response.data) ? response.data : response.data.data;
-        
-        if (!batchList || batchList.length === 0) {
-          setError("No batches found for this account.");
-        } else {
-          setBatches(batchList);
-        }
+        const totals = safeData.reduce((acc, curr) => {
+          acc.totalStudents += curr.currentStudents || 0;
+          acc.activeAssessments += curr.totalAssessments || 0;
+          acc.totalModules += curr.totalModules || 0;
+          return acc;
+        }, { totalStudents: 0, activeAssessments: 0, totalModules: 0 });
+
+        setStats({
+          totalStudents: totals.totalStudents,
+          activeCourses: safeData.length,
+          activeAssessments: totals.activeAssessments,
+          totalModules: totals.totalModules
+        });
       } catch (err) {
-        console.error("Syncing Error:", err);
-        setError("Unable to connect to EduTrack. Please check your connection.");
+        console.error("Failed to load dashboard data:", err);
       } finally {
         setLoading(false);
       }
     };
 
     loadDashboardData();
-  }, [instructorId]); // Re-run if instructorId changes
+  }, [instructorId]);
 
-  const handleSelectBatch = async (batch) => {
-    setSelectedBatch(batch);
-    setStudents([]); 
-    try {
-      // Handles both batchId and BatchId depending on C# serialization
-      const id = batch.batchId || batch.BatchId;
-      const response = await api.getStudentsInBatch(id);
-      
-      const studentData = Array.isArray(response.data) ? response.data : response.data.data;
-      setStudents(studentData || []);
-    } catch (err) {
-      console.error("Roster Sync Error:", err);
-    }
+  const handleDateClick = (dayNumber) => {
+    const newDate = new Date(currentYear, today.getMonth(), dayNumber);
+    setSelectedDate(newDate);
+    fetchDeadlinesByDate(newDate);
   };
 
-  // UI STATE 1: Still Loading
   if (loading) return (
-    <div className="flex items-center justify-center h-screen flex-col gap-4 bg-gray-50">
-      <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-indigo-600 font-bold animate-pulse">Syncing with EduTrack...</p>
-    </div>
-  );
-
-  // UI STATE 2: No Credentials Found (The part you were stuck on)
-  if (!instructorId) return (
-    <div className="flex items-center justify-center h-screen text-gray-400 bg-gray-50 flex-col gap-2">
-      <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-      <p className="font-medium text-lg">Waiting for Instructor credentials...</p>
-      <p className="text-sm">Please log in to view your dashboard.</p>
-      <a href="/login" className="mt-4 text-indigo-600 font-bold hover:underline">Go to Login</a>
+    <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="spinner-border text-primary"></div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800">My Batches</h2>
-          <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Instructor: {instructorId}</p>
-        </div>
+    <div className="container-fluid py-5 px-4" style={{ backgroundColor: '#F4F7FE', minHeight: '100vh' }}>
+      <h2 className="fw-bold mb-4" style={{ color: '#2B3674' }}>Hi Jyothirmyee,</h2>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {error && <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium">{error}</div>}
+      {/* CURRICULUM OVERVIEW */}
+      <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: '20px' }}>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h5 className="fw-bold m-0" style={{ color: '#2B3674' }}>Curriculum Overview</h5>
           
-          {batches.map(batch => (
-            <div 
-              key={batch.batchId || batch.BatchId}
-              onClick={() => handleSelectBatch(batch)}
-              className={`p-4 rounded-xl cursor-pointer border transition-all ${
-                (selectedBatch?.batchId === batch.batchId || selectedBatch?.BatchId === batch.BatchId)
-                ? 'bg-indigo-600 text-white shadow-md border-indigo-600' 
-                : 'bg-white hover:bg-indigo-50 border-gray-100'
-              }`}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-mono opacity-60 uppercase">{batch.batchId || batch.BatchId}</span>
-                {(batch.isActive || batch.IsActive) && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>}
-              </div>
-              <p className="font-bold text-sm leading-tight">{batch.courseName || batch.CourseName}</p>
-            </div>
-          ))}
+          {/* Live Session Button */}
+          <button 
+  className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm"
+  onClick={() => window.open('https://teams.microsoft.com/l/meetup-join/YOUR_TEAMS_LINK', '_blank')}
+  style={{ 
+    fontSize: '0.9rem', 
+    fontWeight: '600', 
+    backgroundColor: '#464EB8', // Official Teams Purple
+    border: 'none' 
+  }}
+>
+  {/* Pulsing indicator to show it's "Live" */}
+  <span 
+    className="spinner-grow spinner-grow-sm" 
+    style={{ width: '10px', height: '10px' }} 
+    role="status" 
+    aria-hidden="true"
+  ></span>
+  Go Live Session
+</button>
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        {selectedBatch ? (
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
-              <h1 className="text-3xl font-extrabold text-gray-900">{selectedBatch.courseName || selectedBatch.CourseName}</h1>
-              <p className="text-gray-500">Student Roster • Batch {selectedBatch.batchId || selectedBatch.BatchId}</p>
+        <div className="table-responsive">
+          <table className="table table-hover align-middle">
+            <thead className="text-secondary small">
+              <tr>
+                <th className="border-0">COURSE NAME</th>
+                <th className="border-0">BATCH</th>
+                <th className="border-0">MODULES</th>
+                <th className="border-0">ASSESSMENTS</th>
+                <th className="border-0">STUDENTS</th>
+              </tr>
+            </thead>
+            <tbody style={{ color: '#2B3674', fontWeight: '600' }}>
+              {curriculumData.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.courseName}</td>
+                  <td><span className="badge rounded-pill bg-light text-dark px-3">{item.batchId}</span></td>
+                  <td>{item.totalModules} Units</td>
+                  <td><span className="text-primary">{item.totalAssessments} Active</span></td>
+                  <td>{item.currentStudents} / {item.batchSize}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="row g-4 align-items-start">
+        {/* CALENDAR SECTION */}
+        <div className="col-md-4">
+          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '20px' }}>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h6 className="fw-bold m-0" style={{ color: '#2B3674' }}>{currentMonth} {currentYear}</h6>
+              <i className="bi bi-calendar3 text-primary"></i>
+            </div>
+            
+            <div className="row g-0 text-center mb-2">
+              {['S','M','T','W','T','F','S'].map(d => (
+                <div key={d} className="col fw-bold small text-secondary" style={{ fontSize: '0.7rem' }}>{d}</div>
+              ))}
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr className="text-gray-400 text-xs font-bold uppercase tracking-wider">
-                    <th className="px-6 py-4">Student Name</th>
-                    <th className="px-6 py-4">Student ID</th>
-                    <th className="px-6 py-4">Email</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {students.map(s => (
-                    <tr key={s.studentId || s.StudentId} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 font-bold text-gray-700">{s.studentName || s.StudentName}</td>
-                      <td className="px-6 py-4 text-sm font-mono text-gray-500">{s.studentId || s.StudentId}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{s.studentEmail || s.StudentEmail}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {students.length === 0 && (
-                <div className="py-20 text-center text-gray-400 italic">No students found in this batch.</div>
-              )}
+            <div className="row g-0 text-center">
+              {calendarDays.map(day => {
+                const isSelected = day === selectedDate.getDate();
+                const isToday = day === today.getDate() && selectedDate.getMonth() === today.getMonth();
+                
+                return (
+                  <div key={day} className="col-auto" style={{ width: '14.28%' }}>
+                    <div 
+                      className="p-1 small fw-bold" 
+                      onClick={() => handleDateClick(day)}
+                      style={{ 
+                        borderRadius: '8px',
+                        backgroundColor: isSelected ? '#4318FF' : 'transparent',
+                        color: isSelected ? '#FFF' : (isToday ? '#4318FF' : '#2B3674'),
+                        border: isToday && !isSelected ? '1px solid #4318FF' : 'none',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {day}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-gray-300">
-             <p className="text-xl font-medium">Select a batch to begin</p>
+        </div>
+        
+        {/* DEADLINES LIST SECTION */}
+        <div className="col-md-8">
+          {/* Changed minHeight to height: 'fit-content' for automatic resizing */}
+          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '20px', height: 'fit-content', minHeight: '300px' }}>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h5 className="fw-bold m-0" style={{ color: '#2B3674' }}>Assessments Ending</h5>
+              <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: '#eef0ff', color: '#4318FF' }}>
+                {selectedDate.getDate()} {currentMonth}
+              </span>
+            </div>
+
+            {todaysDeadlines.length > 0 ? (
+              <div className="list-group list-group-flush">
+                {todaysDeadlines.map((item, idx) => (
+                  <div key={idx} className="list-group-item border-0 d-flex align-items-center p-3 mb-3 shadow-sm" 
+                       style={{ borderRadius: '16px', backgroundColor: '#fff', border: '1px solid #f0f2f8' }}>
+                    
+                    <div className="rounded-3 d-flex align-items-center justify-content-center me-3" 
+                         style={{ width: '45px', height: '45px', backgroundColor: '#F4F7FE', flexShrink: 0 }}>
+                      <i className="bi bi-file-text-fill text-primary" style={{ fontSize: '1.2rem' }}></i>
+                    </div>
+                    
+                    <div className="flex-grow-1 text-start">
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge" style={{ backgroundColor: '#E9EDF7', color: '#4318FF', fontSize: '0.7rem' }}>
+                          {item.assessmentID}
+                        </span>
+                        <span className="text-secondary fw-bold" style={{ fontSize: '0.8rem' }}>
+                          CID: {item.courseId}
+                        </span>
+                      </div>
+                      
+                      <h6 className="fw-bold mb-1" style={{ color: '#2B3674', margin: 0 }}>
+                        {item.courseName} <span className="text-muted fw-normal mx-1">|</span> {item.type}
+                      </h6>
+                      
+                      <div className="d-flex align-items-center text-muted small">
+                         <i className="bi bi-bookmark-check me-1 text-success"></i>
+                         Max Marks: <strong className="ms-1 text-dark">{item.maxMarks}</strong>
+                      </div>
+                    </div>
+
+                    <div className="ms-3">
+                      <button 
+                        className="btn btn-primary rounded-pill btn-sm px-4"
+                        onClick={() => navigate(`/submissions/${item.assessmentID}`)}
+                        style={{ backgroundColor: '#4318FF', border: 'none', fontWeight: '600' }}
+                      >
+                        View Submissions
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-5">
+                <i className="bi bi-calendar-x text-secondary" style={{ fontSize: '3rem', opacity: 0.3 }}></i>
+                <p className="text-secondary mt-3 fw-medium">No deadlines for this date.</p>
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,303 +1,229 @@
-// import React, { useState, useEffect } from 'react';
-// import { api } from '../services/Api';
-// import AttendanceCard from '../components/InstructorAttendance/AttendanceCard';
-// import MarkAttendanceModal from '../components/InstructorAttendance/MarkAttendanceModal';
-// import { Search, Filter, Plus, RefreshCcw, UserCheck } from 'lucide-react';
-
-// export default function InstructorAttendancePage() {
-//   const [attendanceRecords, setAttendanceRecords] = useState([]);
-//   const [filteredData, setFilteredData] = useState([]);
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [statusFilter, setStatusFilter] = useState('All');
-//   const [loading, setLoading] = useState(true);
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-
-//   const fetchData = async () => {
-//     try {
-//       setLoading(true);
-//       setSearchTerm('');
-//       setStatusFilter('All');
-
-//       // Fetching from your backend GetAllAttendanceAsync endpoint
-//       const res = await api.getAttendanceHistory();
-//       const data = Array.isArray(res.data) ? res.data : [];
-      
-//       setAttendanceRecords(data);
-//       setFilteredData(data);
-//     } catch (error) {
-//       console.error("Fetch error:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => { fetchData(); }, []);
-
-//   useEffect(() => {
-//     const results = attendanceRecords.filter(item => {
-//       const searchLower = searchTerm.toLowerCase();
-//       const formattedDate = new Date(item.sessionDate).toLocaleDateString();
-
-//       const searchableText = [
-//         item.attendanceID,
-//         item.studentName,
-//         item.enrollmentID,
-//         item.courseName,
-//         item.batchId,
-//         formattedDate
-//       ].filter(Boolean).join(' ').toLowerCase();
-
-//       const matchesSearch = searchableText.includes(searchLower);
-//       const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-      
-//       return matchesSearch && matchesStatus;
-//     });
-//     setFilteredData(results);
-//   }, [searchTerm, statusFilter, attendanceRecords]);
-
-//   if (loading) return (
-//     <div className="d-flex justify-content-center align-items-center vh-100">
-//       <div className="spinner-grow text-primary" role="status"></div>
-//     </div>
-//   );
-
-//   return (
-//     <div className="container py-4 min-vh-100">
-//       {/* GLOSSY HEADER */}
-//       <div className="d-flex justify-content-between align-items-center mb-4 p-4 rounded-4 bg-white shadow-sm border-start border-4 border-success">
-//         <div>
-//           <h2 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-//             <UserCheck className="text-success" size={28} /> 
-//             Attendance Logs
-//           </h2>
-//           <p className="text-muted small mb-0">Track and manage student daily presence</p>
-//         </div>
-        
-//         <button 
-//           onClick={() => setIsModalOpen(true)}
-//           className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 transition-all hover-scale"
-//           style={{ 
-//             background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Success gradient
-//             minWidth: '180px',
-//             fontWeight: '600',
-//             color: '#1a5c37'
-//           }}
-//         >
-//           <Plus size={20} strokeWidth={3} />
-//           <span>Mark Attendance</span>
-//         </button>
-//       </div>
-
-//       {/* COMPACT FILTER BAR */}
-//       <div className="row g-0 mb-4 align-items-center bg-white rounded-pill shadow-sm border mx-0 px-3" style={{ height: '50px' }}>
-//         <div className="col-md-6 h-100">
-//           <div className="d-flex align-items-center h-100">
-//             <Search size={18} className="text-muted me-2" />
-//             <input 
-//               type="text" 
-//               className="form-control border-0 shadow-none bg-transparent" 
-//               placeholder="Search Student, ID, Batch or Date..." 
-//               value={searchTerm}
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//               style={{ fontSize: '0.95rem' }}
-//             />
-//           </div>
-//         </div>
-        
-//         <div className="col-md-6 d-flex justify-content-end align-items-center gap-2 h-100">
-//           <Filter size={14} className="text-muted" />
-//           <select 
-//             className="form-select form-select-sm border-0 bg-light rounded-pill fw-bold shadow-none" 
-//             style={{ width: '130px', cursor: 'pointer' }} 
-//             value={statusFilter}
-//             onChange={(e) => setStatusFilter(e.target.value)}
-//           >
-//             <option value="All">All Status</option>
-//             <option value="Present">Present</option>
-//             <option value="Absent">Absent</option>
-//           </select>
-          
-//           <button 
-//             className="btn btn-light btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center" 
-//             onClick={fetchData}
-//             title="Refresh"
-//           >
-//             <RefreshCcw size={14} className="text-success" />
-//           </button>
-//           <span className="badge bg-success-subtle text-success rounded-pill px-2 ms-2" style={{ fontSize: '0.75rem' }}>
-//             {filteredData.length} Records
-//           </span>
-//         </div>
-//       </div>
-
-//       {/* GRID SECTION */}
-//       <div className="row g-4">
-//         {filteredData.length > 0 ? (
-//           filteredData.map((item) => (
-//             <div className="col-12 col-md-6 col-lg-4" key={item.attendanceID}>
-//               <AttendanceCard attendance={item} onRefresh={fetchData} />
-//             </div>
-//           ))
-//         ) : (
-//           <div className="text-center py-5">
-//             <div className="display-1 text-light">Empty</div>
-//             <p className="text-muted">No attendance records found.</p>
-//           </div>
-//         )}
-//       </div>
-
-//       {/* Modal for adding new attendance */}
-//       <MarkAttendanceModal 
-//         isOpen={isModalOpen} 
-//         onClose={() => setIsModalOpen(false)} 
-//         onRefresh={fetchData} 
-//       />
-//     </div>
-//   );
-// }
-
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/Api'; // Using 'api' object
+import { api } from '../services/Api';
 import AttendanceCard from '../components/InstructorAttendance/AttendanceCard';
 import MarkAttendanceModal from '../components/InstructorAttendance/MarkAttendanceModal';
-import { Search, Filter, Plus, RefreshCcw, UserCheck } from 'lucide-react';
+import AttendanceDetailModal from '../components/InstructorAttendance/AttendanceDetailsModal';
+import { Search, Plus, RefreshCcw, Loader2, SearchX, CalendarCheck } from 'lucide-react';
 
 export default function InstructorAttendancePage() {
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [summaries, setSummaries] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMarkModalOpen, setIsMarkModalOpen] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState(null);
 
-  const fetchData = async () => {
+  const fetchSummary = async () => {
     try {
       setLoading(true);
-      
-      // 1. Call your [HttpGet("attendance")] via the api object
-      const res = await api.getAttendanceHistory();
-      
-      // 2. Your backend returns a list of objects 
-      // with AttendanceID, StudentName, CourseName, etc.
-      const data = Array.isArray(res.data) ? res.data : [];
-      
-      setAttendanceRecords(data);
-      setFilteredData(data);
-    } catch (error) {
-      console.error("Error fetching attendance history:", error);
-      setAttendanceRecords([]);
+      const [activeRes, deletedRes] = await Promise.all([
+        api.getAttendanceSummary(),
+        api.getDeletedAttendanceSummary()
+      ]);
+
+      const active = (activeRes.data || []).map(i => ({ ...i, isDeleted: false }));
+      const deleted = (deletedRes.data || []).map(i => ({ ...i, isDeleted: true }));
+
+      const combined = [...active, ...deleted].sort((a, b) => 
+        new Date(b.sessionDate) - new Date(a.sessionDate)
+      );
+
+      setSummaries(combined);
+      setFilteredData(combined);
+    } catch (err) {
+      console.error("Error fetching attendance data:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { 
-    fetchData(); 
-  }, []);
+  useEffect(() => { fetchSummary(); }, []);
 
-  // Search and Filter Logic
   useEffect(() => {
-    const results = attendanceRecords.filter(item => {
+    const results = summaries.filter(item => {
       const searchLower = searchTerm.toLowerCase();
-      // Ensure we check all visible fields for the search
-      const searchableText = [
-        item.attendanceID,
-        item.studentName,
-        item.courseName,
-        item.batchId,
-        item.enrollmentID
-      ].filter(Boolean).join(' ').toLowerCase();
+      const formattedDate = item.sessionDate 
+        ? new Date(item.sessionDate).toLocaleDateString().toLowerCase() 
+        : '';
 
-      const matchesSearch = searchableText.includes(searchLower);
-      const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
+      return (
+        item.batchId?.toLowerCase().includes(searchLower) ||
+        item.courseName?.toLowerCase().includes(searchLower) ||
+        item.courseId?.toLowerCase().includes(searchLower) ||
+        formattedDate.includes(searchLower)
+      );
     });
     setFilteredData(results);
-  }, [searchTerm, statusFilter, attendanceRecords]);
+  }, [searchTerm, summaries]);
+
+  const handleBulkDelete = async (item) => {
+    const reason = window.prompt(`Enter reason for deleting Batch ${item.batchId}:`);
+    if (!reason) return;
+    try {
+      const res = await api.deleteBatchAttendance(item.batchId, item.sessionDate, reason);
+      alert(res.data);
+      fetchSummary(); 
+    } catch (err) {
+      alert(err.response?.data || "Deletion failed");
+    }
+  };
+
+  const handleBulkRestore = async (item) => {
+    try {
+      const res = await api.restoreBatchAttendance(item.batchId, item.sessionDate);
+      alert(res.data);
+      fetchSummary();
+    } catch (err) {
+      alert(err.response?.data || "Restore failed");
+    }
+  };
 
   if (loading) return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="spinner-border text-success" role="status"></div>
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100" style={{ backgroundColor: '#F4F7FE' }}>
+      <Loader2 className="animate-spin text-primary mb-3" size={40} />
+      <span className="fw-bold text-muted">Loading Attendance Records...</span>
     </div>
   );
 
   return (
-    <div className="container py-4 min-vh-100">
-      {/* HEADER SECTION */}
-      <div className="d-flex justify-content-between align-items-center mb-4 p-4 rounded-4 bg-white shadow-sm border-start border-4 border-success">
-        <div>
-          <h2 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-            <UserCheck className="text-success" size={28} /> 
-            Attendance Records
-          </h2>
-          <p className="text-muted small mb-0">View and manage history of student presence</p>
-        </div>
-        
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 transition-all hover-scale"
-          style={{ 
-            background: 'linear-gradient(135deg, #28a745 0%, #85e085 100%)',
-            fontWeight: '600'
-          }}
-        >
-          <Plus size={20} />
-          <span>Mark New Attendance</span>
-        </button>
-      </div>
-
-      {/* FILTER BAR */}
-      <div className="row g-0 mb-4 align-items-center bg-white rounded-pill shadow-sm border mx-0 px-3" style={{ height: '50px' }}>
-        <div className="col-md-6 d-flex align-items-center">
-          <Search size={18} className="text-muted me-2" />
-          <input 
-            type="text" 
-            className="form-control border-0 shadow-none bg-transparent" 
-            placeholder="Search by student, ID, or batch..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="col-md-6 d-flex justify-content-end align-items-center gap-2">
-          <Filter size={14} className="text-muted" />
-          <select 
-            className="form-select form-select-sm border-0 bg-light rounded-pill fw-bold" 
-            style={{ width: '130px' }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="All">All Status</option>
-            <option value="Present">Present</option>
-            <option value="Absent">Absent</option>
-          </select>
-          <button className="btn btn-light btn-sm rounded-circle" onClick={fetchData}>
-            <RefreshCcw size={14} className="text-success" />
-          </button>
+    <div className="container-fluid py-4 px-4 px-lg-5" style={{ backgroundColor: '#F4F7FE', minHeight: '100vh' }}>
+      
+      {/* --- HEADER (LEFT ALIGNED BLUE THEME) --- */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="p-4 rounded-4 bg-white shadow-sm d-flex justify-content-between align-items-center" 
+               style={{ borderLeft: '5px solid #4318FF' }}> 
+            <div className="text-start">
+              <h2 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#1B2559' }}>
+                <CalendarCheck className="text-primary" size={28} /> Batch Attendance
+              </h2>
+              <p className="text-secondary small mb-0 fw-medium">Monitor and manage student presence across all active batches.</p>
+            </div>
+            <button 
+              onClick={() => setIsMarkModalOpen(true)}
+              className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 hover-lift"
+              style={{ background: 'linear-gradient(135deg, #4318FF 0%, #5E3BFF 100%)', fontWeight: '600' }}
+            >
+              <Plus size={20} />
+              <span>Mark Attendance</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* CARDS GRID */}
+      {/* --- CONSOLIDATED SEARCH PILL-BAR --- */}
+      <div className="row mb-5">
+        <div className="col-12">
+          <div className="card border-0 shadow-sm p-2 rounded-pill bg-white px-3">
+            <div className="d-flex align-items-center justify-content-between">
+              
+              {/* Left: Search Input */}
+              <div className="d-flex align-items-center flex-grow-1">
+                <Search size={18} className="text-muted ms-2 me-2" />
+                <input 
+                  type="text" 
+                  className="form-control border-0 shadow-none bg-transparent" 
+                  placeholder="Search by Batch, Course Name, or Date..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ fontSize: '0.95rem', color: '#1B2559', fontWeight: '500' }}
+                />
+              </div>
+
+              {/* Right: Refresh and Count Badge (Now Blue) */}
+              <div className="d-flex align-items-center gap-2">
+                <button 
+                  className="btn btn-white rounded-circle p-2 shadow-sm border hover-rotate" 
+                  onClick={fetchSummary}
+                  style={{ width: '38px', height: '38px', backgroundColor: '#fff' }}
+                >
+                  <RefreshCcw size={14} className="text-primary" />
+                </button>
+
+                <div className="badge rounded-pill px-4 py-2" style={{ backgroundColor: '#7c94cdff', color: '#fff', fontWeight: '700', fontSize: '0.8rem', boxShadow: '0 4px 14px 0 rgba(67, 24, 255, 0.3)' }}>
+                  {filteredData.length} Found
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- GRID OR EMPTY STATE --- */}
       <div className="row g-4">
         {filteredData.length > 0 ? (
-          filteredData.map((item) => (
-            <div className="col-12 col-md-6 col-lg-4" key={item.attendanceID}>
-              <AttendanceCard attendance={item} onRefresh={fetchData} />
+          filteredData.map((item, idx) => (
+            <div className="col-12 col-md-6 col-lg-4" key={idx}>
+              <AttendanceCard 
+                item={item} 
+                onClick={() => setSelectedSummary(item)} 
+                onDelete={handleBulkDelete}
+                onRestore={handleBulkRestore}
+              />
             </div>
           ))
         ) : (
-          <div className="text-center py-5 w-100">
-            <h3 className="text-light">No History Found</h3>
-            <p className="text-muted">Start by marking attendance for a batch.</p>
+          /* --- CENTERED EMPTY STATE (BLUE ACCENTS) --- */
+          <div className="col-12 d-flex justify-content-center mt-4">
+            <div 
+              className="bg-white p-5 rounded-5 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
+              style={{ maxWidth: '450px', minHeight: '320px', borderColor: '#E9EDF7', borderWidth: '2px' }}
+            >
+              <div className="position-relative mb-4 d-flex align-items-center justify-content-center">
+                <div 
+                  className="rounded-circle animate-pulse" 
+                  style={{ width: '100px', height: '100px', backgroundColor: '#F4F7FE', position: 'absolute' }}
+                ></div>
+                <SearchX size={50} className="text-primary opacity-40 position-relative z-1" />
+              </div>
+
+              <h4 className="fw-bold text-center" style={{ color: '#1B2559', letterSpacing: '-0.5px' }}>
+                No Attendance Found
+              </h4>
+              
+              <p className="text-secondary small mb-4 text-center px-4">
+                We couldn't find any records matching <strong>"{searchTerm}"</strong>. Try a different date or batch ID.
+              </p>
+
+              <button 
+                className="btn rounded-pill px-5 py-2 fw-bold text-white shadow-sm border-0" 
+                onClick={() => setSearchTerm('')}
+                style={{ backgroundColor: '#4318FF' }}
+              >
+                Clear Search
+              </button>
+            </div>
           </div>
         )}
       </div>
 
+      {/* Modals */}
       <MarkAttendanceModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onRefresh={fetchData} 
+        isOpen={isMarkModalOpen} 
+        onClose={() => setIsMarkModalOpen(false)} 
+        onRefresh={fetchSummary} 
       />
+      {selectedSummary && (
+        <AttendanceDetailModal 
+          isOpen={!!selectedSummary}
+          batchId={selectedSummary.batchId}
+          date={selectedSummary.sessionDate}
+          onClose={() => setSelectedSummary(null)}
+          onUpdate={fetchSummary} 
+        />
+      )}
+
+      {/* --- STYLES --- */}
+      <style>{`
+        .hover-rotate:hover { transform: rotate(180deg); transition: transform 0.4s ease; }
+        .hover-lift { transition: transform 0.2s ease; }
+        .hover-lift:hover { transform: translateY(-2px); }
+        .animate-pulse { animation: pulse 2.5s infinite; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.08); }
+        }
+      `}</style>
     </div>
   );
 }

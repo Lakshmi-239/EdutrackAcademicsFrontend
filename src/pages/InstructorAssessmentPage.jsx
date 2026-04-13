@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/Api';
 import AssessmentCard from '../components/InstructorAssessment/AssessmentCard';
 import CreateAssessmentModal from '../components/InstructorAssessment/CreateAssessmentModal';
-import { Search, Filter, Plus, RefreshCcw, LayoutGrid } from 'lucide-react';
+import { Search, Filter, Plus, RefreshCcw, LayoutGrid, Loader2, SearchX, ClipboardCheck } from 'lucide-react';
 
 export default function InstructorAssessmentPage() {
   const [assessments, setAssessments] = useState([]);
@@ -12,47 +12,41 @@ export default function InstructorAssessmentPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-const fetchData = async () => {
-  try {
-    setLoading(true);
-    
-    // RESET SEARCH AND FILTERS ON REFRESH
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getAllAssessments();
+      const rawData = Array.isArray(data) ? data : [data];
+
+      const enhancedData = rawData.map(item => {
+        const idValue = item.assessmentId || item.assessmentID || item.AssessmentId || item.id || 'N/A';
+        return {
+          ...item,
+          assessmentID: String(idValue),
+          displayStatus: item.status || (new Date(item.dueDate || item.date) > new Date() ? 'Open' : 'Closed')
+        };
+      });
+      
+      setAssessments(enhancedData);
+      setFilteredData(enhancedData);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
     setSearchTerm('');
     setStatusFilter('All');
-
-    const data = await api.getAllAssessments();
-    const rawData = Array.isArray(data) ? data : [data];
-    // const enhancedData = rawData.map(item => ({
-    //   ...item,
-    //   assessmentID: item.id || item.assessmentID || 'N/A',
-    //   displayStatus: item.status || (new Date(item.date) > new Date() ? 'Open' : 'Closed')
-    // }));
-
-    // inside your fetchData mapping:
-const enhancedData = rawData.map(item => ({
-  ...item,
-  // Force ID to string so .includes() works during search
-  assessmentID: String(item.id || item.assessmentID || item.AssessmentID || 'N/A'),
-  displayStatus: item.status || (new Date(item.date) > new Date() ? 'Open' : 'Closed')
-}));
-    
-    setAssessments(enhancedData);
-    setFilteredData(enhancedData);
-  } catch (error) {
-    console.error("Fetch error:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+    fetchData();
+  };
 
   useEffect(() => { fetchData(); }, []);
 
   useEffect(() => {
     const results = assessments.filter(item => {
       const searchLower = searchTerm.toLowerCase();
-
-      // Convert the date to a readable string (e.g., "4/7/2026" or "April")
-      // so the user can search by month, year, or day.
       const dateObj = item.date || item.Date || item.dueDate || item.DueDate;
       const formattedDate = dateObj ? new Date(dateObj).toLocaleDateString() : "";
 
@@ -62,155 +56,156 @@ const enhancedData = rawData.map(item => ({
         item.courseId,
         item.courseName,
         item.type,
-        formattedDate // Now includes the date in the search!
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+        formattedDate 
+      ].filter(Boolean).join(' ').toLowerCase();
 
       const matchesSearch = searchableText.includes(searchLower);
       const matchesStatus = statusFilter === 'All' || item.displayStatus === statusFilter;
       
       return matchesSearch && matchesStatus;
     });
-    
     setFilteredData(results);
   }, [searchTerm, statusFilter, assessments]);
 
-//   useEffect(() => {
-//     const results = assessments.filter(item => {
-//       const searchLower = searchTerm.toLowerCase();
-
-//       // Collect all searchable fields into one string
-//       // We check both camelCase and PascalCase to be safe
-//       const searchableText = [
-//         item.assessmentID,
-//         item.AssessmentID,
-//         item.assessmentName,
-//         item.AssessmentName,
-//         item.courseId,
-//         item.CourseId,
-//         item.courseName,
-//         item.CourseName,
-//         item.type,
-//         item.Type
-//       ]
-//         .filter(Boolean) // Remove null/undefined values
-//         .join(' ')
-//         .toLowerCase();
-
-//       const matchesSearch = searchableText.includes(searchLower);
-//       const matchesStatus = statusFilter === 'All' || item.displayStatus === statusFilter;
-      
-//       return matchesSearch && matchesStatus;
-//     });
-    
-//     setFilteredData(results);
-//   }, [searchTerm, statusFilter, assessments]);
-
-//   useEffect(() => {
-//     const results = assessments.filter(item => {
-//       const matchesSearch = (item.courseId + item.type).toLowerCase().includes(searchTerm.toLowerCase());
-//       const matchesStatus = statusFilter === 'All' || item.displayStatus === statusFilter;
-//       return matchesSearch && matchesStatus;
-//     });
-//     setFilteredData(results);
-//   }, [searchTerm, statusFilter, assessments]);
-
   if (loading) return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="spinner-grow text-primary" role="status"></div>
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100" style={{ backgroundColor: '#F4F7FE' }}>
+      <Loader2 className="animate-spin text-primary mb-3" size={40} />
+      <span className="fw-bold text-muted">Syncing Assessments...</span>
     </div>
   );
 
   return (
-    <div className="container py-4 min-vh-100">
-        {/* GLOSSY HEADER - REFIXED BUTTON VISIBILITY */}
-<div className="d-flex justify-content-between align-items-center mb-4 p-4 rounded-4 bg-white shadow-sm border-start border-4 border-primary">
-  <div>
-    <h2 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-      <LayoutGrid className="text-primary" size={28} /> 
-      Assessments
-    </h2>
-    <p className="text-muted small mb-0">Manage your academic evaluations</p>
-  </div>
-  
-  <button 
-    onClick={() => setIsModalOpen(true)}
-    className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 transition-all hover-scale"
-    style={{ 
-      background: 'linear-gradient(135deg, #a7a7deff 0%, #312ab1ff 100%)',
-      minWidth: '160px',
-      fontWeight: '600',
-      display: 'flex' // Ensures it renders even if Bootstrap classes are conflicting
-    }}
-  >
-    <Plus size={20} color="white" strokeWidth={3} />
-    <span>Create Assessment</span>
-  </button>
-</div>
-
-
-{/* COMPACT FILTER BAR - HEIGHT FIXED */}
-<div className="row g-0 mb-4 align-items-center bg-white rounded-pill shadow-sm border mx-0 px-3" style={{ height: '50px' }}>
-  <div className="col-md-6 h-100">
-    <div className="d-flex align-items-center h-100">
-      <Search size={18} className="text-muted me-2" />
-      <input 
-  type="text" 
-  className="form-control border-0 shadow-none bg-transparent" 
-  placeholder="Search by ID, Course, Type or Date..." 
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  style={{ fontSize: '0.95rem' }}
-/>
+    <div className="container-fluid py-4 px-4 px-lg-5" style={{ backgroundColor: '#F4F7FE', minHeight: '100vh' }}>
       
-    </div>
-  </div>
-  
-  <div className="col-md-6 d-flex justify-content-end align-items-center gap-2 h-100">
-    <Filter size={14} className="text-muted" />
-    <select 
-      className="form-select form-select-sm border-0 bg-light rounded-pill fw-bold shadow-none" 
-      style={{ width: '130px', cursor: 'pointer' }} 
-      value={statusFilter} // Bind the value so it clears on reset
-      onChange={(e) => setStatusFilter(e.target.value)}
-    >
-      <option value="All">All Status</option>
-      <option value="Open">Open</option>
-      <option value="Closed">Closed</option>
-    </select>
-    
-    <button 
-      className="btn btn-light btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center" 
-      onClick={fetchData}
-      title="Refresh & Clear Filters"
-    >
-      <RefreshCcw size={14} className="text-primary" />
-    </button>
-    <span className="badge bg-primary-subtle text-primary rounded-pill px-2 ms-2" style={{ fontSize: '0.75rem' }}>
-  {filteredData.length} Found
-</span>
-  </div>
-</div>
+      {/* --- HEADER --- */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="p-4 rounded-4 bg-white shadow-sm d-flex justify-content-between align-items-center" 
+               style={{ borderLeft: '5px solid #4318FF' }}> 
+            <div className="text-start">
+              <h2 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#1B2559' }}>
+                <ClipboardCheck className="text-primary" size={28} /> Assessments
+              </h2>
+              <p className="text-secondary small mb-0 fw-medium">Design and manage your academic evaluations and student grades.</p>
+            </div>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 hover-lift"
+              style={{ background: 'linear-gradient(135deg, #4318FF 0%, #5E3BFF 100%)', fontWeight: '600' }}
+            >
+              <Plus size={20} />
+              <span>Create Assessment</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {/* GRID SECTION */}
-      <div className="row g-4">
+      {/* --- ACTION BAR (PILL DESIGN) --- */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card border-0 shadow-sm p-2 rounded-pill bg-white px-3">
+            <div className="d-flex align-items-center justify-content-between">
+              
+              {/* Search Section */}
+              <div className="d-flex align-items-center flex-grow-1">
+                <Search size={18} className="text-muted ms-2 me-2" />
+                <input 
+                  type="text" 
+                  className="form-control border-0 shadow-none bg-transparent" 
+                  placeholder="Search by ID, Course, Type or Date..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ fontSize: '0.95rem', color: '#1B2559', fontWeight: '500' }}
+                />
+              </div>
+
+              {/* Filter Section */}
+              <div className="d-flex align-items-center gap-2">
+                <div className="d-flex align-items-center bg-light rounded-pill px-3 py-1 border">
+                  <Filter size={14} className="text-muted me-2" />
+                  <select 
+                    className="form-select border-0 bg-transparent shadow-none fw-bold p-0 py-1" 
+                    style={{ width: '110px', fontSize: '0.85rem', cursor: 'pointer', color: '#4318FF' }} 
+                    value={statusFilter} 
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="All">All Status</option>
+                    <option value="Open">Active</option>
+                    <option value="Closed">Inactive</option>
+                  </select>
+                </div>
+
+                <button 
+                  className="btn btn-white rounded-circle p-2 shadow-sm border hover-rotate" 
+                  onClick={handleReset}
+                  style={{ width: '38px', height: '38px', backgroundColor: '#fff' }}
+                >
+                  <RefreshCcw size={14} className="text-primary" />
+                </button>
+
+                <div className="badge rounded-pill px-4 py-2" style={{ backgroundColor: '#7c94cdff', color: '#fff', fontWeight: '700', fontSize: '0.8rem', boxShadow: '0 4px 14px 0 rgba(67, 24, 255, 0.3)' }}>
+                  {filteredData.length} Found
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- GRID / LIST SECTION --- */}
+      <div className="row g-3">
         {filteredData.length > 0 ? (
-          filteredData.map((item) => (
-            <div className="col-12 col-md-6 col-lg-4" key={item.assessmentID}>
+          filteredData.map((item, index) => (
+            <div className="col-12 hover-lift" key={`${item.assessmentID}-${index}`}>
               <AssessmentCard assessment={item} onRefresh={fetchData} />
             </div>
           ))
         ) : (
-          <div className="text-center py-5">
-            <div className="display-1 text-light">Empty</div>
-            <p className="text-muted">No assessments found in this category.</p>
+          /* --- CENTERED EMPTY STATE --- */
+          <div className="col-12 d-flex justify-content-center mt-5">
+            <div 
+              className="bg-white p-5 rounded-5 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
+              style={{ maxWidth: '400px', minHeight: '300px', borderColor: '#D1DBFF', borderWidth: '2px' }}
+            >
+              <div className="position-relative mb-4 d-flex align-items-center justify-content-center">
+                <div 
+                  className="rounded-circle animate-pulse" 
+                  style={{ width: '100px', height: '100px', backgroundColor: '#F4F7FE', position: 'absolute' }}
+                ></div>
+                <SearchX size={50} className="text-primary opacity-40 position-relative z-1" />
+              </div>
+
+              <h5 className="fw-bold mb-2 text-center" style={{ color: '#1B2559' }}>No Assessments Found</h5>
+              <p className="text-secondary small mb-4 text-center px-4">
+                We couldn't find any results. Try clearing your search or checking "All Status".
+              </p>
+
+              <button 
+                className="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm" 
+                onClick={handleReset}
+                style={{ backgroundColor: '#4318FF', border: 'none', fontSize: '0.85rem' }}
+              >
+                Clear Search
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       <CreateAssessmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onRefresh={fetchData} />
+
+      {/* --- GLOBAL UI STYLES --- */}
+      <style>{`
+        .hover-rotate:hover { transform: rotate(180deg); transition: transform 0.4s ease; }
+        .hover-lift { transition: all 0.2s ease-in-out; }
+        .hover-lift:hover { transform: translateY(-3px); }
+        .animate-pulse { animation: pulse 2.5s infinite; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.05); }
+        }
+        .form-select { background-image: none !important; }
+      `}</style>
     </div>
   );
 }

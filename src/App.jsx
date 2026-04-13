@@ -19,6 +19,7 @@ import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
 import Attendance from "./pages/Attendance";
 
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import InstructorDashboard from './pages/InstructorDashboard';
 import LayOut from './components/Instructor/Lay_Out';
 import InstructorCoursePage from './pages/InstructorCoursePage';
@@ -29,6 +30,7 @@ import ManageQuestionsPage from './components/InstructorAssessment/ManageAssessm
 import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
 import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
 import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
+import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
 
  function App() {
   return (
@@ -69,6 +71,7 @@ import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
             <Route path="/submissions/:id" element={<SubmissionsPage />} />
             <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />
             <Route path="/assessment/:id/add-question" element={<AddQuestionPage />} />
+            <Route path="/view-batch-students/:id" element={<BatchStudentsPage />} />
           </Route>
 
           {/* Route WITHOUT Sidebar/Navbar */}
