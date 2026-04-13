@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Button, Form, Modal ,Badge} from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Modal, Badge } from 'react-bootstrap';
 import axios from 'axios';
 
 const ExamPage = ({ examData, studentId, onExit }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [answers, setAnswers] = useState({}); // Stores local selections
+    const [answers, setAnswers] = useState({}); 
     const [showFeedback, setShowFeedback] = useState(false);
     const [showScore, setShowScore] = useState(false);
     const [submissionId, setSubmissionId] = useState("");
@@ -15,23 +15,26 @@ const ExamPage = ({ examData, studentId, onExit }) => {
     const currentQ = questions[currentIndex];
     const API_URL = "https://localhost:7157/api/Submission";
 
-    // Handle Option Selection & API Save
-    const handleOptionChange = async (optionValue) => {
-        setAnswers({ ...answers, [currentQ.questionId]: optionValue });
+    // Handle Option Selection (Saves 'A', 'B', 'C', or 'D')
+    const handleOptionChange = async (optKey) => {
+        // Extract just the letter (e.g., 'optionA' -> 'A')
+        const letter = optKey.replace("option", "").replace("Option", "");
+        
+        // Update local state with the letter
+        setAnswers({ ...answers, [currentQ.questionId]: letter });
         
         try {
             await axios.post(`${API_URL}/answer`, {
                 studentId,
                 assessmentId: examData.details.assessmentID,
                 questionId: currentQ.questionId,
-                answer: optionValue
+                answer: letter // Sends "A", "B", "C", or "D"
             });
         } catch (err) {
             console.error("Failed to save answer");
         }
     };
 
-    // Final Submit Assessment
     const handleSubmitAssessment = async () => {
         try {
             const res = await axios.post(`${API_URL}/submit`, {
@@ -39,41 +42,36 @@ const ExamPage = ({ examData, studentId, onExit }) => {
                 assessmentId: examData.details.assessmentID
             });
             setSubmissionId(res.data.submissionId);
-            console.log("Submission ID:", res.data.submissionId);
-            setShowFeedback(true); // Open Feedback Modal
+            setShowFeedback(true); 
         } catch (err) {
             alert("Error submitting assessment");
         }
     };
 
     const handleFeedbackSubmit = async () => {
-    try {
-        // Match the DTO structure exactly
-        const feedbackPayload = {
-            StudentId: studentId, // From props/context
-            AssessmentId: examData.details.assessmentID,
-            submissionId: submissionId, 
-            Feedback: feedback 
-        };
+        try {
+            const feedbackPayload = {
+                StudentId: studentId,
+                AssessmentId: examData.details.assessmentID,
+                submissionId: submissionId, 
+                Feedback: feedback 
+            };
+            await axios.put(`${API_URL}/UpdateFeedback`, feedbackPayload);
 
-        await axios.put(`${API_URL}/UpdateFeedback`, feedbackPayload);
+            const res = await axios.get(`${API_URL}/Score`, {
+                params: { 
+                    studentId: studentId, 
+                    assessmentId: examData.details.assessmentID 
+                }
+            });
 
-        // Now fetch the score
-        const res = await axios.get(`${API_URL}/Score`, {
-            params: { 
-                studentId: studentId, 
-                assessmentId: examData.details.assessmentID 
-            }
-        });
-
-        setScoreResult(res.data);
-        setShowFeedback(false);
-        setShowScore(true); 
-    } catch (err) {
-        console.error("Feedback Error:", err.response?.data);
-        alert("Error updating feedback: " + (err.response?.data?.message || "Check console"));
-    }
-};
+            setScoreResult(res.data);
+            setShowFeedback(false);
+            setShowScore(true); 
+        } catch (err) {
+            alert("Error updating feedback");
+        }
+    };
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: '#fff', zIndex: 1050, overflowY: 'auto' }}>
@@ -91,26 +89,60 @@ const ExamPage = ({ examData, studentId, onExit }) => {
                                 <Badge bg="light" text="dark" className="border">Marks: {currentQ.marks}</Badge>
                             </div>
                             <p className="fs-5 mb-4">{currentQ.questionText}</p>
+                            
                             <Form>
-                                {['OptionA', 'OptionB', 'OptionC', 'OptionD'].map((opt) => (
-                                    <Form.Check 
-                                        type="radio"
-                                        key={opt}
-                                        name="examOption"
-                                        id={opt}
-                                        label={currentQ[opt]}
-                                        className="mb-3 p-3 border rounded shadow-sm"
-                                        checked={answers[currentQ.questionId] === currentQ[opt]}
-                                        onChange={() => handleOptionChange(currentQ[opt])}
-                                        style={{ cursor: 'pointer', backgroundColor: answers[currentQ.questionId] === currentQ[opt] ? '#e7f1ff' : 'white' }}
-                                    />
-                                ))}
+                                {['optionA', 'optionB', 'optionC', 'optionD'].map((optKey) => {
+                                    // Get the display text from the question object
+                                    const optionLabel = currentQ[optKey] || currentQ[optKey.charAt(0).toUpperCase() + optKey.slice(1)];
+                                    // Get the letter (A, B, C, or D)
+                                    const letter = optKey.replace("option", "").replace("Option", "");
+
+                                    return (
+                                        <div 
+                                            key={optKey} 
+                                            className="mb-3 p-3 border rounded shadow-sm d-flex align-items-center"
+                                            style={{ 
+                                                cursor: 'pointer', 
+                                                backgroundColor: answers[currentQ.questionId] === letter ? '#e7f1ff' : 'white',
+                                                transition: '0.2s'
+                                            }}
+                                            onClick={() => handleOptionChange(optKey)}
+                                        >
+                                            <Form.Check 
+                                                type="radio"
+                                                name={`question-${currentQ.questionId}`}
+                                                id={`${optKey}-${currentQ.questionId}`}
+                                                label={`${letter}. ${optionLabel}`} 
+                                                value={letter}
+                                                checked={answers[currentQ.questionId] === letter}
+                                                onChange={() => handleOptionChange(optKey)}
+                                                style={{ cursor: 'pointer', width: '100%' }}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </Form>
                         </Card>
 
                         <div className="d-flex justify-content-between">
-                            <Button variant="outline-dark" className="px-4" disabled={currentIndex === 0} onClick={() => setCurrentIndex(currentIndex - 1)}>Previous</Button>
-                            <Button variant="dark" className="px-4" onClick={() => currentIndex < questions.length - 1 ? setCurrentIndex(currentIndex + 1) : null}>Save & Next</Button>
+                            <Button 
+                                variant="outline-dark" 
+                                className="px-4" 
+                                disabled={currentIndex === 0} 
+                                onClick={() => setCurrentIndex(currentIndex - 1)}
+                            >
+                                Previous
+                            </Button>
+                            
+                            <Button 
+                                variant="dark" 
+                                className="px-4" 
+                                /* Disabled on the very last question */
+                                disabled={currentIndex === questions.length - 1}
+                                onClick={() => setCurrentIndex(currentIndex + 1)}
+                            >
+                                Save & Next
+                            </Button>
                         </div>
                     </Col>
 
@@ -119,7 +151,13 @@ const ExamPage = ({ examData, studentId, onExit }) => {
                             <h6 className="fw-bold mb-3">Navigation</h6>
                             <div className="d-flex flex-wrap gap-2 justify-content-center mb-4">
                                 {questions.map((_, i) => (
-                                    <Button key={i} size="sm" variant={i === currentIndex ? "primary" : answers[questions[i].questionId] ? "success" : "outline-secondary"} style={{ width: '35px' }} onClick={() => setCurrentIndex(i)}>
+                                    <Button 
+                                        key={i} 
+                                        size="sm" 
+                                        variant={i === currentIndex ? "primary" : answers[questions[i].questionId] ? "success" : "outline-secondary"} 
+                                        style={{ width: '35px' }} 
+                                        onClick={() => setCurrentIndex(i)}
+                                    >
                                         {i + 1}
                                     </Button>
                                 ))}
