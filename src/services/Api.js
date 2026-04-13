@@ -7,7 +7,7 @@ export const api = {
   getPrograms: async () => {
     try {
       // Note: The string must match your [HttpGet("GetAllqualification")]
-      const response = await axios.get(`${BASE_URL}/admin/GetAllQualification`);
+      const response = await axios.get(`${BASE_URL}/admin/qualifications`);
       return response.data;
     } catch (error) {
       console.error("API Error:", error);
