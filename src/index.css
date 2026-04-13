@@ -65,7 +65,6 @@ body {
   padding: 0;
   box-sizing: border-box;
   background-color: #020617;
-  overflow: hidden;
 }
 
 html, body, #root {
