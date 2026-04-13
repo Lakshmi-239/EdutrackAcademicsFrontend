@@ -119,6 +119,10 @@ a {
 
 body {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #020617;
+  overflow: hidden;
 }
 
 html, body, #root {
@@ -126,9 +130,6 @@ html, body, #root {
   width: 100%;
 }
 
-body {
- 
-  background-color: var(--bs-body-bg) !important;
-  color: var(--bs-body-color) !important;
-  transition: background-color 0.3s ease, color 0.3s ease;
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
