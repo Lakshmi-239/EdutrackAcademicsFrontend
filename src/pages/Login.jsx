@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, GraduationCap, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/Api';
+import toast from 'react-hot-toast';
+import { jwtDecode } from "jwt-decode";
 import Swal from 'sweetalert2';
 
 export const Login = () => {
@@ -10,27 +12,65 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const data = await api.login(email, password);
-      if (data.token) {
-        login(data.token);
-        navigate('/');
+      console.log("LOGIN RESPONSE:", data);
+
+      // 1. Extract the token string safely
+      const token = data?.token?.accessToken || data?.accessToken || data?.token;
+
+      if (!token || typeof token !== 'string') {
+        toast.error("No valid token received");
+        return;
       }
+
+      // 2. Call context login (this updates AuthContext state)
+      login(token);
+
+      // 3. Decode locally to handle immediate redirection
+      let role = "";
+      try {
+        const decoded = jwtDecode(token);
+        const dotNetRoleClaim = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        role = decoded[dotNetRoleClaim] || decoded.role || "";
+      } catch (err) {
+        console.error("Local decode error:", err);
+      }
+
+      toast.success("Login successful!");
+
+      // 4. Structured Navigation
+      const dashboardRoutes = {
+        "Student": "/Studentdashboard",
+        "Admin": "/admin",
+        "Instructor": "/InstructorDashboard",
+        "Coordinator": "/coordinator/dashboard"
+      };
+
+      if (dashboardRoutes[role]) {
+        navigate(dashboardRoutes[role]);
+      } else {
+        console.warn("Unknown or missing role:", role);
+        navigate("/"); // Fallback
+      }
+
     } catch (err) {
+      console.error("Login Error:", err);
       Swal.fire({
         icon: 'error',
         title: 'Authentication Failed',
-        text: 'Invalid credentials. Please try again.',
+        text: err.response?.data?.message || 'Invalid credentials.',
         background: '#0f172a',
         color: '#f1f5f9',
-        confirmButtonColor: '#2dd4bf', 
+        confirmButtonColor: '#22d3ee', 
       });
     } finally {
       setLoading(false);
@@ -38,112 +78,104 @@ export const Login = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-slate-950 flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="h-screen w-full bg-slate-950 flex flex-col items-center justify-center px-6 overflow-hidden relative">
       
-      {/* Background Shimmer Effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-        <div className="absolute -inset-[100%] animate-[spin_30s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#0ea5e9_0%,#2dd4bf_50%,#0ea5e9_100%)]" />
+      {/* Background Decorative Shimmers */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-indigo-600/20 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[45%] h-[45%] bg-cyan-600/20 blur-[120px] rounded-full" />
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-[400px] relative z-10 flex flex-col items-center">
+      <div className="w-full max-w-[420px] z-10">
         
         {/* Brand Header */}
-        <div className="mb-6 text-center flex flex-col items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-500"></div>
-              <div className="relative w-11 h-11 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
-                <GraduationCap className="w-7 h-7 text-teal-400" />
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="relative w-12 h-12 bg-slate-900 border border-white/10 rounded-xl flex items-center justify-center transition-all hover:border-cyan-400/50">
+                <GraduationCap className="w-7 h-7 text-cyan-400" />
               </div>
-            </div>
-            <span className="text-2xl font-extrabold tracking-tight text-white italic">
-              Edu<span className="text-teal-400 not-italic">Track</span>
-            </span>
-          </Link>
+              <span className="text-2xl font-bold text-white tracking-tight">
+                Edu<span className="text-cyan-400">Track</span>
+              </span>
+            </Link>
+          </div>
           
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-white">
-            Welcome Back
-          </h1>
-          
-          <p className="mt-1 text-sm text-slate-400">
-            New to EduTrack?{' '}
-            <Link to="/register" className="text-teal-400 hover:text-teal-300 font-semibold transition-colors underline underline-offset-4">
-              Create an account
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-sm" style={{ color: '#22d3ee' }}>
+            Get started with EduTrack !{' '}
+            <Link to="/register" 
+            style={{color: '#94a3b8'}}
+            className="font-semibold hover:text-cyan-300 transition-colors ml-1">
+              Create account
             </Link>
           </p>
         </div>
 
-        {/* Enterprise Grade Card */}
-        <div className="w-full bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-8">
-          <form className="space-y-5 text-left" onSubmit={handleSubmit}>
+        {/* Enterprise Card */}
+        <div className="bg-[#0f172a]/70 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-8 shadow-2xl">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-1">
+            {/* Email Field */}
+            <div className="space-y-2" style={{ textAlign: 'left' }}>
+              <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-1">
                 Email Address
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  {/* Color is now static teal-400 */}
-                  <Mail className="h-4 w-4 text-teal-400/80" />
-                </div>
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                 <input
-                  id="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-700/50 bg-slate-950/40 pl-10 pr-4 py-2.5 text-slate-200 placeholder-slate-600 focus:border-teal-400/50 focus:ring-4 focus:ring-teal-400/10 text-sm transition-all outline-none"
-                  placeholder="name@gmail.com"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-12 pr-4 py-3 text-slate-200 outline-none focus:border-cyan-500/50 transition-all"
+                  placeholder="name@company.com"
                 />
               </div>
             </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-1">
-                <label htmlFor="password" className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+            {/* Password Field */}
+            <div className="space-y-2" style={{ textAlign: 'left' }}>
+              <div className="flex justify-between px-1">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
                   Password
                 </label>
-                <Link to="/forgot-password" core="true" className="text-[10px] font-semibold text-teal-400 hover:text-teal-300">
+                <Link 
+                  to="/forgot-password" 
+                  style={{color: '#94a3b8'}} 
+                  className="text-[10px] font-bold hover:text-cyan-400 transition-colors"
+                >
                   Forgot Password?
                 </Link>
               </div>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  {/* Color is now static teal-400 */}
-                  <Lock className="h-4 w-4 text-teal-400/80" />
-                </div>
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                 <input
-                  id="password"
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-700/50 bg-slate-950/40 pl-10 pr-10 py-2.5 text-slate-200 placeholder-slate-600 focus:border-teal-400/50 focus:ring-4 focus:ring-teal-400/10 text-sm transition-all outline-none"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-12 pr-12 py-3 text-slate-200 outline-none focus:border-cyan-500/50 transition-all"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-teal-400 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-400"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Sign In Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-teal-500 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(45,212,191,0.2)] hover:bg-teal-400 transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {loading ? "Verifying..." : "Login"}
-                {!loading && <ChevronRight className="w-4 h-4" />}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              {loading ? "Verifying..." : "Sign In"}
+              {!loading && <ChevronRight className="w-4 h-4" />}
+            </button>
           </form>
         </div>
       </div>
