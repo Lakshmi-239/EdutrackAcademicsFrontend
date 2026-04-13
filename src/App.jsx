@@ -18,9 +18,9 @@ import Notifications from "./pages/Notifications";
 import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
 import Attendance from "./pages/Attendance";
-import Dashboard from "./pages/Dashboard";
-import BatchDetails from './pages/BatchDetails';
-import AdminReport from './pages/AdminReport';
+// import Dashboard from "./pages/Dashboard";
+// import BatchDetails from './pages/BatchDetails';
+// import AdminReport from './pages/AdminReport';
 
  function App() {
   return (
@@ -28,8 +28,8 @@ import AdminReport from './pages/AdminReport';
       <Toaster position="top-center" reverseOrder={false} />
       <div className="app-container">
         <Routes>
-          <Route path="/instructor-dashboard" element={<Dashboard/>}/>
-         <Route path="/batch/:id" element={<BatchDetails/>}/>
+          {/* <Route path="/instructor-dashboard" element={<Dashboard/>}/> */}
+         {/* <Route path="/batch/:id" element={<BatchDetails/>}/> */}
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RoleSelection />} />
           <Route path="/register/student" element={<StudentRegistration />} />
@@ -52,9 +52,9 @@ import AdminReport from './pages/AdminReport';
             <Route path="/attendance" element={<Attendance />} />
 
             {/* PERFORMANCE */}
-            <Route path="/batch/:batchId" element={<BatchDetails/>}/>
+            {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
-          <Route path="/admin/report" element={<AdminReport />} />
+          {/* <Route path="/admin/report" element={<AdminReport />} /> */}
 
           {/* Route WITHOUT Sidebar/Navbar */}
           <Route path="/notifications" element={<Notifications />} />

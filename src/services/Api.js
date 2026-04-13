@@ -85,68 +85,27 @@ registerInstructor: async (data) => {
   resetPassword: async (data) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Reset-Password`, data);
     return response.data;
-  }
+  },
 
+  getInstructorBatches: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);
+    return response.data;
+  },
+  getBatchClassCount: async (id) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/Performance/class-counts/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching class counts:", error);
+      return [];
+    }
+  },
+
+  // Dashboard Card 4 kosam
+  getOngoingBatches: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/ongoing-batches/${id}`);
+    return response.data;
+  },
 };
-// //  ADDEDD BY PERFORMANCE
-// export const getInstructorBatches = async (id) => {
-//   const res = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);
-//   return res.data;
-// };
 
-// export const getBatchDetails = async (batchId) => {
-//     const res = await axios.get(`${BASE_URL}/Performance/batch/${batchId}`);
-//     return res.data;
-// };
-// export const getCompletionRate = async (id) => {
-//   const res = await axios.get(`${BASE_URL}/Performance/completion-rate/${id}`);
-//   return res.data;
-// };
-// export const getOngoingBatchesCount = async (id) => {
-//   const res = await axios.get(`${BASE_URL}/Performance/ongoing-batches/${id}`);
-//   return res.data;
-// };
-// //  ADDEDD BY PERFORMANCE
- 
-// // Addedd by performance
-
-
-// export const getFullReport = async () => {
-//   try {
-//     // Note: Swagger shows the endpoint as /AcademicReport/full-report
-//     const response = await axios.get(`${BASE_URL}/AcademicReport/full-report`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching full report:", error);
-//     throw error;
-//   }
-// };
-
-
-// // services/Api.js
-// // services/Api.js
-// export const getBatchClassCount = async (instructorId) => {
-//   try {
-//     // REMOVED the extra "/api" from the string below
-//     const response = await axios.get(`${BASE_URL}/Performance/batch-class-count/${instructorId}`);
-//     return response.data; 
-//   } catch (error) {
-//     console.error("API Error:", error);
-//     return []; 
-//   }
-// };
-// export const getBatchStartDates = async () => {
-//   const res = await axios.get(`${BASE_URL}/Performance/batch-start-dates`);
-//   return res.data; 
-// };
-
-
-// // Matches your [HttpDelete("student/{enrollmentId}")]
-// export const deleteStudent = (enrollmentId) => 
-//   axios.delete(`${BASE_URL}/Performance/student/${enrollmentId}`);
-
-// // Matches your [HttpPut("student")]
-// export const updateStudent = (studentData) => 
-//   axios.put(`${BASE_URL}/Performance/student`, studentData);
-
-
+  
