@@ -1,336 +1,253 @@
-// import React, { useEffect, useState } from "react";
-// import { motion, AnimatePresence } from "framer-motion";
-// import { getFullReport } from "../services/Api"; 
-// import { 
-//   FaFileAlt, FaChevronDown, FaChevronUp, FaGraduationCap, 
-//   FaSearch, FaClipboardCheck, FaUsers, FaChartLine
-// } from "react-icons/fa";
 
-// const AdminReport = () => {
-//   const [reportData, setReportData] = useState({ batches: [] });
-//   const [loading, setLoading] = useState(true);
-//   const [expandedBatch, setExpandedBatch] = useState(null);
-//   const [searchTerm, setSearchTerm] = useState("");
 
-//   useEffect(() => { fetchReport(); }, []);
 
-//   const fetchReport = async () => {
-//     try {
-//       const data = await getFullReport();
-//       setReportData(data || { batches: [] });
-//     } catch (err) { console.error(err); } 
-//     finally { setLoading(false); }
-//   };
-
-//   const filteredBatches = reportData?.batches?.filter((batch) => {
-//     const searchLower = searchTerm.toLowerCase();
-//     return batch.courseName.toLowerCase().includes(searchLower) ||
-//            batch.students?.some(s => s.studentName.toLowerCase().includes(searchLower));
-//   });
-
-//   if (loading) return <div className="p-10 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">Loading...</div>;
-
-//   return (
-//     <div className="min-h-screen bg-[#f4f7fa] p-4 lg:p-6 font-sans text-slate-800">
-//       <div className="max-w-6xl mx-auto">
-        
-//         {/* SLIM HEADER */}
-//         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-//           <div className="flex items-center gap-3">
-//             <div className="p-2 bg-indigo-600 rounded-lg shadow-md shadow-indigo-100">
-//               <FaFileAlt className="text-white text-sm" />
-//             </div>
-//             <h1 className="text-xl font-bold tracking-tight text-slate-800">Academic Report</h1>
-//           </div>
-
-//           <div className="relative w-full sm:w-72">
-//             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-//             <input 
-//               type="text" 
-//               placeholder="Search data..." 
-//               className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//             />
-//           </div>
-//         </div>
-
-//         {/* BATCH LIST */}
-//         <div className="space-y-3">
-//           {filteredBatches.map((batch) => (
-//             <div key={batch.batchId} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:border-indigo-200 transition-colors">
-              
-//               {/* COMPACT BATCH HEADER */}
-//               <div 
-//                 className="p-4 cursor-pointer flex items-center justify-between gap-4"
-//                 onClick={() => setExpandedBatch(expandedBatch === batch.batchId ? null : batch.batchId)}
-//               >
-//                 <div className="flex items-center gap-4 w-1/3">
-//                   <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center text-lg">
-//                     <FaGraduationCap />
-//                   </div>
-//                   <div>
-//                     <h2 className="text-sm font-bold text-slate-900 leading-tight uppercase">{batch.courseName}</h2>
-//                     <span className="text-[10px] font-bold text-slate-400">ID: {batch.batchId}</span>
-//                   </div>
-//                 </div>
-
-//                 <div className="flex items-center gap-8 text-center">
-//                   <div>
-//                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Students</p>
-//                     <p className="text-xs font-black">{batch.totalStudents}</p>
-//                   </div>
-//                   <div className="hidden sm:block">
-//                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Avg Score</p>
-//                     <p className="text-xs font-black text-indigo-600">{batch.batchAverageScore.toFixed(2)}</p>
-//                   </div>
-//                   <div className="hidden sm:block">
-//                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Attendance</p>
-//                     <p className="text-xs font-black text-emerald-500">{batch.batchAverageAttendance}%</p>
-//                   </div>
-//                 </div>
-
-//                 <div className={`text-slate-300 transition-transform ${expandedBatch === batch.batchId ? 'rotate-180 text-indigo-600' : ''}`}>
-//                   <FaChevronDown size={12} />
-//                 </div>
-//               </div>
-
-//               {/* DATA TABLE */}
-//               <AnimatePresence>
-//                 {expandedBatch === batch.batchId && (
-//                   <motion.div 
-//                     initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
-//                     className="border-t border-slate-100 bg-slate-50/50"
-//                   >
-//                     <div className="p-4">
-//                       <table className="w-full text-left">
-//                         <thead>
-//                           <tr className="text-[9px] font-bold text-slate-400 uppercase border-b border-slate-100">
-//                             <th className="pb-3 pl-2">Enrollment ID</th>
-//                             <th className="pb-3">Student Name</th>
-//                             <th className="pb-3 text-center">Score</th>
-//                             <th className="pb-3 text-center">Tasks</th>
-//                             <th className="pb-3">Progress</th>
-//                           </tr>
-//                         </thead>
-//                         <tbody className="divide-y divide-slate-100">
-//                           {batch.students.map((student) => (
-//                             <tr key={student.studentId} className="group hover:bg-white">
-//                               <td className="py-3 pl-2 font-mono text-[10px] text-slate-400">{student.enrollmentId}</td>
-//                               <td className="py-3 text-xs font-bold text-slate-700">{student.studentName}</td>
-//                               <td className="py-3 text-center">
-//                                 <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md font-bold text-[10px]">
-//                                   {student.avgScore.toFixed(2)}
-//                                 </span>
-//                               </td>
-//                               <td className="py-3 text-center">
-//                                 <div className="inline-flex items-center gap-1.5 text-amber-600 text-[10px] font-bold">
-//                                   <FaClipboardCheck size={10} />
-//                                   <span>{student.completedAssessments}/{student.totalAssessments}</span>
-//                                 </div>
-//                               </td>
-//                               <td className="py-3">
-//                                 <div className="w-32">
-//                                   <div className="flex justify-between text-[8px] font-bold text-slate-400 mb-1">
-//                                     <span>{student.completionPercentage}% Done</span>
-//                                   </div>
-//                                   <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-//                                     <div style={{ width: `${student.completionPercentage}%` }} className="h-full bg-emerald-500" />
-//                                   </div>
-//                                 </div>
-//                               </td>
-//                             </tr>
-//                           ))}
-//                         </tbody>
-//                       </table>
-//                     </div>
-//                   </motion.div>
-//                 )}
-//               </AnimatePresence>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default AdminReport;
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getFullReport } from "../services/Api"; 
-import { 
-  FaFileAlt, FaChevronDown, FaChevronUp, FaGraduationCap, 
-  FaSearch, FaClipboardCheck, FaCircle
-} from "react-icons/fa";
+import { getFullReport, getBatchStartDates, updateStudent, deleteStudent } from "../services/Api"; 
+import { FaGraduationCap, FaChevronDown, FaRegEdit, FaRegTrashAlt, FaTimes, FaSearch, FaChalkboardTeacher } from "react-icons/fa";
+import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
 
 const AdminReport = () => {
-  const [reportData, setReportData] = useState({ batches: [] });
+  const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedBatch, setExpandedBatch] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => { fetchReport(); }, []);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentAction, setCurrentAction] = useState(null); 
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [editName, setEditName] = useState("");
 
   const fetchReport = async () => {
     try {
-      const data = await getFullReport();
-      setReportData(data || { batches: [] });
-    } catch (err) { console.error("Data Fetch Error:", err); } 
-    finally { setLoading(false); }
+      setLoading(true);
+      const [reportRes, datesRes] = await Promise.all([
+        getFullReport(),
+        getBatchStartDates()
+      ]);
+
+      const batches = reportRes?.batches || (Array.isArray(reportRes) ? reportRes : []);
+      const datesArray = Array.isArray(datesRes) ? datesRes : [];
+
+      let mergedData = batches.map(batch => {
+        const dateMatch = datesArray.find(d => d.batchId === batch.batchId);
+        return { ...batch, startDate: dateMatch ? dateMatch.startDate : null };
+      });
+
+      mergedData.sort((a, b) => new Date(b.startDate || 0) - new Date(a.startDate || 0));
+      setReportData(mergedData);
+    } catch (err) { 
+      console.error("Fetch Error:", err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  // ✅ ENHANCED SEARCH: Handles Name, Batch ID, and Enrollment ID
-  const filteredBatches = reportData?.batches?.filter((batch) => {
-    const s = searchTerm.toLowerCase();
-    
-    // Check Batch Level
-    const matchesBatch = batch.courseName.toLowerCase().includes(s) || 
-                         batch.batchId.toLowerCase().includes(s);
+  useEffect(() => { fetchReport(); }, []);
 
-    // Check Student Level
-    const matchesStudent = batch.students?.some(student => 
-      student.studentName.toLowerCase().includes(s) || 
-      student.enrollmentId.toLowerCase().includes(s)
+  const filteredData = reportData.filter((batch) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      batch.courseName.toLowerCase().includes(searchLower) ||
+      batch.batchId.toLowerCase().includes(searchLower) ||
+      batch.instructorName?.toLowerCase().includes(searchLower) ||
+      batch.students?.some(s => s.studentName.toLowerCase().includes(searchLower))
     );
-
-    return matchesBatch || matchesStudent;
   });
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "Yet to Start";
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const handleConfirmAction = async () => {
+    try {
+      if (currentAction === 'edit') {
+        await updateStudent(selectedStudent.studentId, { studentName: editName });
+      } else {
+        await deleteStudent(selectedStudent.studentId);
+      }
+      setIsModalOpen(false);
+      fetchReport();
+    } catch (err) { alert("Action failed."); }
+  };
+
   if (loading) return (
-    <div className="flex h-screen items-center justify-center bg-slate-50 text-indigo-600 font-bold text-xs tracking-widest animate-pulse">
-      LOADING ACADEMIC DATA...
+    <div className="h-screen bg-slate-950 flex items-center justify-center text-indigo-500 font-black tracking-widest uppercase">
+      Updating Dashboard...
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* COMPACT DASHBOARD HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100">
-              <FaFileAlt className="text-white text-lg" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-800 tracking-tight">Academic Report</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Master Overview</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-slate-950 font-sans text-slate-200">
+      <Navbar />
+      
+      <div className="max-w-6xl mx-auto p-6 pt-24 pb-12 space-y-8">
+        <header className="mb-8 text-center">
+            <h1 className="text-4xl font-black text-white tracking-tight uppercase">Performance <span className="text-indigo-500">Dashboard</span></h1>
+        </header>
 
-          <div className="relative w-full md:w-80">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <FaSearch className="text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+            </div>
             <input 
-              type="text" 
-              placeholder="Search Name, Batch ID, or Enroll ID..." 
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
-              onChange={(e) => setSearchTerm(e.target.value)}
+                type="text"
+                placeholder="Search Batch ID, Course, Instructor or Student..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-900/50 border border-slate-800 text-white pl-12 pr-4 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all backdrop-blur-xl"
             />
-          </div>
         </div>
 
-        {/* BATCH REPOSITORY */}
-        <div className="space-y-4">
-          {filteredBatches.map((batch) => (
-            <div key={batch.batchId} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
-              
-              {/* COMPACT BATCH HEADER */}
-              <div 
-                className="p-5 cursor-pointer flex items-center justify-between gap-6"
-                onClick={() => setExpandedBatch(expandedBatch === batch.batchId ? null : batch.batchId)}
-              >
-                <div className="flex items-center gap-5 w-1/3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-colors ${expandedBatch === batch.batchId ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-                    <FaGraduationCap />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight leading-none mb-1">{batch.courseName}</h2>
-                    <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded-md">ID: {batch.batchId}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-10 text-center">
-                  <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mb-0.5">Students</p>
-                    <p className="text-sm font-black text-slate-700">{batch.totalStudents}</p>
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mb-0.5">Avg Score</p>
-                    <p className="text-sm font-black text-indigo-600">{batch.batchAverageScore.toFixed(2)}</p>
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mb-0.5">Persistence</p>
-                    <p className="text-sm font-black text-emerald-500">{batch.batchAverageAttendance}%</p>
-                  </div>
-                </div>
-
-                <div className={`p-2 rounded-full transition-all ${expandedBatch === batch.batchId ? 'bg-slate-800 text-white rotate-180' : 'text-slate-300'}`}>
-                  <FaChevronDown size={10} />
-                </div>
-              </div>
-
-              {/* NESTED STUDENT DATA */}
-              <AnimatePresence>
-                {expandedBatch === batch.batchId && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    className="bg-slate-50/50 border-t border-slate-100 p-5"
-                  >
-                    <div className="bg-white rounded-xl border border-slate-100 shadow-inner overflow-hidden">
-                      <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-100">
-                          <tr className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                            <th className="px-6 py-4">Enroll ID</th>
-                            <th className="px-4 py-4">Student</th>
-                            <th className="px-4 py-4 text-center">Score</th>
-                            <th className="px-4 py-4 text-center">Tasks</th>
-                            <th className="px-6 py-4">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                          {batch.students.map((student) => (
-                            <tr key={student.studentId} className="hover:bg-indigo-50/30 transition-colors group">
-                              <td className="px-6 py-4 font-mono text-[10px] text-slate-400 font-bold group-hover:text-indigo-600">{student.enrollmentId}</td>
-                              <td className="px-4 py-4 text-xs font-black text-slate-700">{student.studentName}</td>
-                              <td className="px-4 py-4 text-center">
-                                <span className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md font-black text-[10px]">
-                                  {student.avgScore.toFixed(2)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4 text-center">
-                                <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-600 rounded-md font-black text-[10px]">
-                                  <FaClipboardCheck size={10} />
-                                  <span>{student.completedAssessments}/{student.totalAssessments}</span>
+        {/* Data List */}
+        <div className="space-y-6">
+            {filteredData.map((batch) => {
+                const isExpanded = expandedBatch === batch.batchId;
+                return (
+                    <div key={batch.batchId} className="w-full space-y-4">
+                        <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-6 border border-slate-800 hover:border-indigo-500/40 transition-all shadow-2xl">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                
+                                {/* Course & Batch Info */}
+                                <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-500 text-2xl">
+                                        <FaGraduationCap />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-3">
+                                            <h2 className="text-xl font-bold text-white uppercase tracking-tight">{batch.courseName}</h2>
+                                            <span className="bg-slate-800 text-indigo-400 text-[10px] font-black px-2 py-0.5 rounded border border-slate-700 uppercase tracking-widest">{batch.batchId}</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">
+                                            Started: <span className="text-slate-300">{formatDate(batch.startDate)}</span>
+                                        </p>
+                                    </div>
                                 </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="w-32">
-                                  <div className="flex justify-between text-[8px] font-bold text-slate-400 mb-1">
-                                    <span>PROGRESS</span>
-                                    <span className="text-emerald-500">{student.completionPercentage}%</span>
-                                  </div>
-                                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                      style={{ width: `${student.completionPercentage}%` }} 
-                                      className="h-full bg-emerald-500 shadow-sm"
-                                    />
-                                  </div>
+
+                                {/* NEW: Instructor Info Section */}
+                                <div className="flex items-center gap-4 px-6 border-l border-slate-800">
+                                    <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-500">
+                                        <FaChalkboardTeacher size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Instructor</p>
+                                        <p className="text-sm font-bold text-slate-200">{batch.instructorName || "Unassigned"}</p>
+                                        <p className="text-[10px] text-emerald-500/70 font-mono">{batch.instructorId || "ID: N/A"}</p>
+                                    </div>
                                 </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+
+                                {/* KPI & Toggle */}
+                                <div className="flex items-center gap-8">
+                                    <div className="hidden lg:flex gap-8">
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black text-slate-600 uppercase">Attendance</p>
+                                            <p className="text-lg font-black text-emerald-400">{batch.batchAverageAttendance}%</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black text-slate-600 uppercase">Progress</p>
+                                            <p className="text-lg font-black text-indigo-400">{batch.batchAverageCompletionPercentage}%</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setExpandedBatch(isExpanded ? null : batch.batchId)} 
+                                        className="p-3 bg-slate-800/50 rounded-xl text-indigo-400 border border-slate-700 hover:bg-indigo-600 hover:text-white transition-all"
+                                    >
+                                        <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}><FaChevronDown size={20} /></motion.div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Student Table Expansion (Remains the same as previous) */}
+                        <AnimatePresence>
+                            {isExpanded && (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="px-2">
+                                    <div className="bg-slate-900/20 border border-slate-800/50 rounded-2xl p-4 overflow-x-auto">
+                                        <table className="w-full border-separate border-spacing-y-2">
+                                            <thead>
+                                                <tr className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                                    <th className="px-6 py-2 text-left">Student ID</th>
+                                                    <th className="px-6 py-2 text-left">Student</th>
+                                                    <th className="px-6 py-2 text-center">Avg Score</th>
+                                                    <th className="px-6 py-2 text-center">Attendance</th>
+                                                    <th className="px-6 py-2 text-center">Progress</th>
+                                                    <th className="px-6 py-2 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {batch.students?.map((s) => (
+                                                    <tr key={s.studentId} className="bg-slate-900/60 hover:bg-slate-800/80 transition-all">
+                                                        <td className="px-6 py-4 text-sm font-mono text-slate-500 rounded-l-xl">{s.studentId}</td>
+                                                        <td className="px-6 py-4 text-base font-bold text-slate-200">{s.studentName}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="text-white font-bold bg-slate-800/50 px-3 py-1 rounded-lg border border-slate-700">{s.avgScore?.toFixed(1)}</span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="text-emerald-400 font-bold">{s.attendancePercentage}%</span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <div className="flex flex-col items-center">
+                                                                <span className="text-indigo-400 font-black text-sm">{s.completionPercentage}%</span>
+                                                                <div className="w-20 h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                                                                    <div className="h-full bg-indigo-500" style={{width: `${s.completionPercentage}%`}}></div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right rounded-r-xl">
+                                                            <div className="flex justify-end gap-4 text-slate-500">
+                                                                <button onClick={() => { setSelectedStudent(s); setEditName(s.studentName); setCurrentAction('edit'); setIsModalOpen(true); }} className="hover:text-amber-400"><FaRegEdit size={18}/></button>
+                                                                <button onClick={() => { setSelectedStudent(s); setCurrentAction('delete'); setIsModalOpen(true); }} className="hover:text-rose-500"><FaRegTrashAlt size={18}/></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                );
+            })}
         </div>
       </div>
+
+      <Footer />
+
+      {/* Action Modal (Remains the same) */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-6 text-white font-bold">
+                {currentAction === 'edit' ? 'EDIT STUDENT' : 'REMOVE RECORD'}
+                <button onClick={() => setIsModalOpen(false)}><FaTimes /></button>
+              </div>
+              {currentAction === 'edit' ? (
+                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-indigo-500" />
+              ) : (
+                <p className="text-slate-400">Delete record for <span className="text-white font-bold">{selectedStudent?.studentName}</span>?</p>
+              )}
+              <div className="flex gap-4 mt-8">
+                <button onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
+                <button onClick={handleConfirmAction} className={`flex-1 px-6 py-3 text-white rounded-xl font-bold ${currentAction === 'edit' ? 'bg-indigo-600' : 'bg-rose-600'}`}>
+                  {currentAction === 'edit' ? 'Save' : 'Confirm'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 export default AdminReport;
+
+

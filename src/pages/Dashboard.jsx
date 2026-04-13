@@ -1,439 +1,374 @@
 
 
 
-
 // import React, { useState, useEffect } from "react";
 // import { useNavigate } from "react-router-dom";
-// import { getInstructorBatches } from "../services/Api";
+// import { 
+//   getInstructorBatches, 
+//   getBatchClassCount, 
+//   getBatchStartDates 
+// } from "../services/Api";
+// import { FaSearch } from "react-icons/fa";
+// import axios from "axios";
 
 // const Dashboard = () => {
-//   const [selectedBatch, setSelectedBatch] = React.useState(null);
 //   const navigate = useNavigate();
-
 //   const [inputId, setInputId] = useState("");
-//   const [searchBatchId, setSearchBatchId] = useState("");
+//   const [batchSearchTerm, setBatchSearchTerm] = useState(""); 
 //   const [batches, setBatches] = useState([]);
+//   const [hasSearchedOnce, setHasSearchedOnce] = useState(false);
 
-//   const [instructorDetails, setInstructor] = useState({
-//     name: "N/A",
-//     email: "N/A",
-//     phone: "N/A",
-//   });
+//   const [instructorDetails, setInstructor] = useState({ name: "N/A", email: "N/A", phone: "N/A" });
+//   const [stats, setStats] = useState({ totalBatches: 0, totalStudents: 0, totalClasses: 0, ongoingBatches: 0 });
 
-//   const [stats, setStats] = useState({
-//     totalBatches: 0,
-//     totalStudents: 0,
-//     completionRate: 0,
-//     ongoingBatches: 0,
-//   });
+//   const colors = {
+//     background: "#020617", 
+//     cardBg: "#0f172a",      
+//     accent: "#3b82f6",      
+//     textMain: "#f8fafc",   
+//     textDim: "#94a3b8",     
+//     border: "#1e293b"       
+//   };
 
 //   const loadDashboard = async (idToLoad) => {
-//     const id = idToLoad || inputId;
-//     if (!id) {
-//       alert("Please enter an Instructor ID");
-//       return;
-//     }
-
 //     try {
-//       const data = await getInstructorBatches(id);
-//       const allBatches = Array.isArray(data) ? data : [];
-//       setBatches(allBatches);
+//       const id = idToLoad || inputId;
+//       if (!id) return;
 
-//       if (allBatches.length > 0) {
-//         setInstructor({
-//           name: allBatches[0].instructorName,
-//           email: allBatches[0].instructorEmail,
-//           phone: allBatches[0].instructorPhone,
-//         });
-//         // Save ID and a flag so it persists only during active navigation
+//       const [batchData, classCountData, dateData] = await Promise.all([
+//         getInstructorBatches(id),
+//         getBatchClassCount(id),
+//         getBatchStartDates()
+//       ]);
+
+//       const completionRes = await axios.get(`https://localhost:7157/api/Performance/completion-rate/${id}`);
+//       const completionList = Array.isArray(completionRes.data) ? completionRes.data : [];
+
+//       let allBatches = Array.isArray(batchData) ? batchData : [];
+//       const allDates = Array.isArray(dateData) ? dateData : [];
+      
+//       const mappedBatches = allBatches.map(batch => {
+//         const dateRecord = allDates.find(d => d.batchId === batch.batchId);
+//         const performanceRecord = completionList.find(c => c.batchId === batch.batchId);
+        
+//         return {
+//           ...batch,
+//           startDate: dateRecord ? dateRecord.startDate : null,
+//           displayProgress: performanceRecord ? performanceRecord.completion : 0 
+//         };
+//       });
+
+//       // --- SORTING LOGIC START ---
+//       // Sorts by date: Upcoming/Today's batches at the top, older ones at the bottom
+//       const sortedBatches = mappedBatches.sort((a, b) => {
+//         const dateA = new Date(a.startDate || 0);
+//         const dateB = new Date(b.startDate || 0);
+//         return dateB - dateA; // Descending order: Newest/Today first
+//       });
+//       // --- SORTING LOGIC END ---
+
+//       setBatches(sortedBatches);
+//       setHasSearchedOnce(true);
+
+//       if (sortedBatches.length > 0) {
 //         localStorage.setItem("instructorId", id);
 //         sessionStorage.setItem("hasSearched", "true");
+//         setInstructor({
+//           name: sortedBatches[0].instructorName,
+//           email: sortedBatches[0].instructorEmail,
+//           phone: sortedBatches[0].instructorPhone,
+//         });
+//         setStats({
+//           totalBatches: sortedBatches.length,
+//           totalStudents: sortedBatches.reduce((sum, b) => sum + (b.studentCount || 0), 0),
+//           totalClasses: Array.isArray(classCountData) ? classCountData.reduce((sum, item) => sum + (item.totalClasses || 0), 0) : 0,
+//           ongoingBatches: sortedBatches.filter((b) => b.isActive).length,
+//         });
 //       }
-
-//       const totalBatches = allBatches.length;
-//       const totalStudents = allBatches.reduce((sum, b) => sum + (b.studentCount || 0), 0);
-//       const ongoingBatches = allBatches.filter((b) => b.isActive).length;
-
-//       setStats({
-//         totalBatches,
-//         totalStudents,
-//         completionRate: totalBatches > 0 ? 100 : 0,
-//         ongoingBatches,
-//       });
 //     } catch (err) {
-//       console.error(err);
+//       console.error("Load Error:", err);
 //     }
 //   };
 
-//   // ✅ Fixed: Only loads if a search was actually performed in this session
 //   useEffect(() => {
 //     const savedId = localStorage.getItem("instructorId");
-//     const hasSearched = sessionStorage.getItem("hasSearched");
-    
-//     if (savedId && hasSearched) {
+//     if (savedId) {
 //       setInputId(savedId);
 //       loadDashboard(savedId);
 //     }
 //   }, []);
 
+//   const filteredBatches = batches.filter((b) =>
+//     (b.courseName || "").toLowerCase().includes(batchSearchTerm.toLowerCase()) ||
+//     (b.batchId || "").toLowerCase().includes(batchSearchTerm.toLowerCase())
+//   );
+
 //   return (
-//     <div style={{ padding: "20px", fontFamily: "Segoe UI", background: "#f5f7fb", minHeight: "100vh" }}>
-//       {/* HEADER */}
-//       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#3c7197ff", padding: "20px", borderRadius: "12px", color: "#fff" }}>
-//         <div>
-//           <h2 style={{ margin: 0, fontSize: "24px" }}>🎓 EduTrack</h2>
-//           <p style={{ margin: 0, fontSize: "13px", opacity: 0.8 }}>An Online Education Platform</p>
-//         </div>
-
-//         {/* PROFILE SECTION */}
-//         <div style={{ background: "rgba(255,255,255,0.1)", padding: "10px", borderRadius: "12px", minWidth: "180px" }}>
-//           <div style={{ textAlign: "center", marginBottom: "6px" }}>
-//             <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#fff", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", fontWeight: "bold" }}>
-//               {instructorDetails.name.charAt(0)}
-//             </div>
-//             <h3 style={{ margin: "4px 0", fontSize: "14px" }}>{instructorDetails.name}</h3>
-//           </div>
-//           <div style={{ textAlign: "left", fontSize: "12px" }}>
-//             <p style={{ margin: "2px 0" }}><strong>ID:</strong> {inputId || "N/A"}</p>
-//             <p style={{ margin: "2px 0" }}>📧 {instructorDetails.email}</p>
-//             <p style={{ margin: "2px 0" }}>📞 {instructorDetails.phone}</p>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* SEARCH BAR (MOVED BACK TO LEFT/TOP AREA) */}
-//       <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+//     <div style={{ padding: "20px", background: colors.background, minHeight: "100vh", color: colors.textMain, fontFamily: 'sans-serif' }}>
+      
+//       <div style={{ display: "flex", gap: "10px", justifyContent: 'center', marginBottom: "30px" }}>
 //         <input
 //           value={inputId}
 //           onChange={(e) => setInputId(e.target.value)}
-//           placeholder="Enter Instructor ID"
-//           style={{ padding: "10px 15px", borderRadius: "20px", border: "1px solid #ccc", width: "150px" }}
+//           placeholder="Instructor ID"
+//           style={{ padding: "12px", borderRadius: "25px", border: `1px solid ${colors.border}`, background: colors.cardBg, color: "#fff", outline: 'none' }}
 //         />
-//         <button
-//           onClick={() => loadDashboard()}
-//           style={{ padding: "8px 20px", borderRadius: "20px", border: "none", background: "linear-gradient(135deg, #3d68c5ff, #3b82f6)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}
-//         >
-//           🔍 search
+//         <button onClick={() => loadDashboard()} className="search-btn" style={{ padding: "10px 25px", borderRadius: "25px", background: colors.accent, color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold" }}>
+//           Search
 //         </button>
-
-//         {/* Filter input for specific batches */}
-//         <input
-//           placeholder="Search Batch ID..."
-//           value={searchBatchId}
-//           onChange={(e) => setSearchBatchId(e.target.value)}
-//           style={{ padding: "10px 15px", borderRadius: "20px", border: "1px solid #ccc", width: "200px", marginLeft: "20px" }}
-//         />
 //       </div>
 
-//       {/* MAIN CONTENT - Only shows after a successful search */}
-//       {batches.length > 0 ? (
-//         <>
-//           <p style={{ marginTop: "25px", textAlign: "center", fontSize: "18px", fontWeight: "600" }}>
-//             Welcome back, {instructorDetails.name}!
-//           </p>
-          
-//           <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-//             {[
-//               ["📚", "Total Batches", stats.totalBatches],
-//               ["🎓", "Total Students", stats.totalStudents],
-//               ["📈", "Completion %", stats.completionRate + "%"],
-//               ["🚀", "Ongoing", stats.ongoingBatches],
-//             ].map(([icon, title, value], i) => (
-//               <div key={i} style={{ flex: 1, background: "linear-gradient(135deg, #2563eb, #3b82f6)", color: "#fff", padding: "20px", borderRadius: "16px", textAlign: "center", boxShadow: "0 6px 15px rgba(0,0,0,0.1)" }}>
-//                 <div style={{ fontSize: "22px" }}>{icon}</div>
-//                 <h3 style={{ fontSize: "14px", opacity: 0.9 }}>{title}</h3>
-//                 <h2 style={{ fontSize: "24px", marginTop: "5px" }}>{value}</h2>
+//       {hasSearchedOnce && (
+//         <div className="fade-in">
+//           <div style={{ display: "flex", gap: "15px", marginBottom: "40px" }}>
+//             {[["📚", "Batches", stats.totalBatches], ["🎓", "Students", stats.totalStudents], ["⏰", "Classes", stats.totalClasses], ["🚀", "Ongoing", stats.ongoingBatches]].map(([icon, title, val], i) => (
+//               <div key={i} className="stat-card" style={{ flex: 1, background: colors.cardBg, padding: "20px", borderRadius: "15px", border: `1px solid ${colors.border}`, textAlign: "center", transition: '0.3s' }}>
+//                 <div style={{ fontSize: "20px" }}>{icon}</div>
+//                 <div style={{ fontSize: "10px", color: colors.textDim }}>{title}</div>
+//                 <div style={{ fontSize: "24px", color: colors.accent, fontWeight: 'bold' }}>{val}</div>
 //               </div>
 //             ))}
 //           </div>
 
-//           <h3 style={{ marginTop: "30px", textAlign: "center" }}>Your Batches</h3>
-//           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginTop: "20px" }}>
-//             {batches
-//               .filter((b) => b.batchId.toLowerCase().includes(searchBatchId.toLowerCase()))
-//               .map((b) => (
-//                 <div key={b.batchId} style={{ background: "#fff", borderRadius: "16px", padding: "20px", border: "1px solid #e5e7eb", boxShadow: "0 4px 10px rgba(0,0,0,0.05)" }}>
-//                   <h2 style={{ fontSize: "22px", textAlign: "center", marginBottom: "5px" }}>{b.courseName}</h2>
-//                   <p style={{ textAlign: "center", fontSize: "12px", color: "#6b7280" }}>Batch ID: {b.batchId}</p>
-//                   <button
-//                     onClick={() => navigate(`/batch/${b.batchId}`)}
-//                     style={{ marginTop: "15px", width: "100%", padding: "10px", borderRadius: "8px", background: "#2563eb", color: "#fff", border: "none", cursor: "pointer" }}
-//                   >
-//                     View Details →
-//                   </button>
+//           <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Your Batches</h2>
+
+//           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+//             {filteredBatches.map((b) => (
+//               <div key={b.batchId} className="batch-card" style={{ background: colors.cardBg, padding: "25px", borderRadius: "20px", border: `1px solid ${colors.border}`, transition: '0.4s' }}>
+//                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+//                   <h3>{b.courseName}</h3>
+//                   <span style={{ fontSize: '11px', color: colors.accent, fontWeight: 'bold' }}>
+//                     {b.startDate ? new Date(b.startDate).toLocaleDateString() : 'Not Yet Started'}
+//                   </span>
 //                 </div>
-//               ))}
+//                 <p style={{ color: colors.textDim, fontSize: '12px' }}>ID: {b.batchId}</p>
+                
+//                 <div style={{ margin: "20px 0" }}>
+//                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '5px' }}>
+//                     <span>Syllabus Completion</span>
+//                     <span style={{ color: colors.accent, fontWeight: 'bold' }}>{b.displayProgress}%</span>
+//                   </div>
+//                   <div style={{ width: "100%", background: "#1e293b", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+//                     <div className="progress-fill" style={{ 
+//                       width: `${b.displayProgress}%`, 
+//                       background: `linear-gradient(90deg, ${colors.accent}, #60a5fa)`, 
+//                       height: "100%", 
+//                       transition: "width 2s ease-in-out" 
+//                     }} />
+//                   </div>
+//                 </div>
+
+//                 <button className="view-btn" onClick={() => navigate(`/batch/${b.batchId}`)} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "transparent", color: colors.accent, border: `1px solid ${colors.accent}`, fontWeight: "bold", cursor: "pointer", transition: '0.3s' }}>
+//                   View Full Details
+//                 </button>
+//               </div>
+//             ))}
 //           </div>
-//         </>
-//       ) : (
-//         <div style={{ textAlign: "center", marginTop: "100px", color: "#9ca3af" }}>
-//           <p>Please enter an Instructor ID to view your dashboard.</p>
 //         </div>
 //       )}
 
-//       <footer style={{ marginTop: "50px", textAlign: "center", fontSize: "12px", color: "#9ca3af" }}>
-//         EduTrack © 2026
-//       </footer>
+//       <style>{`
+//         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+//         .fade-in { animation: fadeIn 0.5s ease-out; }
+//         .stat-card:hover { transform: translateY(-5px); border-color: ${colors.accent} !important; background: #1e293b !important; }
+//         .batch-card:hover { transform: translateY(-8px); border-color: ${colors.accent} !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+//         .view-btn:hover { background: ${colors.accent} !important; color: white !important; }
+//         .search-btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px ${colors.accent}44; }
+//         .progress-fill { position: relative; box-shadow: 0 0 8px ${colors.accent}88; }
+//       `}</style>
 //     </div>
 //   );
 // };
 
 // export default Dashboard;
 
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getInstructorBatches } from "../services/Api";
+import { 
+  getInstructorBatches, 
+  getBatchClassCount, 
+  getBatchStartDates 
+} from "../services/Api";
+import { FaSearch } from "react-icons/fa";
+import axios from "axios";
+// IMPORTING NAVBAR AND FOOTER
+import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
   const [inputId, setInputId] = useState("");
-  const [searchBatchId, setSearchBatchId] = useState("");
+  const [batchSearchTerm, setBatchSearchTerm] = useState(""); 
   const [batches, setBatches] = useState([]);
   const [hasSearchedOnce, setHasSearchedOnce] = useState(false);
 
-  const [instructorDetails, setInstructor] = useState({
-    name: "N/A",
-    email: "N/A",
-    phone: "N/A",
-  });
+  const [instructorDetails, setInstructor] = useState({ name: "N/A", email: "N/A", phone: "N/A" });
+  const [stats, setStats] = useState({ totalBatches: 0, totalStudents: 0, totalClasses: 0, ongoingBatches: 0 });
 
-  const [stats, setStats] = useState({
-    totalBatches: 0,
-    totalStudents: 0,
-    completionRate: 0,
-    ongoingBatches: 0,
-  });
+  const colors = {
+    background: "#020617", 
+    cardBg: "#0f172a",      
+    accent: "#3b82f6",      
+    textMain: "#f8fafc",   
+    textDim: "#94a3b8",     
+    border: "#1e293b"       
+  };
 
   const loadDashboard = async (idToLoad) => {
     try {
       const id = idToLoad || inputId;
-      if (!id) {
-        alert("Enter Instructor ID");
-        return;
-      }
+      if (!id) return;
 
-      const data = await getInstructorBatches(id);
-      const allBatches = Array.isArray(data) ? data : [];
+      const [batchData, classCountData, dateData] = await Promise.all([
+        getInstructorBatches(id),
+        getBatchClassCount(id),
+        getBatchStartDates()
+      ]);
+
+      const completionRes = await axios.get(`https://localhost:7157/api/Performance/completion-rate/${id}`);
+      const completionList = Array.isArray(completionRes.data) ? completionRes.data : [];
+
+      let allBatches = Array.isArray(batchData) ? batchData : [];
+      const allDates = Array.isArray(dateData) ? dateData : [];
       
-      setHasSearchedOnce(true);
-      setBatches(allBatches);
+      const mappedBatches = allBatches.map(batch => {
+        const dateRecord = allDates.find(d => d.batchId === batch.batchId);
+        const performanceRecord = completionList.find(c => c.batchId === batch.batchId);
+        
+        return {
+          ...batch,
+          startDate: dateRecord ? dateRecord.startDate : null,
+          displayProgress: performanceRecord ? performanceRecord.completion : 0 
+        };
+      });
 
-      if (allBatches.length > 0) {
+      const sortedBatches = mappedBatches.sort((a, b) => {
+        const dateA = new Date(a.startDate || 0);
+        const dateB = new Date(b.startDate || 0);
+        return dateB - dateA;
+      });
+
+      setBatches(sortedBatches);
+      setHasSearchedOnce(true);
+
+      if (sortedBatches.length > 0) {
         localStorage.setItem("instructorId", id);
         sessionStorage.setItem("hasSearched", "true");
-
         setInstructor({
-          name: allBatches[0].instructorName,
-          email: allBatches[0].instructorEmail,
-          phone: allBatches[0].instructorPhone,
+          name: sortedBatches[0].instructorName,
+          email: sortedBatches[0].instructorEmail,
+          phone: sortedBatches[0].instructorPhone,
         });
-
-        const totalBatches = allBatches.length;
-        const totalStudents = allBatches.reduce((sum, b) => sum + (b.studentCount || 0), 0);
-        const ongoingBatches = allBatches.filter((b) => b.isActive).length;
-
         setStats({
-          totalBatches,
-          totalStudents,
-          completionRate: totalBatches > 0 ? 100 : 0,
-          ongoingBatches,
+          totalBatches: sortedBatches.length,
+          totalStudents: sortedBatches.reduce((sum, b) => sum + (b.studentCount || 0), 0),
+          totalClasses: Array.isArray(classCountData) ? classCountData.reduce((sum, item) => sum + (item.totalClasses || 0), 0) : 0,
+          ongoingBatches: sortedBatches.filter((b) => b.isActive).length,
         });
-      } else {
-        setInstructor({ name: "Not Found", email: "N/A", phone: "N/A" });
-        setStats({ totalBatches: 0, totalStudents: 0, completionRate: 0, ongoingBatches: 0 });
       }
     } catch (err) {
-      console.error(err);
-      setHasSearchedOnce(true);
+      console.error("Load Error:", err);
     }
   };
 
   useEffect(() => {
     const savedId = localStorage.getItem("instructorId");
-    const sessionActive = sessionStorage.getItem("hasSearched");
-    if (savedId && sessionActive) {
+    if (savedId) {
       setInputId(savedId);
       loadDashboard(savedId);
     }
   }, []);
 
-  // ✅ PRE-FILTER LOGIC for the message check
   const filteredBatches = batches.filter((b) =>
-    b.batchId.toLowerCase().includes(searchBatchId.toLowerCase())
+    (b.courseName || "").toLowerCase().includes(batchSearchTerm.toLowerCase()) ||
+    (b.batchId || "").toLowerCase().includes(batchSearchTerm.toLowerCase())
   );
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Segoe UI", background: "#f5f7fb", minHeight: "100vh" }}>
-      {/* HEADER SECTION - Matches Image */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#3c7197ff", padding: "20px", borderRadius: "12px", color: "#fff" }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: "24px" }}>🎓 EduTrack</h2>
-          <p style={{ margin: 0, fontSize: "13px", opacity: 0.8 }}>An Online Education Platform</p>
+    <div style={{ background: colors.background, minHeight: "100vh", color: colors.textMain, fontFamily: 'sans-serif' }}>
+      {/* NAVBAR ADDED HERE */}
+      <Navbar />
+
+      <div style={{ padding: "100px 20px 40px 20px", maxWidth: "1200px", margin: "0 auto" }}>
+        
+        {/* Instructor ID Search */}
+        <div style={{ display: "flex", gap: "10px", justifyContent: 'center', marginBottom: "30px" }}>
+          <input
+            value={inputId}
+            onChange={(e) => setInputId(e.target.value)}
+            placeholder="Instructor ID"
+            style={{ padding: "12px", borderRadius: "25px", border: `1px solid ${colors.border}`, background: colors.cardBg, color: "#fff", outline: 'none' }}
+          />
+          <button onClick={() => loadDashboard()} className="search-btn" style={{ padding: "10px 25px", borderRadius: "25px", background: colors.accent, color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold" }}>
+            Search
+          </button>
         </div>
 
-        <div style={{ background: "rgba(51, 109, 175, 1)", padding: "10px", borderRadius: "12px", minWidth: "180px" }}>
-          <div style={{ textAlign: "center", marginBottom: "6px" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#fff", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", fontWeight: "bold" }}>
-              {instructorDetails.name.charAt(0)}
+        {hasSearchedOnce && (
+          <div className="fade-in">
+            {/* KPI Cards */}
+            <div style={{ display: "flex", gap: "15px", marginBottom: "40px", flexWrap: 'wrap' }}>
+              {[["📚", "Batches", stats.totalBatches], ["🎓", "Students", stats.totalStudents], ["⏰", "Classes", stats.totalClasses], ["🚀", "Ongoing", stats.ongoingBatches]].map(([icon, title, val], i) => (
+                <div key={i} className="stat-card" style={{ flex: "1 1 200px", background: colors.cardBg, padding: "20px", borderRadius: "15px", border: `1px solid ${colors.border}`, textAlign: "center", transition: '0.3s' }}>
+                  <div style={{ fontSize: "20px" }}>{icon}</div>
+                  <div style={{ fontSize: "10px", color: colors.textDim }}>{title}</div>
+                  <div style={{ fontSize: "24px", color: colors.accent, fontWeight: 'bold' }}>{val}</div>
+                </div>
+              ))}
             </div>
-            <h3 style={{ margin: "4px 0", fontSize: "14px" }}>{instructorDetails.name}</h3>
+
+            <h2 style={{ textAlign: 'center', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '2px' }}>Your Batches</h2>
+
+            {/* Batch Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+              {filteredBatches.map((b) => (
+                <div key={b.batchId} className="batch-card" style={{ background: colors.cardBg, padding: "25px", borderRadius: "20px", border: `1px solid ${colors.border}`, transition: '0.4s' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <h3 style={{ margin: 0 }}>{b.courseName}</h3>
+                    <span style={{ fontSize: '11px', color: colors.accent, fontWeight: 'bold' }}>
+                      {b.startDate ? new Date(b.startDate).toLocaleDateString() : 'Not Yet Started'}
+                    </span>
+                  </div>
+                  <p style={{ color: colors.textDim, fontSize: '12px' }}>ID: {b.batchId}</p>
+                  
+                  <div style={{ margin: "20px 0" }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '5px' }}>
+                      <span>Syllabus Completion</span>
+                      <span style={{ color: colors.accent, fontWeight: 'bold' }}>{b.displayProgress}%</span>
+                    </div>
+                    <div style={{ width: "100%", background: "#1e293b", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+                      <div className="progress-fill" style={{ 
+                        width: `${b.displayProgress}%`, 
+                        background: `linear-gradient(90deg, ${colors.accent}, #60a5fa)`, 
+                        height: "100%", 
+                        transition: "width 2s ease-in-out" 
+                      }} />
+                    </div>
+                  </div>
+
+                  <button className="view-btn" onClick={() => navigate(`/batch/${b.batchId}`)} style={{ width: "100%", padding: "12px", borderRadius: "10px", background: "transparent", color: colors.accent, border: `1px solid ${colors.accent}`, fontWeight: "bold", cursor: "pointer", transition: '0.3s' }}>
+                    View Full Details
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{ textAlign: "left", fontSize: "12px" }}>
-            <p style={{ margin: "2px 0" }}><strong>ID:</strong> {inputId || "N/A"}</p>
-            <p style={{ margin: "2px 0" }}>📧 {instructorDetails.email}</p>
-            <p style={{ margin: "2px 0" }}>📞 {instructorDetails.phone}</p>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* SEARCH AREA - Matches Image */}
-      <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center", justifyContent: 'center' }}>
-        <input
-          value={inputId}
-          onChange={(e) => setInputId(e.target.value)}
-          placeholder="Enter Instructor ID"
-          style={{ padding: "10px 15px", borderRadius: "20px", border: "1px solid #ccc", width: "150px" }}
-        />
-        <button
-          onClick={() => loadDashboard()}
-          style={{ padding: "8px 20px", borderRadius: "20px", border: "none", background: "linear-gradient(135deg, #3d68c5ff, #3b82f6)", color: "#fff", cursor: "pointer" }}
-        >
-          🔍 search
-        </button>
+      {/* FOOTER ADDED HERE */}
+      <Footer />
 
-        <div style={{ position: "relative", marginLeft: "20px" }}>
-            <input
-                placeholder="Search Batch ID..."
-                value={searchBatchId}
-                onChange={(e) => setSearchBatchId(e.target.value)}
-                style={{ padding: "10px 40px 10px 15px", width: "200px", borderRadius: "25px", border: "1px solid #ccc", outline: "none", fontSize: "13px" }}
-            />
-            <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)" }}>🔍</span>
-        </div>
-      </div>
-
-      {!hasSearchedOnce ? (
-        <div style={{ textAlign: "center", marginTop: "100px", color: "#9ca3af" }}>
-          <p>Please enter an Instructor ID to view your dashboard.</p>
-        </div>
-      ) : batches.length > 0 ? (
-        <>
-          <p style={{ marginTop: "25px", textAlign: "center", fontSize: "16px", fontWeight: "600" }}>
-            Welcome back, {instructorDetails.name}!
-          </p>
-          
-          <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-          {[
-  ["📚", "Total Batches", stats.totalBatches],
-  ["🎓", "Total Students", stats.totalStudents],
-  ["📈", "Completion %", stats.completionRate + "%"],
-  ["🚀", "Ongoing", stats.ongoingBatches],
-].map(([icon, title, value], i) => (
-  <div
-    key={i}
-    className="stat-card" // Use a class for easier hover management if using a CSS file
-    style={{
-      flex: 1,
-      background: "linear-gradient(135deg, #2563eb, #3b82f6)",
-      color: "#fff",
-      padding: "20px",
-      borderRadius: "16px",
-      textAlign: "center",
-      boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
-     // border: "2px solid #000", // ✅ Added Black Margin/Border
-      transition: "transform 0.3s ease, box-shadow 0.3s ease", // ✅ Added Animation
-      cursor: "pointer"
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-10px)";
-    //  e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.2)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-    //  e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.1)";
-    }}
-  >
-    <div style={{ fontSize: "22px" }}>{icon}</div>
-    <h3 style={{ fontSize: "14px", opacity: 0.9 }}>{title}</h3>
-    <h2 style={{ fontSize: "24px", marginTop: "5px" }}>{value}</h2>
-  </div>
-))}
-          </div>
-
-          <h1 style={{ marginTop: "30px", textAlign: "center", fontSize: "32px", fontWeight: "600" }}>Your Batches</h1>
-
-          {/* ✅ UPDATED SECTION: Handles unassigned/incorrect batch search */}
-          {filteredBatches.length > 0 ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginTop: "20px" }}>
-            {filteredBatches.map((b) => (
-  <div
-    key={b.batchId}
-    style={{
-      background: "#fff",
-      borderRadius: "16px",
-      padding: "20px",
-    //  border: "2px solid #000", 
-      boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-      transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)", 
-      cursor: "pointer"
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "scale(1.05)"; 
-      e.currentTarget.style.boxShadow = "0 15px 30px rgba(0,0,0,0.15)";
-      e.currentTarget.style.borderColor = "#2563eb"; 
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "scale(1)";
-      e.currentTarget.style.boxShadow = "0 4px 10px rgba(0,0,0,0.05)";
-      //e.currentTarget.style.borderColor = "#000";
-    }}
-  >
-    <h2 style={{ fontSize: "28px", textAlign: "center", marginBottom: "5px" }}>{b.courseName}</h2>
-    <p style={{ textAlign: "center", fontSize: "12px", color: "#6b7280" }}>Batch ID: {b.batchId}</p>
-    
-    <button
-      onClick={() => navigate(`/batch/${b.batchId}`)}
-      style={{
-        marginTop: "15px",
-        width: "100%",
-        padding: "10px",
-        borderRadius: "8px",
-        background: "#2563eb", // Original Blue
-        color: "#fff",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: "bold",
-        transition: "background 0.3s ease" // Smooth color transition
-      }}
-      // ✅ Updated: Changes to black on hover
-      onMouseEnter={(e) => e.target.style.background = "#000"} 
-      // ✅ Updated: Returns to original blue when mouse leaves
-      onMouseLeave={(e) => e.target.style.background = "#2563eb"}
-    >
-      View Details →
-    </button>
-  </div>
-))}
-            </div>
-          ) : (
-            <div style={{ textAlign: "center", marginTop: "40px", padding: "30px", background: "#fff", borderRadius: "16px", border: "1px dashed #ccc" }}>
-              <div style={{ fontSize: "40px", marginBottom: "10px" }}>🔍</div>
-              <h3 style={{ color: "#374151" }}>No Matching Batch Found</h3>
-              <p style={{ color: "#6b7280" }}>The batch "<strong>{searchBatchId}</strong>" is not assigned to you.</p>
-            </div>
-          )}
-        </>
-      ) : (
-        <div style={{ textAlign: "center", marginTop: "100px" }}>
-          <h3 style={{ color: "#374151" }}>Instructor Not Found</h3>
-          <p style={{ color: "#6b7280" }}>We couldn't find any data for ID: {inputId}</p>
-        </div>
-      )}
-
-      <footer style={{ marginTop: "50px", textAlign: "center", fontSize: "12px", color: "#9ca3af" }}>
-        EduTrack © 2026
-      </footer>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .stat-card:hover { transform: translateY(-5px); border-color: ${colors.accent} !important; background: #1e293b !important; }
+        .batch-card:hover { transform: translateY(-8px); border-color: ${colors.accent} !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .view-btn:hover { background: ${colors.accent} !important; color: white !important; }
+        .search-btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px ${colors.accent}44; }
+        .progress-fill { position: relative; box-shadow: 0 0 8px ${colors.accent}88; }
+      `}</style>
     </div>
   );
 };
