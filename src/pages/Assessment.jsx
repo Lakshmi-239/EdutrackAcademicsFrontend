@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Badge, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Badge } from 'react-bootstrap';
 import { ClipboardList, Award, ChevronRight, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { useOutletContext } from "react-router-dom"; // Important: Layout logic kosam
 import axios from 'axios';
 import ExamPage from "./ExamPage"; 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -10,21 +11,19 @@ const StudentAssessmentPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeExam, setActiveExam] = useState(null); 
     
-    // Student ID should ideally come from your Auth Context
-    const studentId = "S001"; 
+    // Layout nundi context function ni techukuntunnam
+    const { setIsExamActive } = useOutletContext();
     
+    const studentId = "S001"; 
     const SUB_API = "https://localhost:7157/api/Submission";
     const ENROLL_API = "https://localhost:7157/api/Enrollment"; 
 
     const fetchAssessments = async () => {
         try {
             setLoading(true);
-            
-            // 1. Fetch Assessments from Submission API
             const res = await axios.get(`${SUB_API}/view-assessments?StudentId=${studentId}`);
             const assessmentsList = res.data.data || [];
 
-            // 2. Fetch Enrollment Status for each course to check for "Dropped"
             const enrichedData = await Promise.all(assessmentsList.map(async (item) => {
                 try {
                     const statusRes = await axios.get(`${ENROLL_API}/status`, {
@@ -35,7 +34,6 @@ const StudentAssessmentPage = () => {
                     return { ...item, currentEnrollmentStatus: "Active" }; 
                 }
             }));
-
             setAssessments(enrichedData);
         } catch (error) {
             console.error("Failed to load assessments:", error);
@@ -52,7 +50,6 @@ const StudentAssessmentPage = () => {
         const now = new Date();
         const dueDate = new Date(item.dueDate);
 
-        // Priority 1: Enrollment Table Status
         if (item.currentEnrollmentStatus === "Dropped" || item.currentEnrollmentStatus === "Dropout") {
             return { 
                 label: "Disabled", 
@@ -63,18 +60,16 @@ const StudentAssessmentPage = () => {
             };
         }
 
-        // Priority 2: Submission Table Status (isSubmitted flag)
         if (item.isSubmitted || item.status === "Completed") {
             return { 
                 label: "Completed", 
-                theme: "bg-green-500/10 text-green-400 border-green-500/20", 
+                theme: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", 
                 disabled: true, 
                 icon: <CheckCircle size={14} className="me-1" />,
                 btnText: "Submitted"
             };
         }
 
-        // Priority 3: Date Comparison
         if (now > dueDate) {
             return { 
                 label: "Closed", 
@@ -85,10 +80,9 @@ const StudentAssessmentPage = () => {
             };
         }
 
-        // Default: Open
         return { 
             label: "Open", 
-            theme: "bg-blue-500/10 text-blue-400 border-blue-500/20", 
+            theme: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20", 
             disabled: false, 
             icon: null,
             btnText: "Start Test"
@@ -98,9 +92,12 @@ const StudentAssessmentPage = () => {
     const handleStart = async (item) => {
         const state = getUIState(item);
         if (state.disabled) return;
-
         try {
             const res = await axios.get(`${SUB_API}/start-assessment?studentId=${studentId}&assessmentId=${item.assessmentID}`);
+            
+            // Ikkada Layout ki signal pampali sidebar/topbar remove cheyamani
+            setIsExamActive(true); 
+
             setActiveExam({
                 details: item,
                 questions: res.data.data
@@ -110,12 +107,15 @@ const StudentAssessmentPage = () => {
         }
     };
 
+    // --- Exam Mode Rendering ---
     if (activeExam) {
         return (
             <ExamPage 
                 examData={activeExam} 
                 studentId={studentId} 
                 onExit={() => {
+                    // Back vachinappudu malli Sidebar/Topbar ni thirigi techhesthunnam
+                    setIsExamActive(false); 
                     setActiveExam(null);
                     fetchAssessments(); 
                 }} 
@@ -123,26 +123,30 @@ const StudentAssessmentPage = () => {
         );
     }
 
+    // --- Normal List Rendering ---
     return (
-        <div className="h-[calc(100vh-60px)] w-full overflow-y-auto bg-slate-950 text-slate-200 custom-scrollbar">
+        <div className="h-full w-full overflow-y-auto bg-transparent text-slate-200 custom-scrollbar">
             <Container fluid className="max-w-7xl mx-auto px-6 py-10">
-                
                 <header className="mb-12">
-                    <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <ClipboardList className="text-blue-500" size={32} />
-                        Available Assessments
-                    </h2>
-                    <p className="text-slate-400 mt-2">Manage your assessments and track your progress.</p>
+                    <div className="flex items-center gap-4 mb-2">
+                        <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
+                            <ClipboardList className="text-emerald-400" size={28} />
+                        </div>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
+                            Academic Assessments
+                        </h2>
+                    </div>
+                    <p className="text-slate-500 font-medium ml-14">Precision tracking for your technical evaluations.</p>
                 </header>
 
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-3">
-                        <Spinner animation="border" variant="primary" />
-                        <span className="text-slate-500 text-sm font-medium uppercase tracking-widest">Loading Records...</span>
+                    <div className="flex flex-col items-center justify-center py-24 gap-4">
+                        <div className="w-10 h-10 border-2 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+                        <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Syncing Records</span>
                     </div>
                 ) : assessments.length === 0 ? (
-                    <div className="text-center py-20 bg-slate-900/20 border border-dashed border-slate-800 rounded-[2rem]">
-                        <p className="text-slate-500">No assessments available at this time.</p>
+                    <div className="text-center py-24 bg-[#020617]/40 border border-dashed border-slate-800 rounded-[3rem]">
+                        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No active assessments found.</p>
                     </div>
                 ) : (
                     <Row className="g-4">
@@ -150,61 +154,59 @@ const StudentAssessmentPage = () => {
                             const ui = getUIState(item);
                             return (
                                 <Col lg={12} key={item.assessmentID}>
-                                    {/* Card stays fully visible (no opacity/grayscale) */}
-                                    <div className="group relative bg-slate-900/40 border border-slate-800 p-6 rounded-[2rem] transition-all duration-300 hover:bg-slate-900/60 hover:border-blue-500/50">
+                                    <div className="group relative bg-[#020617]/40 border border-slate-800/60 p-8 rounded-[2.5rem] transition-all duration-500 hover:bg-[#020617]/60 hover:border-emerald-500/30 shadow-xl">
                                         <Row className="align-items-center">
-                                            {/* Course Details */}
                                             <Col md={4}>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="bg-slate-950/60 rounded-3xl p-3 border border-slate-800 flex items-center justify-center" style={{ width: '64px', height: '64px' }}>
-                                                        <Award className="text-blue-400" size={28} />
+                                                <div className="flex items-center gap-5">
+                                                    <div className="bg-slate-950/80 rounded-[1.5rem] p-4 border border-slate-800 flex items-center justify-center shadow-inner" style={{ width: '72px', height: '72px' }}>
+                                                        <Award className="text-emerald-400" size={32} />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-xl font-bold mb-1 text-white">{item.courseName}</h4>
-                                                        <div className="flex gap-2">
-                                                            <span className="text-slate-500 text-[10px] font-black tracking-widest uppercase">{item.type}</span>
-                                                            <span className="text-slate-700 text-[10px]">•</span>
-                                                            <span className="text-slate-500 text-[10px] font-black tracking-widest uppercase">ID: {item.assessmentID}</span>
+                                                        <h4 className="text-xl font-black mb-1 text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">
+                                                            {item.courseName}
+                                                        </h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-slate-500 text-[9px] font-black tracking-[0.2em] uppercase">{item.type}</span>
+                                                            <span className="text-slate-800 text-[9px]">•</span>
+                                                            <span className="text-emerald-500/60 text-[9px] font-black tracking-[0.2em] uppercase">ID: {item.assessmentID}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </Col>
 
-                                            {/* Metadata Section */}
                                             <Col md={5}>
-                                                <div className="flex justify-around items-center border-l border-r border-slate-800/50 px-4">
+                                                <div className="flex justify-around items-center border-l border-r border-slate-800/40 px-6">
                                                     <div className="text-center">
-                                                        <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Max Marks</p>
-                                                        <span className="text-lg font-bold">{item.maxMarks}</span>
+                                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em] mb-2">Max Marks</p>
+                                                        <span className="text-xl font-bold text-slate-300">{item.maxMarks}</span>
                                                     </div>
                                                     <div className="text-center">
-                                                        <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Due Date</p>
-                                                        <span className={`text-lg font-bold ${ui.label === 'Closed' ? 'text-red-500' : 'text-slate-200'}`}>
+                                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em] mb-2">Due Date</p>
+                                                        <span className={`text-xl font-bold ${ui.label === 'Closed' ? 'text-red-500' : 'text-slate-300'}`}>
                                                             {new Date(item.dueDate).toLocaleDateString('en-GB')}
                                                         </span>
                                                     </div>
                                                     <div className="text-center">
-                                                        <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Status</p>
-                                                        <Badge className={`flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${ui.theme}`}>
+                                                        <p className="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em] mb-2">Status</p>
+                                                        <Badge className={`flex items-center px-4 py-1.5 rounded-lg text-[9px] font-black tracking-[0.15em] uppercase border shadow-sm ${ui.theme}`}>
                                                             {ui.icon}{ui.label}
                                                         </Badge>
                                                     </div>
                                                 </div>
                                             </Col>
 
-                                            {/* Action Button - Only this part reflects the disabled state */}
                                             <Col md={3} className="text-end">
                                                 <button 
                                                     onClick={() => handleStart(item)}
                                                     disabled={ui.disabled}
-                                                    className={`w-full md:w-auto px-8 py-3 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 border ${
+                                                    className={`w-full md:w-auto px-10 py-3.5 rounded-2xl font-black transition-all flex items-center justify-center gap-2 border-0 uppercase tracking-widest text-[11px] ${
                                                         !ui.disabled 
-                                                        ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-900/20" 
-                                                        : "bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed opacity-40"
+                                                        ? "bg-gradient-to-r from-[#10b981] to-[#06b6d4] text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.25)] hover:scale-[1.02] active:scale-95" 
+                                                        : "bg-slate-800/50 text-slate-600 cursor-not-allowed opacity-30"
                                                     }`}
                                                 >
                                                     {ui.btnText}
-                                                    {!ui.disabled && <ChevronRight size={18} />}
+                                                    {!ui.disabled && <ChevronRight size={16} strokeWidth={3} />}
                                                 </button>
                                             </Col>
                                         </Row>
@@ -217,9 +219,9 @@ const StudentAssessmentPage = () => {
             </Container>
 
             <style>{`
-                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #064e3b; border-radius: 10px; }
             `}</style>
         </div>
     );

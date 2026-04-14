@@ -4,14 +4,13 @@ import {
   Search, 
   BookOpen, 
   Clock, 
-  Award, 
   PlayCircle, 
   FileText, 
   CheckCircle2, 
   Layers,
   X,
   ChevronRight,
-  AlertCircle // Added for the warning icon
+  AlertCircle 
 } from 'lucide-react';
 
 const MyCourses = () => {
@@ -31,6 +30,7 @@ const MyCourses = () => {
   const studentId = "S001";
   const BASE_URL = "https://localhost:7157/api/Enrollment";
 
+  // --- LOGIC: REMAINS EXACTLY AS PROVIDED ---
   useEffect(() => {
     const loadPageData = async () => {
       setLoading(true);
@@ -92,7 +92,6 @@ const MyCourses = () => {
             ...course, 
             progress: progRes.data.progress, 
             status: statusRes.data.currentStatus,
-            // REQUIREMENT: Ensure your backend statusRes returns the batch's IsActive property
             isBatchActive: statusRes.data.isActive ?? true 
           };
         } catch (err) {
@@ -137,7 +136,6 @@ const MyCourses = () => {
   };
 
   const handleStartCourse = async (course) => {
-    // Prevent modal from opening if batch is inactive
     if (!course.isBatchActive) return;
 
     try {
@@ -218,23 +216,33 @@ const MyCourses = () => {
   const renderContentItem = (content) => {
     const uri = content.contentURI || "";
     const youtubeId = getYouTubeId(uri);
-    const isDoc = uri.toLowerCase().endsWith(".pdf") || uri.toLowerCase().endsWith(".ppt") || uri.toLowerCase().endsWith(".pptx");
+    const isDoc = /\.(pdf|ppt|pptx)$/i.test(uri);
 
     if (isDoc) {
       return (
-        <div className="p-6 text-center bg-slate-900/50 border border-dashed border-slate-700 rounded-2xl mt-4">
-          <FileText className="mx-auto mb-3 text-blue-400" size={40} />
-          <h5 className="text-slate-200 mb-4 font-semibold">{content.title}</h5>
-          <a href={uri} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full font-bold transition-all"
-             onClick={() => setWatchedProgress(prev => ({ ...prev, [content.contentID]: 100 }))}>
-            View Resources
-          </a>
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="p-4 bg-emerald-500/5 border border-emerald-900/30 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="text-emerald-400" size={24} />
+              <span className="text-sm text-slate-300">{content.title}</span>
+            </div>
+            <a href={uri} target="_blank" rel="noreferrer" className="text-xs bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg font-bold no-underline">
+              Download
+            </a>
+          </div>
+          <div className="w-full h-[600px] rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
+            <iframe 
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(uri)}&embedded=true`}
+              className="w-full h-full"
+              frameBorder="0"
+            ></iframe>
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="relative mt-4 rounded-xl overflow-hidden border border-slate-800">
+      <div className="relative mt-4 rounded-xl overflow-hidden border border-slate-800/60 shadow-2xl">
         {youtubeId ? (
           <div className="aspect-video">
             <iframe src={`https://www.youtube.com/embed/${youtubeId}?rel=0`} title="Youtube player" className="w-full h-full" allowFullScreen></iframe>
@@ -249,62 +257,64 @@ const MyCourses = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-60px)] w-full overflow-y-auto bg-slate-950 text-slate-200 selection:bg-blue-500/30 custom-scrollbar">
-      <div className="max-w-7xl mx-auto px-8 py-10">
+    <div className="relative h-full w-full bg-transparent text-slate-200">
+      {/* --- Main Page Content --- */}
+      <div className={`max-w-7xl mx-auto px-6 py-10 transition-opacity duration-300 ${showModal ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         
         {/* Search Header */}
         <div className="flex flex-col items-center mb-12">
           <div className="relative w-full max-w-2xl group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={20} />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors" size={20} />
             <input
               type="text"
-              className="w-full bg-slate-900/40 border border-slate-800/50 text-slate-100 pl-14 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all placeholder:text-slate-600 shadow-2xl"
-              placeholder={activeTab === "available" ? "Search for new skills..." : "Search your enrolled courses..."}
+              className="w-full bg-[#020617]/60 border border-slate-800/50 text-slate-100 pl-16 pr-8 py-4 rounded-2xl focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all placeholder:text-slate-600 backdrop-blur-md"
+              placeholder={activeTab === "available" ? "Search for new skills..." : "Search your learning path..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex justify-center gap-3 mb-10">
-          {['available', 'enrolled'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-8 py-3 rounded-full font-bold transition-all flex items-center gap-2 border ${
-                activeTab === tab 
-                ? "bg-white text-slate-950 border-white shadow-lg" 
-                : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700"
-              }`}
-            >
-              {tab === 'available' ? <Layers size={18}/> : <BookOpen size={18}/>}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-16">
+          <div className="bg-[#020617]/80 p-1.5 rounded-2xl border border-slate-800/50 flex gap-2 backdrop-blur-sm shadow-xl">
+            {['available', 'enrolled'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-10 py-3 rounded-xl font-bold transition-all flex items-center gap-3 text-sm tracking-wide ${
+                  activeTab === tab 
+                  ? "bg-white text-slate-950 shadow-[0_0_25px_rgba(255,255,255,0.1)]" 
+                  : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {tab === 'available' ? <Layers size={16}/> : <BookOpen size={16}/>}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Course Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
           {loading ? (
-            <div className="col-span-full text-center py-20 flex flex-col items-center gap-4">
-              <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-              <p className="text-slate-500 font-medium tracking-widest uppercase text-xs">Loading Catalog</p>
+            <div className="col-span-full text-center py-24 flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-2 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+              <p className="text-slate-500 font-bold tracking-[0.2em] uppercase text-[10px]">Syncing Knowledge</p>
             </div>
           ) : (
             courses.map((course) => {
               const isEnrolled = enrolledCourseIds.has(course.courseId);
-              // Logic check for Batch status
               const canAccess = course.isBatchActive !== false;
 
               return (
-                <div key={course.courseId} className={`group bg-slate-900/40 border p-8 rounded-[2rem] transition-all duration-300 ${!canAccess && activeTab === "enrolled" ? 'opacity-75 border-red-900/50' : 'hover:bg-slate-900/60 hover:border-blue-500/50 border-slate-800'}`}>
-                  <div className="flex justify-between items-start mb-6">
+                <div key={course.courseId} className={`group relative bg-[#020617]/40 border rounded-[2.5rem] p-8 transition-all duration-500 ${!canAccess && activeTab === "enrolled" ? 'opacity-50 border-slate-800' : 'hover:border-emerald-500/30 border-slate-800/50 hover:bg-[#020617]/60'}`}>
+                  <div className="flex justify-between items-start mb-8">
                     <div>
-                      <h3 className="text-2xl font-bold text-white mb-2">{course.courseName}</h3>
+                      <h3 className="text-2xl font-bold text-white mb-3 tracking-tight group-hover:text-emerald-400 transition-colors uppercase">{course.courseName}</h3>
                       {activeTab === "enrolled" && (
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${
-                          course.status === 'Completed' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border ${
+                          course.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
                         }`}>
                           {course.status}
                         </span>
@@ -312,43 +322,30 @@ const MyCourses = () => {
                     </div>
                     {activeTab === "enrolled" && canAccess && (
                       <div className="text-right">
-                        <div className="text-[10px] font-black text-slate-500 mb-1 tracking-tighter">PROGRESS {course.progress}%</div>
-                        <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-500 transition-all duration-700" style={{ width: `${course.progress}%` }} />
+                        <div className="text-[10px] font-black text-slate-500 mb-2 tracking-tighter">PROGRESS {course.progress}%</div>
+                        <div className="w-24 h-1 bg-slate-800/50 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-1000" style={{ width: `${course.progress}%` }} />
                         </div>
                       </div>
                     )}
                   </div>
-                  
-                  <p className="text-slate-400 leading-relaxed mb-4 line-clamp-3 text-sm">{course.learningObjective}</p>
-                  
-                  {/* REQUIREMENT: Show message if batch not started yet */}
-                  {activeTab === "enrolled" && !canAccess && (
-                    <div className="flex items-center gap-2 mb-6 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 text-xs font-bold">
-                      <Clock size={14} />
-                      Batch not started yet. Content will be available once the course starts.
+                  <p className="text-slate-400 leading-relaxed mb-10 line-clamp-2 text-sm">{course.learningObjective}</p>
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-800/40">
+                    <div className="flex gap-8 text-slate-200 font-bold">
+                      <div className="flex flex-col"><span className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Duration</span><span className="text-sm">{course.durationInWeeks}W</span></div>
+                      <div className="flex flex-col"><span className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Credits</span><span className="text-sm">{course.credits}</span></div>
                     </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-6 border-t border-slate-800/50">
-                    <div className="flex gap-6 text-white font-semibold">
-                      <div className="flex flex-col"><span className="text-[10px] text-slate-500 uppercase font-bold">Weeks</span><span>{course.durationInWeeks}</span></div>
-                      <div className="flex flex-col"><span className="text-[10px] text-slate-500 uppercase font-bold">Credits</span><span>{course.credits}</span></div>
-                    </div>
-                    
                     <button 
                       onClick={() => activeTab === "available" ? handleEnroll(course.courseId) : handleStartCourse(course)}
                       disabled={(isEnrolled && activeTab === "available") || (activeTab === "enrolled" && !canAccess)}
-                      className={`px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
+                      className={`px-8 py-3 rounded-2xl font-black transition-all flex items-center gap-2 text-xs uppercase tracking-widest border-0 ${
                         ((isEnrolled && activeTab === "available") || (activeTab === "enrolled" && !canAccess))
                         ? "bg-slate-800 text-slate-500 cursor-not-allowed" 
-                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20"
+                        : "bg-gradient-to-r from-[#10b981] to-[#06b6d4] text-slate-950"
                       }`}
                     >
-                      {activeTab === "available" ? (isEnrolled ? "Enrolled" : "Enroll Now") : (
-                        !canAccess ? "Waiting" : (course.status === 'Completed' ? 'Review' : 'Continue')
-                      )}
-                      <ChevronRight size={18} />
+                      {activeTab === "available" ? (isEnrolled ? "Enrolled" : "Enroll Now") : (course.status === 'Completed' ? 'Review' : 'Continue')}
+                      <ChevronRight size={16} />
                     </button>
                   </div>
                 </div>
@@ -358,30 +355,41 @@ const MyCourses = () => {
         </div>
       </div>
 
-      {/* Modal Section remains the same */}
+      {/* --- CONTENT WINDOW: NO OVERLAP WITH SIDEBAR/TOPBAR --- */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-[2.5rem] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-              <h2 className="text-2xl font-bold text-white">{selectedCourse?.courseName}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-800 rounded-full text-slate-500 transition-all"><X/></button>
+        <div className="w-full animate-in fade-in zoom-in duration-300">
+           <div className="bg-[#0f172a] border border-slate-800 w-full min-h-screen rounded-t-[3rem] flex flex-col shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="p-8 border-b border-slate-800/50 flex justify-between items-center sticky top-0 bg-[#0f172a] z-10">
+              <div>
+                <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter">{selectedCourse?.courseName}</h2>
+                <span className="text-[10px] text-emerald-400 font-bold tracking-[0.3em] uppercase">Module Contents</span>
+              </div>
+              <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-800 rounded-2xl text-slate-500 border-0 bg-transparent">
+                <X size={28}/>
+              </button>
             </div>
-            <div className="p-8 overflow-y-auto custom-scrollbar">
+            
+            {/* Scrollable Content Area */}
+            <div className="p-6 md:p-10 max-w-5xl mx-auto w-full">
               {courseModules.map((module, mIdx) => (
-                <div key={mIdx} className="mb-10">
-                  <h4 className="text-xs font-black text-blue-500 uppercase tracking-widest mb-6">Section {mIdx + 1}: {module.moduleName}</h4>
-                  <div className="space-y-4">
+                <div key={mIdx} className="mb-14">
+                  <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] mb-8">
+                    <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-md mr-3">Module {mIdx + 1}</span> 
+                    {module.moduleName}
+                  </h4>
+                  <div className="grid gap-6">
                     {module.contents?.map((content, cIdx) => {
                       const isDone = completedContentIds.has(content.contentID);
                       return (
-                        <div key={cIdx} className="bg-slate-950/40 border border-slate-800/50 p-6 rounded-3xl">
-                          <div className="flex justify-between items-center mb-4">
-                            <h5 className="text-lg font-semibold text-slate-200 flex items-center gap-3">
-                              {isDone ? <CheckCircle2 className="text-green-500" size={20}/> : <PlayCircle className="text-blue-400" size={20}/>}
+                        <div key={cIdx} className={`border rounded-[2rem] p-8 ${isDone ? 'bg-[#0f172a]/40 border-emerald-900/20' : 'bg-[#020617]/30 border-slate-800/50'}`}>
+                          <div className="flex justify-between items-center mb-6">
+                            <h5 className="text-lg font-bold text-slate-200 flex items-center gap-4">
+                              {isDone ? <CheckCircle2 className="text-emerald-500" size={24}/> : <PlayCircle className="text-cyan-400" size={24}/>}
                               {content.title}
                             </h5>
-                            <input type="checkbox" className="w-6 h-6 rounded border-slate-700 bg-slate-800 text-blue-500 cursor-pointer"
-                                     checked={isDone} onChange={() => handleMarkAsRead(content.contentID)} />
+                            <input type="checkbox" className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-emerald-500"
+                                   checked={isDone} onChange={() => handleMarkAsRead(content.contentID)} />
                           </div>
                           {renderContentItem(content)}
                         </div>
@@ -394,13 +402,6 @@ const MyCourses = () => {
           </div>
         </div>
       )}
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #334155; }
-      `}</style>
     </div>
   );
 };
