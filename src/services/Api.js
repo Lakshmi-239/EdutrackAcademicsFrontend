@@ -313,8 +313,7 @@ deleteQuestion: async (questionId) => {
   getPersonalInfo: async (studentId) => {
     try {
       // Use the passed ID, or fallback to localStorage
-      const id = studentId || localStorage.getItem("studentId");
-      
+      const id = studentId || localStorage.getItem("studentId");      
       // CRITICAL FIX: Use 'id' in the template literal, not 'studentId'
       const response = await axios.get(`${BASE_URL}/profile/Personal-Information/${id}`);
       return response.data;
