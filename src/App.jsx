@@ -14,6 +14,7 @@ import { Toaster } from "react-hot-toast";
 //import CoordinatorDashboard from './pages/CoordinatorDashboard';
 import Layout from "./components/Student/Layout";
 import StudentDashboard from "./pages/StudentDashboard";
+import {StudentProfile} from "./pages/StudentProfile";
 import Notifications from "./pages/Notifications";
 import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
@@ -67,6 +68,7 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
+            <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
@@ -116,5 +118,4 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
     </AuthProvider>
   );
 }
-
 export default App;

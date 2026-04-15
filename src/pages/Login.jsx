@@ -21,33 +21,46 @@ export const Login = () => {
     setLoading(true);
 
     try {
+      // 1. Authenticate with Backend
       const data = await api.login(email, password);
       console.log("LOGIN RESPONSE:", data);
 
-      // 1. Extract the token string safely
+      // 2. Extract the token string safely
       const token = data?.token?.accessToken || data?.accessToken || data?.token;
 
       if (!token || typeof token !== 'string') {
         toast.error("No valid token received");
+        setLoading(false);
         return;
       }
 
-      // 2. Call context login (this updates AuthContext state)
+      // 3. Update AuthContext (Saves 'authToken' to localStorage)
       login(token);
 
-      // 3. Decode locally to handle immediate redirection
+      // 4. Decode JWT for Routing and ID Storage
       let role = "";
       try {
         const decoded = jwtDecode(token);
+        
+        // Match .NET Role Claim URI
         const dotNetRoleClaim = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
-        role = decoded[dotNetRoleClaim] || decoded.role || "";
+        const rawRoles = decoded[dotNetRoleClaim] || decoded.role || "";
+        role = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
+
+        // Store the actual User ID (Matches C#: new Claim("id", user.UserId))
+        const studentId = decoded.id; 
+        if (studentId) {
+          //for matching the format in the backend
+          const finalId = studentId.toString().startsWith('S') ? studentId : `S${studentId.toString().padStart(3, '0')}`;
+          localStorage.setItem('studentId', finalId);
+        }
       } catch (err) {
-        console.error("Local decode error:", err);
+        console.error("Token decoding failed:", err);
       }
 
       toast.success("Login successful!");
 
-      // 4. Structured Navigation
+      // 5. Structured Navigation
       const dashboardRoutes = {
         "Student": "/Studentdashboard",
         "Admin": "/admin",
@@ -58,8 +71,8 @@ export const Login = () => {
       if (dashboardRoutes[role]) {
         navigate(dashboardRoutes[role]);
       } else {
-        console.warn("Unknown or missing role:", role);
-        navigate("/"); // Fallback
+        console.warn("Role not recognized:", role);
+        navigate("/"); // Fallback to Home
       }
 
     } catch (err) {
@@ -103,16 +116,16 @@ export const Login = () => {
           
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-sm" style={{ color: '#22d3ee' }}>
-            Get started with EduTrack !{' '}
+            Get started with EduTrack!{' '}
             <Link to="/register" 
-            style={{color: '#94a3b8'}}
-            className="font-semibold hover:text-cyan-300 transition-colors ml-1">
+              style={{color: '#94a3b8'}}
+              className="font-semibold hover:text-cyan-300 transition-colors ml-1">
               Create account
             </Link>
           </p>
         </div>
 
-        {/* Enterprise Card */}
+        {/* Login Card */}
         <div className="bg-[#0f172a]/70 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-8 shadow-2xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
             
