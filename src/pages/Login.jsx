@@ -39,24 +39,53 @@ export const Login = () => {
 
       // 4. Decode JWT for Routing and ID Storage
       let role = "";
-      try {
-        const decoded = jwtDecode(token);
-        
-        // Match .NET Role Claim URI
-        const dotNetRoleClaim = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
-        const rawRoles = decoded[dotNetRoleClaim] || decoded.role || "";
-        role = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
+     try {
+  const decoded = jwtDecode(token);
 
-        // Store the actual User ID (Matches C#: new Claim("id", user.UserId))
-        const studentId = decoded.id; 
-        if (studentId) {
-          //for matching the format in the backend
-          const finalId = studentId.toString().startsWith('S') ? studentId : `S${studentId.toString().padStart(3, '0')}`;
-          localStorage.setItem('studentId', finalId);
-        }
-      } catch (err) {
-        console.error("Token decoding failed:", err);
-      }
+  // ✅ Role extraction (AS-IS)
+  const dotNetRoleClaim =
+    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+  const rawRoles = decoded[dotNetRoleClaim] || decoded.role || "";
+  role = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
+
+  // ✅ Store UserId ONLY (no guessing)
+  const userId = decoded.id;
+  if (userId) {
+    localStorage.setItem("userId", userId);
+  }
+
+  // ✅ NEW: Fetch role-based domain ID from backend
+  const domainRes = await fetch(
+    `https://localhost:7157/api/profile/domain-id/${userId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!domainRes.ok) {
+    throw new Error("Failed to fetch domain ID");
+  }
+
+  const domainData = await domainRes.json();
+
+  // ✅ Store correct IDs based on role
+  if (domainData.studentId) {
+    localStorage.setItem("studentId", domainData.studentId);
+  }
+
+  if (domainData.instructorId) {
+    localStorage.setItem("instructorId", domainData.instructorId);
+  }
+
+  if (domainData.coordinatorId) {
+    localStorage.setItem("coordinatorId", domainData.coordinatorId);
+  }
+
+} catch (err) {
+  console.error("Token decoding / domain-id fetch failed:", err);
+}
 
       toast.success("Login successful!");
 
