@@ -350,7 +350,7 @@ deleteQuestion: async (questionId) => {
   // Ensure you still have this for the Personal Info section
   updatePersonalInfo: async (studentId, data) => {
     const id = studentId || localStorage.getItem("studentId");
-    const response = await axios.put(`${BASE_URL}/profile/Personal-Information/${id}`, data);
+    const response = await axios.put(`${BASE_URL}/profile/Additional-Information/${id}`, data);
     return response.data;
   },
   changePassword: async (passwordData) => {
