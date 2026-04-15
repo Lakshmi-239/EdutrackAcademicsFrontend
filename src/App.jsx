@@ -18,11 +18,6 @@ import Notifications from "./pages/Notifications";
 import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
 import Attendance from "./pages/Attendance";
-<<<<<<< HEAD
-// import Dashboard from "./pages/Dashboard";
-// import BatchDetails from './pages/BatchDetails';
-// import AdminReport from './pages/AdminReport';
-=======
 //Coordinator 
 import Sidebar from "./components/Coordinator/Sidebar.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -34,8 +29,9 @@ import Instructors from "./pages/Instructors.jsx";
 import Students from "./pages/Students.jsx";
 import Reports from "./pages/Reports.jsx";
 import BatchPage from "./pages/BatchPage.jsx";
-
->>>>>>> dba063437442e1f7e3efd626a55a98502fd98adf
+//instrcutorreport
+import InstructorReportPage from './pages/InstructorReportPage';
+import AdminReportPage from "./pages/AdminReportPage";
 
  function App() {
   return (
@@ -54,6 +50,7 @@ import BatchPage from "./pages/BatchPage.jsx";
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
@@ -62,16 +59,16 @@ import BatchPage from "./pages/BatchPage.jsx";
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
+            <Route path="/admin/performance" element={<AdminReportPage />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
 
+            <Route path="/instructor-performance" element={<InstructorReportPage />} />
+
             {/* PERFORMANCE */}
             {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
-<<<<<<< HEAD
-          {/* <Route path="/admin/report" element={<AdminReport />} /> */}
-=======
           <Route path="/notifications" element={<Notifications />} />
              <Route
               path="/coordinator/*"
@@ -95,7 +92,6 @@ import BatchPage from "./pages/BatchPage.jsx";
               }
             />
 
->>>>>>> dba063437442e1f7e3efd626a55a98502fd98adf
 
           {/* Route WITHOUT Sidebar/Navbar */}
           
