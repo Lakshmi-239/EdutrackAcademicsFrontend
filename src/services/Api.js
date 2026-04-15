@@ -3,6 +3,16 @@ import axios from 'axios';
 // Set the base URL of your .NET backend (check your Properties/launchSettings.json)
 const BASE_URL = 'https://localhost:7157/api'; 
 
+axios.interceptors.request.use((config) => {
+  // CHANGED: Match the key 'authToken' used in your AuthProvider
+  const token = localStorage.getItem('authToken'); 
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => Promise.reject(error));
+
 export const api = {
   getPrograms: async () => {
     try {
@@ -24,7 +34,7 @@ export const api = {
       throw error;
     }
   },
-registerStudent: async (studentData) => {
+  registerStudent: async (studentData) => {
   try {
     const formData = new FormData();
 
@@ -50,8 +60,8 @@ registerStudent: async (studentData) => {
   } catch (error) {
     throw error;
   }
-},
-registerInstructor: async (data) => {
+   },
+  registerInstructor: async (data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
       // If it's the file, it appends as a blob; if it's the date/text, it appends as string
@@ -85,7 +95,64 @@ registerInstructor: async (data) => {
   resetPassword: async (data) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Reset-Password`, data);
     return response.data;
-  }
+  },
+  // 1. Get Personal Info
+  getPersonalInfo: async (studentId) => {
+    try {
+      // Use the passed ID, or fallback to localStorage
+      const id = studentId || localStorage.getItem("studentId");
+      
+      // CRITICAL FIX: Use 'id' in the template literal, not 'studentId'
+      const response = await axios.get(`${BASE_URL}/profile/Personal-Information/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error in getPersonalInfo:", error);
+      throw error;
+    }
+  },
+
+  // 2. Get Program Details
+  getProgramDetails: async (studentId) => {
+    try {
+      const id = studentId || localStorage.getItem("studentId");
+      
+      // CRITICAL FIX: Use 'id' in the template literal, not 'studentId'
+      const response = await axios.get(`${BASE_URL}/profile/Program-Details/${id}`);
+      return response.data?.details || response.data;
+    } catch (error) {
+      console.error("Error in getProgramDetails:", error);
+      throw error;
+    }
+  },
+
+  // 3. Update Additional Info
+  updateAdditionalInfo: async (studentId, data) => {
+    try {
+      const id = studentId || localStorage.getItem("studentId");
+      
+      const response = await axios.put(
+        `${BASE_URL}/profile/Additional-Information/${id}`,
+        data,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating additional info:", error);
+      throw error;
+    }
+  },
+
+  // Ensure you still have this for the Personal Info section
+  updatePersonalInfo: async (studentId, data) => {
+    const id = studentId || localStorage.getItem("studentId");
+    const response = await axios.put(`${BASE_URL}/profile/Personal-Information/${id}`, data);
+    return response.data;
+  },
+  changePassword: async (passwordData) => {
+    // passwordData will look like: { email: "...", newPassword: "..." }
+    const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, passwordData);
+    return response.data;
+   },
 
 };
 
