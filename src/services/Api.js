@@ -308,17 +308,12 @@ deleteQuestion: async (questionId) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Reset-Password`, data);
     return response.data;
   },
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Performance
+
   // 1. Get Personal Info
   getPersonalInfo: async (studentId) => {
     try {
       // Use the passed ID, or fallback to localStorage
-      const id = studentId || localStorage.getItem("studentId");
-      
+      const id = studentId || localStorage.getItem("studentId");      
       // CRITICAL FIX: Use 'id' in the template literal, not 'studentId'
       const response = await axios.get(`${BASE_URL}/profile/Personal-Information/${id}`);
       return response.data;
@@ -370,11 +365,10 @@ deleteQuestion: async (questionId) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, passwordData);
     return response.data;
    },
-<<<<<<< HEAD
->>>>>>> 26a368d9bf1af82ffe100705fff60a9d4f0247ba
-=======
 
->>>>>>> Performance
+
+
+
 
   getInstructorBatches: async (id) => {
     const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);
