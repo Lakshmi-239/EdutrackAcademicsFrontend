@@ -11,7 +11,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const instructorId = "I001"; // Hardcoded as per your current setup
+  const instructorId = "I003"; // Hardcoded as per your current setup
 
   // Fetch batches only when modal is open
   useEffect(() => {

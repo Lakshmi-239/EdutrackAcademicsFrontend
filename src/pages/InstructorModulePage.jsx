@@ -11,6 +11,12 @@ export default function InstructorModulePage() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  const handleReset = () => {
+  // Logic to clear search filters or inputs
+  setSearchTerm(''); 
+  setFilterStatus('All');
+};
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -114,10 +120,51 @@ export default function InstructorModulePage() {
       </div>
 
       {/* --- MODULE CARDS GRID WITH COURSE HEADERS --- */}
-      <div className="row">
+      {/* Removed justify-content-center to keep cards aligned to the left */}
+      <div className="row g-4">
+        {filteredData.length > 0 ? (
+          filteredData.map((course, index) => (
+            <div className="col-12 col-md-6 col-lg-4" key={course.batchId || index}>
+              <CourseCard course={course} />
+            </div>
+          ))
+        ) : (
+          /* --- COMPACT EMPTY STATE --- */
+          <div className="col-12 d-flex justify-content-center mt-4"> {/* Aligned left to match headers */}
+            <div 
+              className="bg-white p-4 rounded-4 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
+              style={{ maxWidth: '400px', minHeight: '280px', borderColor: '#E9EDF7', borderWidth: '2px' }}
+            >
+              <div className="position-relative mb-3 d-flex align-items-center justify-content-center">
+                <div 
+                  className="rounded-circle animate-pulse" 
+                  style={{ width: '80px', height: '80px', backgroundColor: '#F4F7FE', position: 'absolute' }}
+                ></div>
+                <SearchX size={40} className="text-muted opacity-40 position-relative z-1" />
+              </div>
+
+              <h5 className="fw-bold mb-2" style={{ color: '#2B3674' }}>
+                No Matches Found
+              </h5>
+              
+              <p className="text-secondary small mb-4 text-center px-3">
+                Adjust your filters or keywords to find what you're looking for.
+              </p>
+
+              <button 
+                className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" 
+                onClick={handleReset}
+                style={{ backgroundColor: '#4318FF', border: 'none', fontSize: '0.8rem' }}
+              >
+                Clear Search
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* <div className="row">
         {filteredData.length > 0 ? (
           filteredData.map((module, index) => {
-            // Logic to show Course Header only when the Course ID changes
             const showCourseHeader = index === 0 || module.courseId !== filteredData[index - 1].courseId;
             
             return (
@@ -138,7 +185,7 @@ export default function InstructorModulePage() {
             </button>
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

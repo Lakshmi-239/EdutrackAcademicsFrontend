@@ -282,7 +282,7 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
     if (isOpen) {
       const loadCourses = async () => {
         try {
-          const data = await api.getCoursesByInstructor('I001');
+          const data = await api.getCoursesByInstructor('I003');
           setCourses(data.filter(c => c.isActive)); // Only show active batches
         } catch (err) {
           console.error("Failed to load courses", err);

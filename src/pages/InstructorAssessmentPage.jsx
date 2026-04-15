@@ -153,16 +153,58 @@ export default function InstructorAssessmentPage() {
       </div>
 
       {/* --- GRID / LIST SECTION --- */}
-      <div className="row g-3">
+      {/* Removed justify-content-center to keep cards aligned to the left */}
+      <div className="row g-4">
+        {filteredData.length > 0 ? (
+          filteredData.map((course, index) => (
+            <div className="col-12 col-md-6 col-lg-4" key={course.batchId || index}>
+              <CourseCard course={course} />
+            </div>
+          ))
+        ) : (
+          /* --- COMPACT EMPTY STATE --- */
+          <div className="col-12 d-flex justify-content-center mt-4"> {/* Aligned left to match headers */}
+            <div 
+              className="bg-white p-4 rounded-4 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
+              style={{ maxWidth: '400px', minHeight: '280px', borderColor: '#E9EDF7', borderWidth: '2px' }}
+            >
+              <div className="position-relative mb-3 d-flex align-items-center justify-content-center">
+                <div 
+                  className="rounded-circle animate-pulse" 
+                  style={{ width: '80px', height: '80px', backgroundColor: '#F4F7FE', position: 'absolute' }}
+                ></div>
+                <SearchX size={40} className="text-muted opacity-40 position-relative z-1" />
+              </div>
+
+              <h5 className="fw-bold mb-2" style={{ color: '#2B3674' }}>
+                No Matches Found
+              </h5>
+              
+              <p className="text-secondary small mb-4 text-center px-3">
+                Adjust your filters or keywords to find what you're looking for.
+              </p>
+
+              <button 
+                className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" 
+                onClick={handleReset}
+                style={{ backgroundColor: '#4318FF', border: 'none', fontSize: '0.8rem' }}
+              >
+                Clear Search
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* <div className="row g-3">
         {filteredData.length > 0 ? (
           filteredData.map((item, index) => (
             <div className="col-12 hover-lift" key={`${item.assessmentID}-${index}`}>
               <AssessmentCard assessment={item} onRefresh={fetchData} />
             </div>
           ))
-        ) : (
-          /* --- CENTERED EMPTY STATE --- */
-          <div className="col-12 d-flex justify-content-center mt-5">
+        ) : ( */}
+        
+          {/* <div className="col-12 d-flex justify-content-center mt-5">
             <div 
               className="bg-white p-5 rounded-5 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
               style={{ maxWidth: '400px', minHeight: '300px', borderColor: '#D1DBFF', borderWidth: '2px' }}
@@ -190,7 +232,7 @@ export default function InstructorAssessmentPage() {
             </div>
           </div>
         )}
-      </div>
+      </div> */}
 
       <CreateAssessmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onRefresh={fetchData} />
 

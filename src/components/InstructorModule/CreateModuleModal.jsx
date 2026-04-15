@@ -18,7 +18,7 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
     const loadCourses = async () => {
       try {
         setFetchingCourses(true);
-        const data = await api.getCoursesByInstructor('I001');
+        const data = await api.getCoursesByInstructor('I003');
         const activeCourses = data.filter(c => c.isActive);
         setCourses(activeCourses);
         

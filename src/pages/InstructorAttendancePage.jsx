@@ -13,29 +13,66 @@ export default function InstructorAttendancePage() {
   const [isMarkModalOpen, setIsMarkModalOpen] = useState(false);
   const [selectedSummary, setSelectedSummary] = useState(null);
 
-  const fetchSummary = async () => {
-    try {
-      setLoading(true);
-      const [activeRes, deletedRes] = await Promise.all([
-        api.getAttendanceSummary(),
-        api.getDeletedAttendanceSummary()
-      ]);
+  const handleReset = () => {
+  setSearchTerm('');
+};
 
-      const active = (activeRes.data || []).map(i => ({ ...i, isDeleted: false }));
-      const deleted = (deletedRes.data || []).map(i => ({ ...i, isDeleted: true }));
+const fetchSummary = async () => {
+  try {
+    setLoading(true);
+    const [activeRes, deletedRes] = await Promise.all([
+      api.getAttendanceSummary(),
+      api.getDeletedAttendanceSummary()
+    ]);
 
-      const combined = [...active, ...deleted].sort((a, b) => 
-        new Date(b.sessionDate) - new Date(a.sessionDate)
-      );
+    // AXIOS returns data in .data, but if your API method 
+    // already returns .data (like in your api.js), adjust accordingly:
+    const activeData = activeRes.data || activeRes;
+    const deletedData = deletedRes.data || deletedRes;
 
-      setSummaries(combined);
-      setFilteredData(combined);
-    } catch (err) {
-      console.error("Error fetching attendance data:", err);
-    } finally {
-      setLoading(false);
+    const active = (Array.isArray(activeData) ? activeData : []).map(i => ({ ...i, isDeleted: false }));
+    const deleted = (Array.isArray(deletedData) ? deletedData : []).map(i => ({ ...i, isDeleted: true }));
+
+    const combined = [...active, ...deleted].sort((a, b) => 
+      new Date(b.sessionDate) - new Date(a.sessionDate)
+    );
+
+    setSummaries(combined);
+    setFilteredData(combined);
+  } catch (err) {
+    console.error("Error fetching attendance data:", err);
+    // If unauthorized, the token might be expired
+    if (err.response?.status === 401) {
+        window.location.href = "/login";
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // const fetchSummary = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const [activeRes, deletedRes] = await Promise.all([
+  //       api.getAttendanceSummary(),
+  //       api.getDeletedAttendanceSummary()
+  //     ]);
+
+  //     const active = (activeRes.data || []).map(i => ({ ...i, isDeleted: false }));
+  //     const deleted = (deletedRes.data || []).map(i => ({ ...i, isDeleted: true }));
+
+  //     const combined = [...active, ...deleted].sort((a, b) => 
+  //       new Date(b.sessionDate) - new Date(a.sessionDate)
+  //     );
+
+  //     setSummaries(combined);
+  //     setFilteredData(combined);
+  //   } catch (err) {
+  //     console.error("Error fetching attendance data:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   useEffect(() => { fetchSummary(); }, []);
 
@@ -150,45 +187,41 @@ export default function InstructorAttendancePage() {
       </div>
 
       {/* --- GRID OR EMPTY STATE --- */}
+      {/* Removed justify-content-center to keep cards aligned to the left */}
       <div className="row g-4">
         {filteredData.length > 0 ? (
-          filteredData.map((item, idx) => (
-            <div className="col-12 col-md-6 col-lg-4" key={idx}>
-              <AttendanceCard 
-                item={item} 
-                onClick={() => setSelectedSummary(item)} 
-                onDelete={handleBulkDelete}
-                onRestore={handleBulkRestore}
-              />
+          filteredData.map((course, index) => (
+            <div className="col-12 col-md-6 col-lg-4" key={course.batchId || index}>
+              <CourseCard course={course} />
             </div>
           ))
         ) : (
-          /* --- CENTERED EMPTY STATE (BLUE ACCENTS) --- */
-          <div className="col-12 d-flex justify-content-center mt-4">
+          /* --- COMPACT EMPTY STATE --- */
+          <div className="col-12 d-flex justify-content-center mt-4"> {/* Aligned left to match headers */}
             <div 
-              className="bg-white p-5 rounded-5 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
-              style={{ maxWidth: '450px', minHeight: '320px', borderColor: '#E9EDF7', borderWidth: '2px' }}
+              className="bg-white p-4 rounded-4 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
+              style={{ maxWidth: '400px', minHeight: '280px', borderColor: '#E9EDF7', borderWidth: '2px' }}
             >
-              <div className="position-relative mb-4 d-flex align-items-center justify-content-center">
+              <div className="position-relative mb-3 d-flex align-items-center justify-content-center">
                 <div 
                   className="rounded-circle animate-pulse" 
-                  style={{ width: '100px', height: '100px', backgroundColor: '#F4F7FE', position: 'absolute' }}
+                  style={{ width: '80px', height: '80px', backgroundColor: '#F4F7FE', position: 'absolute' }}
                 ></div>
-                <SearchX size={50} className="text-primary opacity-40 position-relative z-1" />
+                <SearchX size={40} className="text-muted opacity-40 position-relative z-1" />
               </div>
 
-              <h4 className="fw-bold text-center" style={{ color: '#1B2559', letterSpacing: '-0.5px' }}>
-                No Attendance Found
-              </h4>
+              <h5 className="fw-bold mb-2" style={{ color: '#2B3674' }}>
+                No Matches Found
+              </h5>
               
-              <p className="text-secondary small mb-4 text-center px-4">
-                We couldn't find any records matching <strong>"{searchTerm}"</strong>. Try a different date or batch ID.
+              <p className="text-secondary small mb-4 text-center px-3">
+                Adjust your filters or keywords to find what you're looking for.
               </p>
 
               <button 
-                className="btn rounded-pill px-5 py-2 fw-bold text-white shadow-sm border-0" 
-                onClick={() => setSearchTerm('')}
-                style={{ backgroundColor: '#4318FF' }}
+                className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" 
+                onClick={handleReset}
+                style={{ backgroundColor: '#4318FF', border: 'none', fontSize: '0.8rem' }}
               >
                 Clear Search
               </button>
@@ -226,4 +259,5 @@ export default function InstructorAttendancePage() {
       `}</style>
     </div>
   );
+  
 }
