@@ -1,24 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/Api';
 import toast from 'react-hot-toast';
-
 import { PersonalInfoSection } from '../components/Student/PersonalInfoSection';
 import { ProgramDetailsSection } from '../components/Student/ProgramDetailsSection';
 import { AdditionalInfoSection } from '../components/Student/AdditionalInfoSection';
-import { PhotoUploadSection } from '../components/Student/PhotoUploadSection';
 import { AccountSettingsSection } from '../components/Student/AccountSettingsSection';
-
 import {
   User,
   GraduationCap,
   FileText,
-  Camera,
   Settings,
   Menu,
   X,
-  LogOut,
-  LayoutDashboard
+  ShieldCheck,
+  AlertCircle,
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 
 export const StudentProfile = () => {
@@ -27,7 +25,6 @@ export const StudentProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const isPreview = window.location.pathname.includes('/preview/');
 
   useEffect(() => {
@@ -40,30 +37,29 @@ export const StudentProfile = () => {
       const studentId = localStorage.getItem('studentId');
 
       if (!studentId && !isPreview) {
-        toast.error("Session expired. Please login again.");
+        toast.error('Session expired. Please login again.');
         logout();
         return;
       }
-      // We call the new separate services in parallel
-      const [personalData, programData] = await Promise.all([
+
+      const [personalData, programData, additionalData] = await Promise.all([
         api.getPersonalInfo(studentId),
         api.getProgramDetails(studentId),
-        api.updateAdditionalInfo(studentId)
+        api.getAdditionalInfo(studentId),
       ]);
 
-      // Reconstruct the profile state so child components don't break
       setProfile({
-        personalInfo: personalData,
+        personalInfo: {
+          ...personalData,
+          email: personalData?.email || personalData?.Email || '',
+        },
         programDetails: programData.details || programData,
-        // Mapping these from personalData if that's where they reside in your DB
-        additionalInfo: personalData.additionalInfo || {},
-        
+        additionalInfo: additionalData || {},
+        photoUrl: personalData.photoUrl || null,
       });
-
     } catch (error) {
       console.error('Failed to sync dashboard profile:', error);
-      toast.error("Could not load profile data.");
-      
+      toast.error('Could not load profile data.');
       if (!isPreview && (error.response?.status === 401 || !localStorage.getItem('studentId'))) {
         logout();
       }
@@ -72,156 +68,157 @@ export const StudentProfile = () => {
     }
   };
 
-  const handleProfileUpdate = () => {
-    loadProfile();
-  };
-
-  const handleLogout = () => {
-    if (isPreview) {
-      window.location.href = '/';
-    } else {
-      logout();
-    }
-  };
+  const handleProfileUpdate = () => loadProfile();
 
   const sidebarItems = [
-    { id: 'profile', label: 'Personal Info', icon: User, color: 'text-blue-500' },
-    { id: 'program', label: 'Program Details', icon: GraduationCap, color: 'text-indigo-500' },
-    { id: 'additional', label: 'Additional Info', icon: FileText, color: 'text-emerald-500' },
-    { id: 'settings', label: 'Account Settings', icon: Settings, color: 'text-slate-500' },
+    { id: 'profile', label: 'Personal Info', icon: User },
+    { id: 'program', label: 'Program Details', icon: GraduationCap },
+    { id: 'additional', label: 'Additional Info', icon: FileText },
+    { id: 'settings', label: 'Account Settings', icon: Settings },
   ];
+
+  const sectionMeta = useMemo(() => {
+    const metas = {
+      program: { title: 'Program Details', subtitle: 'Academic program and curriculum.', icon: GraduationCap },
+      additional: { title: 'Additional Info', subtitle: 'Supporting registration data.', icon: FileText },
+      settings: { title: 'Account Settings', subtitle: 'Security and preferences.', icon: Settings },
+      profile: { title: 'Personal Information', subtitle: 'Official student record details.', icon: User },
+    };
+    return metas[activeSection] || metas.profile;
+  }, [activeSection]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-slate-500 font-bold animate-pulse">Syncing EduTrack Profile...</p>
-        </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-teal-500 animate-spin" />
       </div>
     );
   }
 
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-600 mb-4">Unable to load profile data.</p>
-          <button onClick={() => window.location.reload()} className="text-indigo-600 font-bold underline">Try Refreshing</button>
-        </div>
-      </div>
-    );
-  }
+  const firstLetter = profile?.personalInfo?.fullName?.charAt(0) || '?';
+  const SectionIcon = sectionMeta.icon;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          <aside className={`
-            fixed lg:relative inset-y-0 left-0 w-72 lg:w-64 z-40
-            transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-            transition-transform duration-300 ease-in-out
-            bg-white lg:bg-transparent lg:block
-          `}>
-            <div className="h-full p-6 lg:p-0">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex flex-col items-center text-center pb-6 border-b border-slate-100">
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-slate-50 bg-slate-100 mb-4">
-                    {profile.photoUrl ? (
-                      <img src={profile.photoUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-600 font-bold text-2xl">
-                        {profile?.personalInfo?.fullName?.charAt(0) || "?"}
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-sm font-black text-slate-900 truncate w-full">
-                    {profile?.personalInfo?.fullName || "Student"}
-                  </h3>
-                </div>
-
-                <nav className="mt-6 space-y-1">
-                  {sidebarItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeSection === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveSection(item.id);
-                          setIsSidebarOpen(false);
-                        }}
-                        className={`
-                          w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
-                          ${isActive 
-                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
-                            : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
-                          }
-                        `}
-                      >
-                        <Icon size={18} className={isActive ? 'text-white' : item.color} />
-                        <span className="text-sm font-bold">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </div>
-            </div>
-          </aside>
-
-          <main className="flex-1 min-w-0">
-            {activeSection === 'profile' && (
-              <PersonalInfoSection 
-                personalInfo={profile.personalInfo} 
-                onUpdate={handleProfileUpdate} 
-              />
-            )}
-            {activeSection === 'program' && (
-              <ProgramDetailsSection 
-                programDetails={profile.programDetails} 
-              />
-            )}
-            {activeSection === 'additional' && (
-              <AdditionalInfoSection 
-                additionalInfo={profile.additionalInfo} 
-                onUpdate={handleProfileUpdate} 
-              />
-            )}
-            {activeSection === 'photo' && (
-              <PhotoUploadSection 
-                currentPhotoUrl={profile.photoUrl} 
-                onUpdate={handleProfileUpdate} 
-              />
-            )}
-            {activeSection === 'settings' && (
-              <AccountSettingsSection 
-                email={profile.personalInfo?.email} 
-                emailNotifications={profile.emailNotifications} 
-                onUpdate={handleProfileUpdate} 
-              />
-            )}
-          </main>
-        </div>
+    <div className="min-h-screen bg-slate-950 text-slate-200 pb-12">
+      {/* Background Glows */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-500/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/10 blur-[120px] rounded-full" />
       </div>
 
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
-      )}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 lg:pt-12">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* ===================== SIDEBAR ===================== */}
+          <aside
+            className={`
+              fixed lg:sticky lg:top-8 inset-y-0 left-0 w-72 z-50
+              transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+              transition-transform duration-300 ease-in-out
+              bg-slate-900 lg:bg-slate-900/40 backdrop-blur-xl
+              border-r lg:border border-slate-800 lg:rounded-3xl
+              p-6 flex flex-col h-full lg:h-fit
+            `}
+          >
+            <div className="flex flex-col items-center text-center pb-8 border-b border-slate-800/60">
+              <div className="relative w-24 h-24 mb-4">
+                <div className="absolute inset-0 bg-gradient-to-tr from-teal-400 to-emerald-500 rounded-2xl rotate-3 opacity-20 animate-pulse" />
+                <div className="relative w-full h-full rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-3xl font-bold text-teal-400 shadow-2xl">
+                  {firstLetter}
+                </div>
+              </div>
+              <h3 className="font-bold text-white text-lg truncate w-full px-2">
+                {profile?.personalInfo?.fullName || 'Student'}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-2 px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full">
+                <ShieldCheck size={14} className="text-teal-400" />
+                <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Verified</span>
+              </div>
+            </div>
+
+            <nav className="mt-8 space-y-2">
+              {sidebarItems.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => { setActiveSection(id); setIsSidebarOpen(false); }}
+                  className={`
+                    w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all group
+                    ${activeSection === id 
+                      ? 'bg-teal-500/10 text-white border border-teal-500/20 shadow-[0_0_20px_rgba(20,184,166,0.05)]' 
+                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={20} className={activeSection === id ? 'text-teal-400' : 'group-hover:text-slate-300'} />
+                    <span className="text-sm font-semibold">{label}</span>
+                  </div>
+                  {activeSection === id && <ChevronRight size={16} className="text-teal-500/50" />}
+                </button>
+              ))}
+            </nav>
+
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden mt-auto flex items-center justify-center gap-2 p-4 text-slate-400 border border-slate-800 rounded-xl"
+            >
+              <X size={18} /> Close Menu
+            </button>
+          </aside>
+
+          {/* ===================== MAIN WORKSPACE ===================== */}
+          <main className="flex-1 min-w-0">
+            {/* Mobile Header Toggle */}
+            <div className="lg:hidden flex items-center justify-between mb-6 p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-teal-400 font-bold">
+                  {firstLetter}
+                </div>
+                <h2 className="font-bold text-white uppercase tracking-wider text-sm">Workspace</h2>
+              </div>
+              <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-teal-400">
+                <Menu size={24} />
+              </button>
+            </div>
+
+            {/* Main Content Card */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-[2.5rem] overflow-hidden backdrop-blur-md shadow-2xl">
+              <div className="p-8 lg:p-12 border-b border-slate-800/50 bg-gradient-to-b from-slate-900/50 to-transparent">
+                <div className="flex flex-col md:flex-row md:items-center gap-6">
+                  <div className="w-16 h-16 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-center text-teal-400 shadow-inner">
+                    <SectionIcon size={32} />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black text-white tracking-tight leading-none">
+                      {sectionMeta.title}
+                    </h1>
+                    <p className="text-slate-400 mt-2 text-lg font-medium">{sectionMeta.subtitle}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 lg:p-12">
+                <div className="min-h-[400px]">
+                  {activeSection === 'profile' && (
+                    <PersonalInfoSection personalInfo={profile.personalInfo} onUpdate={handleProfileUpdate} />
+                  )}
+                  {activeSection === 'program' && (
+                    <ProgramDetailsSection programDetails={profile.programDetails} />
+                  )}
+                  {activeSection === 'additional' && (
+                    <AdditionalInfoSection additionalInfo={profile.additionalInfo} onUpdate={handleProfileUpdate} />
+                  )}
+                  {activeSection === 'settings' && (
+                    <AccountSettingsSection email={profile.personalInfo.email} onUpdate={handleProfileUpdate} />
+                  )}
+                </div>
+
+                
+              </div>
+            </div>
+          </main>
+
+        </div>
+      </div>
     </div>
   );
 };

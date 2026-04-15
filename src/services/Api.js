@@ -301,11 +301,6 @@ deleteQuestion: async (questionId) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Reset-Password`, data);
     return response.data;
   },
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Performance
   // 1. Get Personal Info
   getPersonalInfo: async (studentId) => {
     try {
@@ -355,19 +350,32 @@ deleteQuestion: async (questionId) => {
   // Ensure you still have this for the Personal Info section
   updatePersonalInfo: async (studentId, data) => {
     const id = studentId || localStorage.getItem("studentId");
-    const response = await axios.put(`${BASE_URL}/profile/Additional-Information/${id}`, data);
+    const response = await axios.put(`${BASE_URL}/profile/Additional-Information/${id}`, data,
+      {
+          headers: {
+                'Content-Type': 'application/json'
+            }
+      });
+    return response.data;
+  },
+  getAdditionalInfo: async (studentId) => {
+    const id = studentId || localStorage.getItem("studentId");
+    const response = await axios.get(`${BASE_URL}/profile/GetAdditional-Information/${id}`);
     return response.data;
   },
   changePassword: async (passwordData) => {
-    // passwordData will look like: { email: "...", newPassword: "..." }
-    const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, passwordData);
-    return response.data;
-   },
-<<<<<<< HEAD
->>>>>>> 26a368d9bf1af82ffe100705fff60a9d4f0247ba
-=======
+  const password = passwordData.NewPassword || passwordData.newPassword;
 
->>>>>>> Performance
+  const formattedData = {
+    Email: passwordData.Email || passwordData.email || '', // safe fallback
+    NewPassword: password
+  };
+
+  console.log("Sending to backend:", formattedData);
+
+  const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, formattedData);
+  return response.data;
+},
 
   getInstructorBatches: async (id) => {
     const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);

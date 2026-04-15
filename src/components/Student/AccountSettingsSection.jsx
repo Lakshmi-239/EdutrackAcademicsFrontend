@@ -14,7 +14,6 @@ import {
 import toast from 'react-hot-toast';
 
 export const AccountSettingsSection = ({ email }) => {
-  // Password State
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -44,21 +43,23 @@ export const AccountSettingsSection = ({ email }) => {
     try {
       setIsChangingPassword(true);
       
-      // 2. Map to your ResetPasswordDto
+      // 2. Map to ResetPasswordDto (matches your C# class)
       const passwordData = {
-        email: email, 
-        newPassword: newPassword 
+        Email: email, // This is overwritten by backend for security, but required for DTO binding
+        NewPassword: newPassword 
       };
 
-      // 3. Call your POST method
-      await api.changePassword(passwordData);
+      // 3. Call POST method
+      const response = await api.changePassword(passwordData);
       
-      setStatus({ type: 'success', message: 'Password updated successfully!' });
-      toast.success("Security updated.");
+      setStatus({ type: 'success', message: response.message || 'Password updated successfully!' });
+      toast.success("Security keys updated.");
+      
+      // Reset form
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      // Catching the BadRequest(new { Message = "..." }) from your C# controller
+      // Handling the BadRequest response from your controller
       const errMsg = err.response?.data?.message || 'Update failed. Please try again.';
       setStatus({ type: 'error', message: errMsg });
       toast.error(errMsg);
@@ -91,7 +92,6 @@ export const AccountSettingsSection = ({ email }) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Account Security</h2>
@@ -103,30 +103,26 @@ export const AccountSettingsSection = ({ email }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Account Info Panel */}
         <div className="lg:col-span-1">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-6">
               <Settings2 size={18} className="text-indigo-600" /> Account Context
             </h3>
-            
             <div className="space-y-6">
               <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Session</span>
-                <p className="text-sm font-semibold text-slate-700 truncate">{email}</p>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Email</span>
+                <p className="text-sm font-semibold text-slate-700 truncate">{email || 'Loading...'}</p>
               </div>
-
-              <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="pt-4 border-t border-slate-100">
                 <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-100">
                   <CheckCircle size={14} />
-                  <span className="text-[10px] font-bold uppercase">Status: Verified</span>
+                  <span className="text-[10px] font-bold uppercase">Identity Verified</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Password Form Panel */}
         <div className="lg:col-span-2">
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
@@ -166,30 +162,24 @@ export const AccountSettingsSection = ({ email }) => {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    type="submit"
-                    disabled={isChangingPassword}
-                    className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-slate-200"
-                  >
-                    {isChangingPassword ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Lock size={18} />
-                        Update Security Key
-                        <ArrowRight size={16} className="ml-1 opacity-50" />
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-slate-200"
+                >
+                  {isChangingPassword ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Lock size={18} />
+                      Update Security Key
+                      <ArrowRight size={16} className="ml-1 opacity-50" />
+                    </>
+                  )}
+                </button>
               </form>
             </div>
           </div>
-          
-          <p className="mt-4 text-xs text-slate-400 text-center italic">
-            Note: Changing your password affects all connected EduTrack services.
-          </p>
         </div>
       </div>
     </div>
