@@ -44,17 +44,17 @@ export const StudentProfile = () => {
         logout();
         return;
       }
-
       // We call the new separate services in parallel
       const [personalData, programData] = await Promise.all([
         api.getPersonalInfo(studentId),
-        api.getProgramDetails(studentId)
+        api.getProgramDetails(studentId),
+        api.updateAdditionalInfo(studentId)
       ]);
 
       // Reconstruct the profile state so child components don't break
       setProfile({
         personalInfo: personalData,
-        programDetails: programData,
+        programDetails: programData.details || programData,
         // Mapping these from personalData if that's where they reside in your DB
         additionalInfo: personalData.additionalInfo || {},
         
@@ -125,7 +125,7 @@ export const StudentProfile = () => {
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
-          
+
         </div>
       </header>
 

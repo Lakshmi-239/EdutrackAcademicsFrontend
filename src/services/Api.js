@@ -170,13 +170,6 @@ getAllModules: async () => {
     // This matches the URL in your Swagger screenshot
     return await axios.get(`${BASE_URL}/instructorModuleContent/modules`);
   },
-
-
-
-
-
-
-
   updateContent: (id, data) => axios.put(`${BASE_URL}/instructorModuleContent/content/${id}`, data),  //** 
   //  getModulesByCourseId: (courseId) => axios.get(`${BASE_URL}/instructorModuleContent/modules/${courseId}`),   // **
    updateModule: (moduleId, dto) => axios.put(`${BASE_URL}/instructorModuleContent/module/${moduleId}`, dto),  //** 
