@@ -1,125 +1,169 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, GraduationCap, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/Api';
 import toast from 'react-hot-toast';
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
+import Swal from 'sweetalert2';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
 
     try {
-    const data = await api.login(email, password);
-    console.log("LOGIN RESPONSE:", data);
- 
-    const token = data?.token?.accessToken || data?.accessToken;
- 
-    if (!token) {
-      toast.error("No token received");
-      return;
-    }
- 
-    login(token);
- 
-    let role = "";
- 
-    try {
-      const decoded = jwtDecode(token);
-      console.log("DECODED:", decoded);
- 
-      role =
-        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]||"";
+      const data = await api.login(email, password);
+      console.log("LOGIN RESPONSE:", data);
+
+      // 1. Extract the token string safely
+      const token = data?.token?.accessToken || data?.accessToken || data?.token;
+
+      if (!token || typeof token !== 'string') {
+        toast.error("No valid token received");
+        return;
+      }
+
+      // 2. Call context login (this updates AuthContext state)
+      login(token);
+
+      // 3. Decode locally to handle immediate redirection
+      let role = "";
+      try {
+        const decoded = jwtDecode(token);
+        const dotNetRoleClaim = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        role = decoded[dotNetRoleClaim] || decoded.role || "";
+      } catch (err) {
+        console.error("Local decode error:", err);
+      }
+
+      toast.success("Login successful!");
+
+      // 4. Structured Navigation
+      const dashboardRoutes = {
+        "Student": "/Studentdashboard",
+        "Admin": "/admin",
+        "Instructor": "/InstructorDashboard",
+        "Coordinator": "/coordinator/dashboard"
+      };
+
+      if (dashboardRoutes[role]) {
+        navigate(dashboardRoutes[role]);
+      } else {
+        console.warn("Unknown or missing role:", role);
+        navigate("/"); // Fallback
+      }
+
     } catch (err) {
-      console.log("Decode error:", err);
+      console.error("Login Error:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Authentication Failed',
+        text: err.response?.data?.message || 'Invalid credentials.',
+        background: '#0f172a',
+        color: '#f1f5f9',
+        confirmButtonColor: '#22d3ee', 
+      });
+    } finally {
+      setLoading(false);
     }
- 
-    toast.success("Login successful!");
- 
-    if (role === "Student") {
-      navigate("/Studentdashboard");
-    } else if (role === "Admin") {
-      navigate("/admin");
-    } else if (role === "Instructor") {
-      navigate("/instructor");
-    } else  if(role==="Coordinator"){
-      
-      navigate("/coordinator/dashboard");
-    }
-    else{
-      console.log("unknown role",role);
-    }
- 
-  } catch (err) {
-    console.log(err);
-    toast.error("Login failed");
-  } finally {
-    setLoading(false); // ✅ ensures loading stops ALWAYS
-  }
-};
- 
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full py-12">
-        {/* Header */}
+    <div className="h-screen w-full bg-slate-950 flex flex-col items-center justify-center px-6 overflow-hidden relative">
+      
+      {/* Background Decorative Shimmers */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-indigo-600/20 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[45%] h-[45%] bg-cyan-600/20 blur-[120px] rounded-full" />
+      </div>
+
+      <div className="w-full max-w-[420px] z-10">
+        
+        {/* Brand Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">EduTrack</span>
-          </Link>
-          <h2 className="text-2xl font-bold text-gray-900">Sign In</h2>
+          <div className="flex justify-center mb-4">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="relative w-12 h-12 bg-slate-900 border border-white/10 rounded-xl flex items-center justify-center transition-all hover:border-cyan-400/50">
+                <GraduationCap className="w-7 h-7 text-cyan-400" />
+              </div>
+              <span className="text-2xl font-bold text-white tracking-tight">
+                Edu<span className="text-cyan-400">Track</span>
+              </span>
+            </Link>
+          </div>
+          
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-sm" style={{ color: '#22d3ee' }}>
+            Get started with EduTrack !{' '}
+            <Link to="/register" 
+            style={{color: '#94a3b8'}}
+            className="font-semibold hover:text-cyan-300 transition-colors ml-1">
+              Create account
+            </Link>
+          </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+        {/* Enterprise Card */}
+        <div className="bg-[#0f172a]/70 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-8 shadow-2xl">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            
+            {/* Email Field */}
+            <div className="space-y-2" style={{ textAlign: 'left' }}>
+              <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-1">
+                Email Address
+              </label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none"
-                  placeholder="Enter your email"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-12 pr-4 py-3 text-slate-200 outline-none focus:border-cyan-500/50 transition-all"
+                  placeholder="name@company.com"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            {/* Password Field */}
+            <div className="space-y-2" style={{ textAlign: 'left' }}>
+              <div className="flex justify-between px-1">
+                <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  Password
+                </label>
+                <Link 
+                  to="/forgot-password" 
+                  style={{color: '#94a3b8'}} 
+                  className="text-[10px] font-bold hover:text-cyan-400 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-12 pr-12 py-3 text-slate-200 outline-none focus:border-cyan-500/50 transition-all"
                   placeholder="••••••••"
                 />
                 <button
-                  type="button" // CRITICAL: prevents submitting form
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-400"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
@@ -127,26 +171,12 @@ export const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-violet-600 text-white rounded-lg font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-[0.98] transition-all"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? "Verifying..." : "Sign In"}
+              {!loading && <ChevronRight className="w-4 h-4" />}
             </button>
           </form>
-
-          {/* Bottom Links */}
-          <div className="mt-8 space-y-3 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-violet-600 font-semibold hover:underline">
-                Register
-              </Link>
-            </p>
-            <p className="text-sm">
-              <Link to="/forgot-password" title="Forgot Password" className="text-gray-500 hover:text-violet-600 transition-colors">
-                Forgot your password?
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>
