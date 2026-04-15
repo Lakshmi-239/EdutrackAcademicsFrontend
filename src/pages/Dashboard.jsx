@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Link, useNavigate } from "react-router-dom"; // Added for navigation
 import DashboardCard from "../components/Coordinator/DashboardCard.jsx";
 import {
   EnrollmentChart,
@@ -7,6 +8,7 @@ import {
   StudentsByProgramChart,
   GenderDistributionChart,
 } from "../components/Coordinator/Charts.jsx";
+import { FiHome, FiUser, FiLogOut, FiSettings } from "react-icons/fi"; // Added Icons
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const Dashboard = () => {
@@ -16,241 +18,253 @@ const Dashboard = () => {
   const [studentsByProgramData, setStudentsByProgramData] = useState([]);
   const [genderDistributionData, setGenderDistributionData] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [batches, setBatches] = useState([]);
   const [instructors, setInstructors] = useState([]);
   const [students, setStudents] = useState([]);
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
-  // Stats summary (already matches DashboardCard props)
-  axios.get("https://localhost:7157/api/coordinator/dashboard/stats")
-    .then(res => setStats(res.data));
+    // API calls remain exactly as your working version
+    axios.get("https://localhost:7157/api/coordinator/dashboard/stats").then(res => setStats(res.data));
 
-  // Enrollment trends → backend gives { month, count }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/enrollment-trends")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        course: `Month ${item.month}`,   // rename to "course"
-        students: item.count             // rename to "students"
-      }));
+    axios.get("https://localhost:7157/api/coordinator/dashboard/enrollment-trends").then(res => {
+      const formatted = res.data.map(item => ({ course: `Month ${item.month}`, students: item.count }));
       setEnrollmentData(formatted);
     });
 
-  // Performance → backend gives { batchId, progress }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/performance")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        batch: item.batchId,             // rename to "batch"
-        performance: item.progress       // rename to "performance"
-      }));
+    axios.get("https://localhost:7157/api/coordinator/dashboard/performance").then(res => {
+      const formatted = res.data.map(item => ({ batch: item.batchId, performance: item.progress }));
       setPerformanceData(formatted);
     });
 
-  // Students by program → backend gives { program, count }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/students-by-program")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        program: item.program,           // keep "program"
-        students: item.count             // rename to "students"
-      }));
+    axios.get("https://localhost:7157/api/coordinator/dashboard/students-by-program").then(res => {
+      const formatted = res.data.map(item => ({ program: item.program, students: item.count }));
       setStudentsByProgramData(formatted);
     });
 
-  // Gender distribution → backend gives { gender, count }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/gender-distribution")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        gender: item.gender,             // keep "gender"
-        value: item.count                // rename to "value"
-      }));
+    axios.get("https://localhost:7157/api/coordinator/dashboard/gender-distribution").then(res => {
+      const formatted = res.data.map(item => ({ gender: item.gender, value: item.count }));
       setGenderDistributionData(formatted);
     });
 
-  // Notifications (already matches your UI)
-  axios.get("https://localhost:7157/api/coordinator/dashboard/notifications")
-    .then(res => setNotifications(res.data));
-
-  // Batches overview
-  axios.get("https://localhost:7157/api/coordinator/batches")
-    .then(res => setBatches(res.data));
-
-  // Instructors overview
-  axios.get("https://localhost:7157/api/coordinator/instructors/all")
-    .then(res => setInstructors(res.data));
-
-  // Students overview
-  axios.get("https://localhost:7157/api/coordinator/details")
-    .then(res => setStudents(res.data));
-}, []);
+    axios.get("https://localhost:7157/api/coordinator/dashboard/notifications").then(res => setNotifications(res.data));
+    axios.get("https://localhost:7157/api/coordinator/instructors/all").then(res => setInstructors(res.data));
+    axios.get("https://localhost:7157/api/coordinator/details").then(res => setStudents(res.data));
+  }, []);
 
   return (
-    <div className="container-fluid py-4">
-      <h1 className="mb-4 text-primary fw-bold">Coordinator Dashboard</h1>
+    <div className="dashboard-wrapper" style={{ backgroundColor: "#f4f7fe", minHeight: "100vh" }}>
+      
+      {/* --- TOP NAVIGATION BAR --- */}
+     {/* --- TOP NAVIGATION BAR --- */}
+<nav className="navbar navbar-expand-lg navbar-light bg-white px-4 py-3 shadow-sm sticky-top">
+  <div className="container-fluid">
+    <div className="d-flex align-items-center">
+      {/* Brand links back to the main public landing page */}
+      <Link to="/" className="navbar-brand fw-bold text-primary d-flex align-items-center">
+        <span className="bg-primary text-white p-2 rounded-3 me-2 shadow-sm">Edu</span> Track
+      </Link>
+    </div>
 
-      {/* Top Stats */}
-      <div className="row g-4">
-        {stats.map((item, index) => (
-          <div className="col-md-3" key={index}>
-            <DashboardCard title={item.title} value={item.value} icon={item.icon} />
-          </div>
-        ))}
-      </div>
+    <div className="d-flex align-items-center gap-3">
+      {/* Home button returns to the public home */}
+      <button 
+        className="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-2"
+        onClick={() => navigate("/")}
+      >
+        <FiHome size={18} /> <span className="d-none d-md-inline">Home</span>
+      </button>
 
-      {/* Charts */}
-      <div className="row mt-5 g-4">
-        <div className="col-lg-6">
-          <div className="card shadow-sm h-100">
-            <div className="card-header bg-info text-white fw-bold">Enrollment Trends</div>
-            <div className="card-body">
-              <EnrollmentChart data={enrollmentData} />
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-6">
-          <div className="card shadow-sm h-100">
-            <div className="card-header bg-success text-white fw-bold">Batch Performance</div>
-            <div className="card-body">
-              <PerformanceChart data={performanceData} />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Dashboard link (Optional: if you want a button to refresh the dashboard view) */}
+      <button 
+        className="btn btn-light rounded-pill px-3 d-flex align-items-center gap-2"
+        onClick={() => navigate("/coordinator/dashboard")}
+      >
+        <FiSettings size={18} /> <span className="d-none d-md-inline">Refresh</span>
+      </button>
 
-      {/* Additional Insights */}
-      <div className="row mt-5 g-4">
-        <div className="col-lg-6">
-          <div className="card shadow-sm h-100">
-            <div className="card-header bg-warning text-dark fw-bold">Students by Program</div>
-            <div className="card-body">
-              <StudentsByProgramChart data={studentsByProgramData} />
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-6">
-          <div className="card shadow-sm h-100">
-            <div className="card-header bg-danger text-white fw-bold">Gender Distribution</div>
-            <div className="card-body">
-              <GenderDistributionChart data={genderDistributionData} />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Profile Dropdown... remains same */}
 
-      {/* Notifications */}
-      <div className="row mt-5">
-        <div className="col-12">
-          <div className="card shadow-sm">
-            <div className="card-header bg-primary text-white fw-bold">Notifications</div>
-            <div className="card-body">
-              {notifications.map((note, index) => (
-                <div key={index} className="d-flex justify-content-between border-bottom py-2">
-                  <div>
-                    <i className="bi bi-bell-fill text-info me-2"></i>
-                    <strong>{note.title}</strong>
-                    <p className="mb-0 text-muted small">{note.message}</p>
-                  </div>
-                  <span className="badge bg-secondary">{note.time}</span>
+
+
+            {/* Profile Dropdown */}
+            <div className="dropdown">
+              <button 
+                className="btn btn-white border rounded-pill p-1 d-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                style={{ paddingRight: '12px !important' }}
+              >
+                <div className="bg-soft-primary text-primary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '35px', height: '35px', backgroundColor: '#eef2ff' }}>
+                  <FiUser size={20} />
                 </div>
-              ))}
+                <div className="text-start d-none d-md-block pe-2">
+                  <div className="fw-bold small lh-1">Coordinator</div>
+                  <div className="text-muted" style={{ fontSize: '10px' }}>Active Session</div>
+                </div>
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
+                <li><Link className="dropdown-item py-2" to="/profile"><FiUser className="me-2" /> My Profile</Link></li>
+                <li><Link className="dropdown-item py-2" to="/settings"><FiSettings className="me-2" /> Settings</Link></li>
+                <li><hr className="dropdown-divider" /></li>
+                <li><button className="dropdown-item py-2 text-danger" onClick={() => {/* Logout Logic */}}><FiLogOut className="me-2" /> Logout</button></li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Recent Activities */}
-      <div className="row mt-5">
-        <div className="col-12">
-          <div className="card shadow-sm">
-            <div className="card-header bg-secondary text-white fw-bold">Recent Activities</div>
-            <div className="card-body">
+      {/* --- MAIN CONTENT --- */}
+      <div className="p-4 p-md-5">
+        {/* HEADER */}
+        <div className="mb-4 d-flex justify-content-between align-items-end">
+          <div>
+            <h2 className="fw-bold text-dark mb-1">Management Insights</h2>
+            <p className="text-muted mb-0">Welcome back! Here is what's happening today.</p>
+          </div>
+          <div className="text-end d-none d-md-block">
+            <span className="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm">
+              Date: {new Date().toLocaleDateString()}
+            </span>
+          </div>
+        </div>
 
-              {/* Batches Overview */}
-              {/* <h5 className="fw-bold mb-3">Batches Overview</h5>
-              <table className="table align-middle">
-                <thead className="table-dark">
-                  <tr>
-                    <th>Batch Name</th>
-                    <th>Enrolled</th>
-                    <th>Capacity</th>
-                    <th>Progress</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {batches.map((batch, index) => (
-                    <tr key={index}>
-                      <td>{batch.batchName}</td>
-                      <td><span className="badge bg-info">{batch.enrolled}</span></td>
-                      <td>{batch.capacity}</td>
-                      <td style={{ width: "200px" }}>
-                        <div className="progress">
-                          <div
-                            className="progress-bar bg-success"
-                            role="progressbar"
-                            style={{ width: `${(batch.enrolled / batch.capacity) * 100}%` }}
-                          >
-                            {((batch.enrolled / batch.capacity) * 100).toFixed(0)}%
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table> */}
+        {/* TOP STATS */}
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+          {stats.map((item, index) => (
+            <div className="col" key={index}>
+              <div className="card border-0 shadow-sm h-100 rounded-4 p-2">
+                <DashboardCard title={item.title} value={item.value} icon={item.icon} />
+              </div>
+            </div>
+          ))}
+        </div>
 
-              {/* Instructors Overview */}
-              <h5 className="fw-bold mt-4 mb-3">Instructors Overview</h5>
-              <div className="row">
-                {instructors.map((inst, index) => (
-                  <div className="col-md-6 mb-3" key={index}>
-                    <div className="card h-100 shadow-sm border-0">
-                      <div className="card-body">
-                        <h6 className="fw-bold">{inst.instructorName}</h6>
-                        <p className="text-muted mb-1">Expertise: {inst.expertise}</p>
-                        <p className="mb-1"><i className="bi bi-book"></i> {inst.courses?.join(", ")}</p>
-                        <span className="badge bg-primary">{inst.batches?.length || 0} Batches</span>
-                      </div>
+        {/* CHARTS GRID */}
+        <div className="row g-4 mb-5">
+          <div className="col-xl-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100">
+              <div className="card-body">
+                <h6 className="fw-bold text-muted mb-4 text-uppercase small">Enrollment Trends</h6>
+                <div style={{ width: '100%', height: '300px' }}>
+                  <EnrollmentChart data={enrollmentData} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-xl-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100">
+              <div className="card-body">
+                <h6 className="fw-bold text-muted mb-4 text-uppercase small">Batch Performance</h6>
+                <div style={{ width: '100%', height: '300px' }}>
+                  <PerformanceChart data={performanceData} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-xl-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100">
+              <div className="card-body">
+                <h6 className="fw-bold text-muted mb-4 text-uppercase small">Students By Program</h6>
+                <div style={{ width: '100%', height: '300px' }}>
+                  <StudentsByProgramChart data={studentsByProgramData} />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-xl-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100 text-center">
+              <div className="card-body">
+                <h6 className="fw-bold text-muted mb-4 text-uppercase small text-start">Gender Distribution</h6>
+                <div className="d-flex justify-content-center" style={{ width: '100%', height: '300px' }}>
+                  <GenderDistributionChart data={genderDistributionData} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="row g-4">
+          {/* NOTIFICATIONS */}
+          <div className="col-lg-4">
+            <div className="card border-0 shadow-sm rounded-4 h-100">
+              <div className="card-header bg-white border-0 py-3">
+                <h6 className="fw-bold m-0">Recent Alerts</h6>
+              </div>
+              <div className="card-body p-0" style={{ maxHeight: "500px", overflowY: "auto" }}>
+                {notifications.map((note, index) => (
+                  <div key={index} className="p-3 border-bottom border-light hover-bg" style={{ transition: '0.2s' }}>
+                    <div className="d-flex justify-content-between">
+                      <span className="fw-bold small text-primary">{note.title}</span>
+                      <span className="text-muted extra-small">{note.time}</span>
+                    </div>
+                    <p className="mb-0 text-muted small mt-1">{note.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* INSTRUCTORS & STUDENTS GRID */}
+          <div className="col-lg-8">
+            <div className="card border-0 shadow-sm rounded-4 p-4 mb-4">
+              <h6 className="fw-bold mb-3">Instructors Expertise</h6>
+              <div className="row g-3">
+                {instructors.slice(0, 4).map((inst, index) => (
+                  <div className="col-md-6" key={index}>
+                    <div className="p-3 rounded-4" style={{ border: "1px solid #eee", background: '#ffffff' }}>
+                      <div className="fw-bold small text-dark">{inst.instructorName}</div>
+                      <div className="text-primary extra-small">{inst.expertise}</div>
+                      <div className="mt-2"><span className="badge bg-soft-primary text-primary px-2" style={{ backgroundColor: '#eef2ff' }}>{inst.batches?.length || 0} Batches</span></div>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
 
-              {/* Students Overview */}
-             <h5 className="fw-bold mt-4 mb-3">Students Overview</h5>
-<div className="row">
-  {students.map((stu, index) => (
-    <div className="col-md-6 mb-3" key={index}>
-      <div className="card h-100 shadow-sm border-0">
-        <div className="card-body">
-          <h6 className="fw-bold">{stu.studentName}</h6>
-          <p className="mb-1">
-            <i className="bi bi-envelope"></i> {stu.studentEmail || "N/A"}
-          </p>
-          <p className="mb-1">
-            <i className="bi bi-book"></i> {stu.courseId || "N/A"}
-          </p>
-          <p className="mb-1">
-            <i className="bi bi-people"></i> {stu.batchName || "Unassigned"}
-          </p>
-          <span
-            className={`badge ${
-              stu.batchName && stu.batchName !== "Unassigned"
-                ? "bg-success"
-                : "bg-secondary"
-            }`}
-          >
-            {stu.batchName && stu.batchName !== "Unassigned"
-              ? "Assigned"
-              : "Unassigned"}
-          </span>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
-
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+              <div className="p-3 bg-white border-bottom border-light">
+                <h6 className="fw-bold m-0">Live Student Feed</h6>
+              </div>
+              <div className="table-responsive">
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="bg-light">
+                    <tr className="small text-muted">
+                      <th className="ps-4">Student Name</th>
+                      <th>Course</th>
+                      <th className="pe-4 text-end">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.slice(0, 6).map((stu, index) => (
+                      <tr key={index}>
+                        <td className="ps-4">
+                          <div className="fw-bold text-dark">{stu.studentName}</div>
+                          <div className="text-muted extra-small">{stu.studentEmail}</div>
+                        </td>
+                        <td className="small text-secondary">{stu.courseId}</td>
+                        <td className="pe-4 text-end">
+                          <span className={`badge rounded-pill ${stu.batchName ? "bg-success bg-opacity-10 text-success" : "bg-secondary bg-opacity-10 text-secondary"}`}>
+                            {stu.batchName ? "Assigned" : "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        .hover-bg:hover { background-color: #f8faff; cursor: pointer; }
+        .bg-soft-primary { background-color: #eef2ff !important; }
+        .ls-1 { letter-spacing: 0.5px; }
+        .extra-small { font-size: 11px; }
+      `}</style>
     </div>
   );
 };

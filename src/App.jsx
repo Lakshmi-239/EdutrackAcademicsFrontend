@@ -33,6 +33,19 @@ import BatchPage from "./pages/BatchPage.jsx";
 import InstructorReportPage from './pages/InstructorReportPage';
 import AdminReportPage from "./pages/AdminReportPage";
 
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import InstructorDashboard from './pages/InstructorDashboard';
+import LayOut from './components/Instructor/Lay_Out';
+import InstructorCoursePage from './pages/InstructorCoursePage';
+import InstructorAttendancePage from './pages/InstructorAttendancePage';
+import InstructorAssessmentPage from './pages/InstructorAssessmentPage';
+import InstructorModulePage from './pages/InstructorModulePage';
+import ManageQuestionsPage from './components/InstructorAssessment/ManageAssessmentPage';
+import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
+import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
+import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
+import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
+
  function App() {
   return (
     <AuthProvider>
@@ -92,6 +105,20 @@ import AdminReportPage from "./pages/AdminReportPage";
               }
             />
 
+
+          <Route path="/" element={<Navigate to="/instructordashboard" />} />
+          <Route element={<LayOut />}>
+            <Route path="/instructordashboard" element={<InstructorDashboard />} />
+            <Route path="/Icourses" element={<InstructorCoursePage />} />
+            <Route path="/Imodules" element={<InstructorModulePage />} />
+            <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
+            <Route path="/Iattendances" element={<InstructorAttendancePage />} />
+            <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
+            <Route path="/submissions/:id" element={<SubmissionsPage />} />
+            <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />
+            <Route path="/assessment/:id/add-question" element={<AddQuestionPage />} />
+            <Route path="/view-batch-students/:id" element={<BatchStudentsPage />} />
+          </Route>
 
           {/* Route WITHOUT Sidebar/Navbar */}
           

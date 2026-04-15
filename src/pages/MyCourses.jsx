@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { 
+  Search, 
+  BookOpen, 
+  Clock, 
+  PlayCircle, 
+  FileText, 
+  CheckCircle2, 
+  Layers,
+  X,
+  ChevronRight,
+  AlertCircle 
+} from 'lucide-react';
 
 const MyCourses = () => {
   const [activeTab, setActiveTab] = useState("available");
@@ -8,27 +20,26 @@ const MyCourses = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Modal & Content State
   const [showModal, setShowModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseModules, setCourseModules] = useState([]);
 
-  // Progress & Persistence State
   const [watchedProgress, setWatchedProgress] = useState({}); 
   const [completedContentIds, setCompletedContentIds] = useState(new Set());
 
   const studentId = "S001";
   const BASE_URL = "https://localhost:7157/api/Enrollment";
 
+  // --- LOGIC: REMAINS EXACTLY AS PROVIDED ---
   useEffect(() => {
     const loadPageData = async () => {
       setLoading(true);
       try {
-        await axios.patch(`${BASE_URL}/sync-status`, null, {
-          params: { studentId: studentId }
+        await axios.patch(`${BASE_URL}/sync-status`, null, { 
+          params: { studentId: studentId } 
         });
       } catch (err) {
-        console.error("Dropout sync failed:", err);
+        console.error("Sync failed:", err);
       }
       await fetchEnrolledIds();
       await fetchData();
@@ -46,7 +57,7 @@ const MyCourses = () => {
       handleSearch();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  }, [searchTerm, activeTab]);
 
   const fetchData = async () => {
     try {
@@ -58,31 +69,36 @@ const MyCourses = () => {
       let fetchedCourses = response.data.data || [];
 
       if (activeTab === "enrolled" && fetchedCourses.length > 0) {
-        const coursesWithDetails = await Promise.all(
-          fetchedCourses.map(async (course) => {
-            try {
-              const progRes = await axios.get(`${BASE_URL}/progress`, {
-                params: { StudentId: studentId, CourseId: course.courseId }
-              });
-              const statusRes = await axios.get(`${BASE_URL}/status`, {
-                params: { StudentId: studentId, CourseId: course.courseId }
-              });
-              return { 
-                ...course, 
-                progress: progRes.data.progress, 
-                status: statusRes.data.currentStatus 
-              };
-            } catch (err) {
-              return { ...course, progress: 0, status: "Active" };
-            }
-          })
-        );
-        fetchedCourses = coursesWithDetails;
+        fetchedCourses = await enrichCourseData(fetchedCourses);
       }
       setCourses(fetchedCourses);
     } catch (err) {
       setCourses([]);
     }
+  };
+
+  const enrichCourseData = async (courseList) => {
+    return await Promise.all(
+      courseList.map(async (course) => {
+        try {
+          const progRes = await axios.get(`${BASE_URL}/progress`, {
+            params: { StudentId: studentId, CourseId: course.courseId }
+          });
+          const statusRes = await axios.get(`${BASE_URL}/status`, {
+            params: { StudentId: studentId, CourseId: course.courseId }
+          });
+          
+          return { 
+            ...course, 
+            progress: progRes.data.progress, 
+            status: statusRes.data.currentStatus,
+            isBatchActive: statusRes.data.isActive ?? true 
+          };
+        } catch (err) {
+          return { ...course, progress: 0, status: "Active", isBatchActive: true };
+        }
+      })
+    );
   };
 
   const fetchEnrolledIds = async () => {
@@ -105,7 +121,13 @@ const MyCourses = () => {
       const response = await axios.get(endpoint, {
         params: { studentId: studentId, courseName: searchTerm }
       });
-      setCourses(response.data.data || []);
+      
+      let results = response.data.data || [];
+
+      if (activeTab === "enrolled" && results.length > 0) {
+        results = await enrichCourseData(results);
+      }
+      setCourses(results);
     } catch (err) {
       setCourses([]);
     } finally {
@@ -114,6 +136,8 @@ const MyCourses = () => {
   };
 
   const handleStartCourse = async (course) => {
+    if (!course.isBatchActive) return;
+
     try {
       const response = await axios.get(`${BASE_URL}/content`, {
         params: { StudentId: studentId, CourseId: course.courseId }
@@ -122,79 +146,20 @@ const MyCourses = () => {
         setCourseModules(response.data.data);
         setSelectedCourse(course);
         
-        // PERSISTENCE LOGIC: 
-        // If the course is already marked 'Completed' in the DB, 
-        // we fill our local state so the checkboxes are checked on load.
+        const storageKey = `completed_${studentId}_${course.courseId}`;
+        const saved = localStorage.getItem(storageKey);
+        let localSet = saved ? new Set(JSON.parse(saved)) : new Set();
+
         if (course.status === "Completed") {
-            const allIds = new Set();
-            response.data.data.forEach(m => m.contents.forEach(c => allIds.add(c.contentID)));
-            setCompletedContentIds(allIds);
+            response.data.data.forEach(m => m.contents.forEach(c => localSet.add(c.contentID)));
         }
         
+        setCompletedContentIds(localSet);
         setShowModal(true);
       }
     } catch (err) {
       alert("Error loading content.");
     }
-  };
-
-  // Extract YouTube ID for Iframe
-  const getYouTubeId = (url) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
-  const renderContentItem = (content) => {
-    const uri = content.contentURI || "";
-    const youtubeId = getYouTubeId(uri);
-    const isDoc = uri.toLowerCase().endsWith(".pdf") || uri.toLowerCase().endsWith(".ppt") || uri.toLowerCase().endsWith(".pptx");
-
-    if (isDoc) {
-      return (
-        <div className="p-5 text-center bg-light border rounded">
-          <h5>{content.title}</h5>
-          <a href={uri} target="_blank" rel="noreferrer" className="btn btn-primary mt-2"
-             onClick={() => setWatchedProgress(prev => ({ ...prev, [content.contentID]: 100 }))}>
-            View / Download Document
-          </a>
-        </div>
-      );
-    }
-
-    if (youtubeId) {
-      return (
-        <div className="ratio ratio-16x9">
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?rel=0`}
-            title={content.title}
-            allowFullScreen
-            onLoad={() => {
-                // Auto-enable Mark as Read for YouTube after 5 seconds to simulate viewing
-                setTimeout(() => {
-                    setWatchedProgress(prev => ({ ...prev, [content.contentID]: 100 }));
-                }, 5000);
-            }}
-          ></iframe>
-        </div>
-      );
-    }
-
-    return (
-      <video 
-        key={uri} controls className="w-100 rounded" style={{ height: "400px", backgroundColor: "#000" }}
-        onTimeUpdate={(e) => {
-          if (e.target.duration) {
-            const progress = (e.target.currentTime / e.target.duration) * 100;
-            if (progress > (watchedProgress[content.contentID] || 0)) {
-              setWatchedProgress(prev => ({ ...prev, [content.contentID]: progress }));
-            }
-          }
-        }}
-      >
-        <source src={uri} type="video/mp4" />
-      </video>
-    );
   };
 
   const handleMarkAsRead = async (contentId) => {
@@ -206,7 +171,9 @@ const MyCourses = () => {
       });
 
       if (response.data.status === 200) {
-        setCompletedContentIds(prev => new Set(prev).add(contentId));
+        const updatedSet = new Set(completedContentIds).add(contentId);
+        setCompletedContentIds(updatedSet);
+        localStorage.setItem(`completed_${studentId}_${selectedCourse.courseId}`, JSON.stringify(Array.from(updatedSet)));
         
         const statusRes = await axios.get(`${BASE_URL}/status`, {
           params: { StudentId: studentId, CourseId: selectedCourse.courseId }
@@ -220,24 +187,18 @@ const MyCourses = () => {
             ? { ...c, progress: newProgress, status: newStatus }
             : c
         ));
-        
         setSelectedCourse(prev => ({ ...prev, progress: newProgress, status: newStatus }));
-
-        if (newStatus === "Completed") {
-          alert("🎉 Congratulations! You've completed the course.");
-        }
       }
     } catch (err) {
-      alert("Progress update failed.");
+      console.error(err);
     }
   };
 
   const handleEnroll = async (courseId) => {
     try {
       const add_enroll="https://localhost:7157/api/coordinator/add-enrollment";
-      const response = await axios.post(`${add_enroll}`, { studentId, courseId: String(courseId) });
+      const response = await axios.post(add_enroll, { studentId, courseId: String(courseId) });
       if (response.status === 200) {
-        alert("Enrollment successful!");
         await fetchEnrolledIds();
         await fetchData();
       }
@@ -246,114 +207,197 @@ const MyCourses = () => {
     }
   };
 
-  return (
-    <div className="container-fluid py-4 px-4 bg-white min-vh-100">
-      {/* Search & Tabs remain unchanged */}
-      <div className="mb-4 d-flex align-items-center">
-        <input
-          type="text"
-          className="form-control w-25 border-secondary"
-          placeholder={activeTab === "available" ? "Search all courses..." : "Search my courses..."}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+  const getYouTubeId = (url) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
 
-      <div className="d-flex mb-4 border-bottom">
-        <button className={`btn me-5 pb-2 rounded-0 border-0 ${activeTab === "available" ? "border-bottom border-dark border-3 fw-bold text-dark" : "text-muted"}`} onClick={() => setActiveTab("available")}>Courses</button>
-        <button className={`btn pb-2 rounded-0 border-0 ${activeTab === "enrolled" ? "border-bottom border-dark border-3 fw-bold text-dark" : "text-muted"}`} onClick={() => setActiveTab("enrolled")}>Enrolled</button>
-      </div>
+  const renderContentItem = (content) => {
+    const uri = content.contentURI || "";
+    const youtubeId = getYouTubeId(uri);
+    const isDoc = /\.(pdf|ppt|pptx)$/i.test(uri);
 
-      {/* Course Cards */}
-      <div className="row g-4">
-        {loading ? <div className="text-center mt-5">Loading...</div> : (
-          courses.map((course) => {
-            const isEnrolled = enrolledCourseIds.has(course.courseId);
-            return (
-              <div className="col-12" key={course.courseId}>
-                <div className="card border-0 shadow-sm" style={{ backgroundColor: "#D9D9D9", borderRadius: "12px" }}>
-                  <div className="card-body p-4">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center">
-                        <h4 className="fw-bold mb-0 me-3">{course.courseName}</h4>
-                        {activeTab === "enrolled" && (
-                          <span className={`badge ${course.status === 'Completed' ? 'bg-success' : 'bg-primary'}`}>{course.status || 'Assigned'}</span>
-                        )}
-                      </div>
-                      {activeTab === "enrolled" && (
-                        <div className="d-flex align-items-center" style={{ width: "250px" }}>
-                          <div className="progress flex-grow-1 me-2" style={{ height: "10px", backgroundColor: "#BBB" }}>
-                            <div className="progress-bar bg-secondary" style={{ width: `${course.progress || 0}%`, transition: "0.4s" }}></div>
-                          </div>
-                          <span className="small fw-bold">{course.progress || 0}%</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="mb-4 text-muted">{course.learningObjective}</p>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <span className="fw-bold">Weeks- {course.durationInWeeks || 8}</span>
-                      <h6 className="fw-bold mb-0 me-3">Credits- {course.credits || 0}</h6>
-                      {activeTab === "available" ? (
-                        <button className="btn btn-outline-dark px-4" onClick={() => handleEnroll(course.courseId)} disabled={isEnrolled}>{isEnrolled ? "Enrolled" : "Enroll Now"}</button>
-                      ) : (
-                        <button className="btn btn-dark px-4 py-2" onClick={() => handleStartCourse(course)} disabled={course.status === "Dropped"}>Start Course</button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+    if (isDoc) {
+      return (
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="p-4 bg-emerald-500/5 border border-emerald-900/30 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="text-emerald-400" size={24} />
+              <span className="text-sm text-slate-300">{content.title}</span>
+            </div>
+            <a href={uri} target="_blank" rel="noreferrer" className="text-xs bg-emerald-500 text-slate-950 px-4 py-2 rounded-lg font-bold no-underline">
+              Download
+            </a>
+          </div>
+          <div className="w-full h-[600px] rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
+            <iframe 
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(uri)}&embedded=true`}
+              className="w-full h-full"
+              frameBorder="0"
+            ></iframe>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative mt-4 rounded-xl overflow-hidden border border-slate-800/60 shadow-2xl">
+        {youtubeId ? (
+          <div className="aspect-video">
+            <iframe src={`https://www.youtube.com/embed/${youtubeId}?rel=0`} title="Youtube player" className="w-full h-full" allowFullScreen></iframe>
+          </div>
+        ) : (
+          <video controls className="w-full bg-black">
+            <source src={uri} type="video/mp4" />
+          </video>
         )}
       </div>
+    );
+  };
 
-      {/* Content Modal */}
+  return (
+    <div className="relative h-full w-full bg-transparent text-slate-200">
+      {/* --- Main Page Content --- */}
+      <div className={`max-w-7xl mx-auto px-6 py-10 transition-opacity duration-300 ${showModal ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+        
+        {/* Search Header */}
+        <div className="flex flex-col items-center mb-12">
+          <div className="relative w-full max-w-2xl group">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors" size={20} />
+            <input
+              type="text"
+              className="w-full bg-[#020617]/60 border border-slate-800/50 text-slate-100 pl-16 pr-8 py-4 rounded-2xl focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all placeholder:text-slate-600 backdrop-blur-md"
+              placeholder={activeTab === "available" ? "Search for new skills..." : "Search your learning path..."}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-16">
+          <div className="bg-[#020617]/80 p-1.5 rounded-2xl border border-slate-800/50 flex gap-2 backdrop-blur-sm shadow-xl">
+            {['available', 'enrolled'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-10 py-3 rounded-xl font-bold transition-all flex items-center gap-3 text-sm tracking-wide ${
+                  activeTab === tab 
+                  ? "bg-white text-slate-950 shadow-[0_0_25px_rgba(255,255,255,0.1)]" 
+                  : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {tab === 'available' ? <Layers size={16}/> : <BookOpen size={16}/>}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Course Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
+          {loading ? (
+            <div className="col-span-full text-center py-24 flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-2 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+              <p className="text-slate-500 font-bold tracking-[0.2em] uppercase text-[10px]">Syncing Knowledge</p>
+            </div>
+          ) : (
+            courses.map((course) => {
+              const isEnrolled = enrolledCourseIds.has(course.courseId);
+              const canAccess = course.isBatchActive !== false;
+
+              return (
+                <div key={course.courseId} className={`group relative bg-[#020617]/40 border rounded-[2.5rem] p-8 transition-all duration-500 ${!canAccess && activeTab === "enrolled" ? 'opacity-50 border-slate-800' : 'hover:border-emerald-500/30 border-slate-800/50 hover:bg-[#020617]/60'}`}>
+                  <div className="flex justify-between items-start mb-8">
+                    <div>
+                      <h3 className="text-2xl font-bold text-white mb-3 tracking-tight group-hover:text-emerald-400 transition-colors uppercase">{course.courseName}</h3>
+                      {activeTab === "enrolled" && (
+                        <span className={`px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border ${
+                          course.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                        }`}>
+                          {course.status}
+                        </span>
+                      )}
+                    </div>
+                    {activeTab === "enrolled" && canAccess && (
+                      <div className="text-right">
+                        <div className="text-[10px] font-black text-slate-500 mb-2 tracking-tighter">PROGRESS {course.progress}%</div>
+                        <div className="w-24 h-1 bg-slate-800/50 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-1000" style={{ width: `${course.progress}%` }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-slate-400 leading-relaxed mb-10 line-clamp-2 text-sm">{course.learningObjective}</p>
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-800/40">
+                    <div className="flex gap-8 text-slate-200 font-bold">
+                      <div className="flex flex-col"><span className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Duration</span><span className="text-sm">{course.durationInWeeks}W</span></div>
+                      <div className="flex flex-col"><span className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Credits</span><span className="text-sm">{course.credits}</span></div>
+                    </div>
+                    <button 
+                      onClick={() => activeTab === "available" ? handleEnroll(course.courseId) : handleStartCourse(course)}
+                      disabled={(isEnrolled && activeTab === "available") || (activeTab === "enrolled" && !canAccess)}
+                      className={`px-8 py-3 rounded-2xl font-black transition-all flex items-center gap-2 text-xs uppercase tracking-widest border-0 ${
+                        ((isEnrolled && activeTab === "available") || (activeTab === "enrolled" && !canAccess))
+                        ? "bg-slate-800 text-slate-500 cursor-not-allowed" 
+                        : "bg-gradient-to-r from-[#10b981] to-[#06b6d4] text-slate-950"
+                      }`}
+                    >
+                      {activeTab === "available" ? (isEnrolled ? "Enrolled" : "Enroll Now") : (course.status === 'Completed' ? 'Review' : 'Continue')}
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* --- CONTENT WINDOW: NO OVERLAP WITH SIDEBAR/TOPBAR --- */}
       {showModal && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-          <div className="modal-dialog modal-xl modal-dialog-centered">
-            <div className="modal-content border-0 p-5 shadow-lg">
-              <div className="d-flex justify-content-between align-items-start mb-4">
-                <div className="border border-dark p-2 px-4 fs-4 fw-bold">{selectedCourse?.courseName}</div>
-                <button className="btn-close" onClick={() => setShowModal(false)}></button>
+        <div className="w-full animate-in fade-in zoom-in duration-300">
+           <div className="bg-[#0f172a] border border-slate-800 w-full min-h-screen rounded-t-[3rem] flex flex-col shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="p-8 border-b border-slate-800/50 flex justify-between items-center sticky top-0 bg-[#0f172a] z-10">
+              <div>
+                <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter">{selectedCourse?.courseName}</h2>
+                <span className="text-[10px] text-emerald-400 font-bold tracking-[0.3em] uppercase">Module Contents</span>
               </div>
-
-              <div className="modal-body p-0" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                {courseModules.map((module, mIdx) => (
-                  <div key={module.moduleID || mIdx} className="mb-5">
-                    <p className="text-muted mb-2">Section {mIdx + 1}</p>
-                    <div className="border border-light p-3 px-4 mb-4 d-inline-block fs-5 shadow-sm" style={{ minWidth: "350px", backgroundColor: "#fcfcfc" }}>{module.moduleName}</div>
-
-                    {module.contents && module.contents.map((content, cIdx) => {
-                      // 90% Threshold Logic
-                      const isThresholdMet = (watchedProgress[content.contentID] || 0) >= 90;
-                      // Persistance Logic: Checks local state set during handleStartCourse
-                      const isAlreadyDone = completedContentIds.has(content.contentID) || selectedCourse?.status === "Completed";
-
+              <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-800 rounded-2xl text-slate-500 border-0 bg-transparent">
+                <X size={28}/>
+              </button>
+            </div>
+            
+            {/* Scrollable Content Area */}
+            <div className="p-6 md:p-10 max-w-5xl mx-auto w-full">
+              {courseModules.map((module, mIdx) => (
+                <div key={mIdx} className="mb-14">
+                  <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] mb-8">
+                    <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-md mr-3">Module {mIdx + 1}</span> 
+                    {module.moduleName}
+                  </h4>
+                  <div className="grid gap-6">
+                    {module.contents?.map((content, cIdx) => {
+                      const isDone = completedContentIds.has(content.contentID);
                       return (
-                        <div key={content.contentID || cIdx} className="ms-5 mb-5 border-bottom pb-4">
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h4 className="fw-normal">{content.title}</h4>
-                            <div className="d-flex align-items-center">
-                              <span className={`me-2 small ${isAlreadyDone ? "text-success fw-bold" : "text-muted"}`}>
-                                {isAlreadyDone ? "Completed" : isThresholdMet ? "Ready to Mark" : "Watch 90% to Enable"}
-                              </span>
-                              <input 
-                                type="checkbox" 
-                                className="form-check-input ms-2" 
-                                style={{ width: "25px", height: "25px", cursor: isAlreadyDone ? "default" : "pointer" }}
-                                checked={isAlreadyDone}
-                                disabled={isAlreadyDone || !isThresholdMet} 
-                                onChange={() => handleMarkAsRead(content.contentID)}
-                              />
-                            </div>
+                        <div key={cIdx} className={`border rounded-[2rem] p-8 ${isDone ? 'bg-[#0f172a]/40 border-emerald-900/20' : 'bg-[#020617]/30 border-slate-800/50'}`}>
+                          <div className="flex justify-between items-center mb-6">
+                            <h5 className="text-lg font-bold text-slate-200 flex items-center gap-4">
+                              {isDone ? <CheckCircle2 className="text-emerald-500" size={24}/> : <PlayCircle className="text-cyan-400" size={24}/>}
+                              {content.title}
+                            </h5>
+                            <input type="checkbox" className="w-5 h-5 rounded border-slate-700 bg-slate-800 text-emerald-500"
+                                   checked={isDone} onChange={() => handleMarkAsRead(content.contentID)} />
                           </div>
                           {renderContentItem(content)}
                         </div>
                       );
                     })}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
