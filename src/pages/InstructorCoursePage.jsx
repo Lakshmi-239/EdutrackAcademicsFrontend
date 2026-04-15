@@ -10,8 +10,8 @@ export default function InstructorCoursePage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
 
-  // const instructorId = localStorage.getItem("userId") || "I003";
- const instructorId = "I003";
+  const instructorId = localStorage.getItem("userId") || "I001";
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -156,7 +156,7 @@ export default function InstructorCoursePage() {
               </div>
 
               <h5 className="fw-bold mb-2" style={{ color: '#2B3674' }}>
-                No Matches Found
+                No matches found
               </h5>
               
               <p className="text-secondary small mb-4 text-center px-3">
