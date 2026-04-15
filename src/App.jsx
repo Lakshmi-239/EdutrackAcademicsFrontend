@@ -74,10 +74,15 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <Route path="/admin/performance" element={<AdminReportPage />} />
 =======
             <Route path="/student-profile" element={<StudentProfile />} />
 >>>>>>> 26a368d9bf1af82ffe100705fff60a9d4f0247ba
+=======
+            <Route path="/admin/performance" element={<AdminReportPage />} />
+            <Route path="/student-profile" element={<StudentProfile />} />
+>>>>>>> Performance
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />

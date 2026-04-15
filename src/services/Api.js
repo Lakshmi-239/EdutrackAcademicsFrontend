@@ -309,7 +309,10 @@ deleteQuestion: async (questionId) => {
     return response.data;
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> Performance
   // 1. Get Personal Info
   getPersonalInfo: async (studentId) => {
     try {
@@ -367,7 +370,11 @@ deleteQuestion: async (questionId) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, passwordData);
     return response.data;
    },
+<<<<<<< HEAD
 >>>>>>> 26a368d9bf1af82ffe100705fff60a9d4f0247ba
+=======
+
+>>>>>>> Performance
 
   getInstructorBatches: async (id) => {
     const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);
