@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { FiSave, FiX, FiInfo, FiHash, FiClock, FiFileText } from "react-icons/fi";
 
 const CourseModal = ({ onSave, editingCourse }) => {
   const [course, setCourse] = useState({
     courseName: "",
     credits: "",
     durationInWeeks: "",
-    batchSize: "",
   });
 
   useEffect(() => {
     if (editingCourse) {
       setCourse(editingCourse);
     } else {
-      setCourse({
-        courseName: "",
-        credits: "",
-        durationInWeeks: "",
-        batchSize: "",
-      });
+      setCourse({ courseName: "", credits: "", durationInWeeks: "" });
     }
   }, [editingCourse]);
 
@@ -26,78 +21,113 @@ const CourseModal = ({ onSave, editingCourse }) => {
   };
 
   const handleSave = () => {
-    if (
-      !course.courseName ||
-      !course.credits ||
-      !course.durationInWeeks ||
-      !course.batchSize
-    )
-      return;
+    if (!course.courseName || !course.credits || !course.durationInWeeks) return;
     onSave(course);
   };
 
   return (
-    <div className="modal fade" id="courseModal" tabIndex="-1">
-      <div className="modal-dialog">
-        <div className="modal-content shadow">
-          <div className="modal-header bg-primary text-white">
-            <h5 className="modal-title">
-              {editingCourse ? "Edit Course" : "Add Course"}
-            </h5>
-            <button
-              type="button"
-              className="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
+    <div className="modal fade" id="courseModal" tabIndex="-1" aria-hidden="true">
+      <div className="modal-dialog modal-dialog-centered">
+        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          
+          {/* HEADER */}
+          <div className="modal-header border-0 bg-primary p-4 text-white">
+            <div className="d-flex align-items-center gap-3">
+              <div className="bg-white bg-opacity-25 rounded-3 p-2">
+                <FiFileText size={24} />
+              </div>
+              <div>
+                <h5 className="modal-title fw-bold m-0">
+                  {editingCourse ? "Modify Module" : "New Module Entry"}
+                </h5>
+                <small className="text-white-50">Course Structure Configuration</small>
+              </div>
+            </div>
+            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
-          <div className="modal-body">
-            <input
-              type="text"
-              name="courseName"
-              placeholder="Course Name"
-              className="form-control mb-2"
-              value={course.courseName}
-              onChange={handleChange}
-            />
-            <input
-              type="number"
-              name="credits"
-              placeholder="Credits"
-              className="form-control mb-2"
-              value={course.credits}
-              onChange={handleChange}
-            />
-            <input
-              type="number"
-              name="durationInWeeks"
-              placeholder="Duration (Weeks)"
-              className="form-control mb-2"
-              value={course.durationInWeeks}
-              onChange={handleChange}
-            />
-            <input
-              type="number"
-              name="batchSize"
-              placeholder="Batch Size"
-              className="form-control mb-2"
-              value={course.batchSize}
-              onChange={handleChange}
-            />
+
+          <div className="modal-body p-4">
+            <form>
+              {/* COURSE NAME */}
+              <div className="input-group-custom mb-4">
+                <label className="small fw-bold text-muted mb-2 d-flex align-items-center gap-2">
+                  <FiFileText /> COURSE NAME
+                </label>
+                <input
+                  type="text"
+                  name="courseName"
+                  placeholder="e.g. Advanced Neural Networks"
+                  className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
+                  value={course.courseName}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="row">
+                {/* CREDITS */}
+                <div className="col-md-6 mb-4 mb-md-0">
+                  <label className="small fw-bold text-muted mb-2 d-flex align-items-center gap-2">
+                    <FiHash /> CREDIT WEIGHT
+                  </label>
+                  <input
+                    type="number"
+                    name="credits"
+                    placeholder="0"
+                    className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
+                    value={course.credits}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* DURATION */}
+                <div className="col-md-6">
+                  <label className="small fw-bold text-muted mb-2 d-flex align-items-center gap-2">
+                    <FiClock /> DURATION
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type="number"
+                      name="durationInWeeks"
+                      placeholder="Weeks"
+                      className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
+                      value={course.durationInWeeks}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* INFO BOX */}
+              <div className="mt-4 p-3 bg-light rounded-3 d-flex gap-2">
+                <FiInfo className="text-primary mt-1 flex-shrink-0" />
+                <p className="small text-muted mb-0">
+                  Ensure the module name and credits match the standard university guidelines before saving.
+                </p>
+              </div>
+            </form>
           </div>
-          <div className="modal-footer">
-            <button className="btn btn-secondary" data-bs-dismiss="modal">
-              Cancel
+
+          {/* FOOTER */}
+          <div className="modal-footer border-0 p-4 pt-0">
+            <button className="btn btn-light px-4 py-2 rounded-3 fw-semibold text-muted d-flex align-items-center gap-2" data-bs-dismiss="modal">
+              <FiX /> Discard
             </button>
             <button
-              className="btn btn-success"
+              className="btn btn-primary px-4 py-2 rounded-3 fw-semibold shadow-sm d-flex align-items-center gap-2"
               onClick={handleSave}
               data-bs-dismiss="modal"
             >
-              {editingCourse ? "Update" : "Save"}
+              <FiSave /> {editingCourse ? "Update Module" : "Establish Course"}
             </button>
           </div>
         </div>
       </div>
+
+      <style>{`
+        .input-group-custom input:focus { border-color: #4361ee; background-color: #f8faff; }
+        .form-control-lg { font-size: 1rem; padding: 0.75rem 1rem; }
+        .modal-content { transition: transform 0.3s ease; }
+      `}</style>
     </div>
   );
 };
