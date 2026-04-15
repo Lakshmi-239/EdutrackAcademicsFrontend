@@ -30,7 +30,9 @@ import Instructors from "./pages/Instructors.jsx";
 import Students from "./pages/Students.jsx";
 import Reports from "./pages/Reports.jsx";
 import BatchPage from "./pages/BatchPage.jsx";
-
+//instrcutorreport
+import InstructorReportPage from './pages/InstructorReportPage';
+import AdminReportPage from "./pages/AdminReportPage";
 
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import InstructorDashboard from './pages/InstructorDashboard';
@@ -51,6 +53,8 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
       <Toaster position="top-center" reverseOrder={false} />
       <div className="app-container">
         <Routes>
+          {/* <Route path="/instructor-dashboard" element={<Dashboard/>}/> */}
+         {/* <Route path="/batch/:id" element={<BatchDetails/>}/> */}
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RoleSelection />} />
           <Route path="/register/student" element={<StudentRegistration />} />
@@ -60,6 +64,7 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
@@ -68,10 +73,24 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
+<<<<<<< HEAD
+<<<<<<< HEAD
+            <Route path="/admin/performance" element={<AdminReportPage />} />
+=======
             <Route path="/student-profile" element={<StudentProfile />} />
+>>>>>>> 26a368d9bf1af82ffe100705fff60a9d4f0247ba
+=======
+            <Route path="/admin/performance" element={<AdminReportPage />} />
+            <Route path="/student-profile" element={<StudentProfile />} />
+>>>>>>> Performance
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
+
+            <Route path="/instructor-performance" element={<InstructorReportPage />} />
+
+            {/* PERFORMANCE */}
+            {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
           <Route path="/notifications" element={<Notifications />} />
              <Route
