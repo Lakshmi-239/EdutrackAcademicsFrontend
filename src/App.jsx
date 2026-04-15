@@ -29,6 +29,7 @@ import Instructors from "./pages/Instructors.jsx";
 import Students from "./pages/Students.jsx";
 import Reports from "./pages/Reports.jsx";
 import BatchPage from "./pages/BatchPage.jsx";
+import { AuthGuard } from './guards/AuthGuard';
 
 
  function App() {
@@ -62,6 +63,7 @@ import BatchPage from "./pages/BatchPage.jsx";
              <Route
               path="/coordinator/*"
               element={
+               <AuthGuard>
                 <div className="d-flex">
                   <Sidebar />
                   <main className="flex-grow-1 p-4 bg-light">
@@ -69,15 +71,15 @@ import BatchPage from "./pages/BatchPage.jsx";
                       <Route path="dashboard" element={<Dashboard />} />
                       <Route path="programs" element={<Programs />} />
                       <Route path="courses" element={<CoursePage />} />
-                    
                       <Route path="instructors" element={<Instructors />} />
                       <Route path="students" element={<Students />} />
-                      <Route path="reports" element={<Reports />} />
                       <Route path="batch" element={<BatchPage />} />
+                        <Route path="reports" element={<Reports />} />
                       <Route path="notifications" element={<NotificationPanel />} />
                     </Routes>
                   </main>
                 </div>
+              </AuthGuard>
               }
             />
 
