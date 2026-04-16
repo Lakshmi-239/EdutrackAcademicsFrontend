@@ -14,7 +14,7 @@ const StudentAssessmentPage = () => {
     // Layout nundi context function ni techukuntunnam
     const { setIsExamActive } = useOutletContext();
     
-    const studentId = "S001"; 
+    const studentId = localStorage.getItem("studentId"); 
     const SUB_API = "https://localhost:7157/api/Submission";
     const ENROLL_API = "https://localhost:7157/api/Enrollment"; 
 

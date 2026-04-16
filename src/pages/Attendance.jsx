@@ -7,7 +7,7 @@ const Attendance = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const studentId = "S001"; 
+  const studentId = localStorage.getItem("studentId"); 
   const BASE_URL = "https://localhost:7157/api/Enrollment";
 
   useEffect(() => {

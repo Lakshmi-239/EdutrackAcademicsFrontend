@@ -14,6 +14,7 @@ import { Toaster } from "react-hot-toast";
 //import CoordinatorDashboard from './pages/CoordinatorDashboard';
 import Layout from "./components/Student/Layout";
 import StudentDashboard from "./pages/StudentDashboard";
+import {StudentProfile} from "./pages/StudentProfile";
 import Notifications from "./pages/Notifications";
 import MyCourses from "./pages/MyCourses";
 import StudentAssessmentPage from "./pages/Assessment";
@@ -30,7 +31,22 @@ import Students from "./pages/Students.jsx";
 import Reports from "./pages/Reports.jsx";
 import BatchPage from "./pages/BatchPage.jsx";
 import { AuthGuard } from './guards/AuthGuard';
+//instrcutorreport
+import InstructorReportPage from './pages/InstructorReportPage';
+import AdminReportPage from "./pages/AdminReportPage";
 
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import InstructorDashboard from './pages/InstructorDashboard';
+import LayOut from './components/Instructor/Lay_Out';
+import InstructorCoursePage from './pages/InstructorCoursePage';
+import InstructorAttendancePage from './pages/InstructorAttendancePage';
+import InstructorAssessmentPage from './pages/InstructorAssessmentPage';
+import InstructorModulePage from './pages/InstructorModulePage';
+import ManageQuestionsPage from './components/InstructorAssessment/ManageAssessmentPage';
+import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
+import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
+import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
+import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
 
  function App() {
   return (
@@ -38,6 +54,8 @@ import { AuthGuard } from './guards/AuthGuard';
       <Toaster position="top-center" reverseOrder={false} />
       <div className="app-container">
         <Routes>
+          {/* <Route path="/instructor-dashboard" element={<Dashboard/>}/> */}
+         {/* <Route path="/batch/:id" element={<BatchDetails/>}/> */}
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RoleSelection />} />
           <Route path="/register/student" element={<StudentRegistration />} />
@@ -47,6 +65,7 @@ import { AuthGuard } from './guards/AuthGuard';
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
@@ -55,9 +74,16 @@ import { AuthGuard } from './guards/AuthGuard';
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
+            <Route path="/admin/performance" element={<AdminReportPage />} />
+            <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
+
+            <Route path="/instructor-performance" element={<InstructorReportPage />} />
+
+            {/* PERFORMANCE */}
+            {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
           <Route path="/notifications" element={<Notifications />} />
              <Route
@@ -84,6 +110,20 @@ import { AuthGuard } from './guards/AuthGuard';
             />
 
 
+          <Route path="/" element={<Navigate to="/instructordashboard" />} />
+          <Route element={<LayOut />}>
+            <Route path="/instructordashboard" element={<InstructorDashboard />} />
+            <Route path="/Icourses" element={<InstructorCoursePage />} />
+            <Route path="/Imodules" element={<InstructorModulePage />} />
+            <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
+            <Route path="/Iattendances" element={<InstructorAttendancePage />} />
+            <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
+            <Route path="/submissions/:id" element={<SubmissionsPage />} />
+            <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />
+            <Route path="/assessment/:id/add-question" element={<AddQuestionPage />} />
+            <Route path="/view-batch-students/:id" element={<BatchStudentsPage />} />
+          </Route>
+
           {/* Route WITHOUT Sidebar/Navbar */}
           
         </Routes>
@@ -91,5 +131,4 @@ import { AuthGuard } from './guards/AuthGuard';
     </AuthProvider>
   );
 }
-
 export default App;

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaBell, FaMoon, FaSun, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
 import { GraduationCap } from 'lucide-react';
+import {StudentProfile} from '../../pages/StudentProfile';
 
 function Topbar() {
   const navigate = useNavigate();
@@ -63,7 +64,10 @@ function Topbar() {
             <div className="absolute right-0 mt-3 shadow-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-xl p-2 rounded-2xl w-48 z-50">
               <button 
                 className="flex items-center gap-2 text-slate-200 py-2.5 px-3 rounded-xl hover:bg-emerald-500/10 hover:text-teal-400 transition-all border-0 bg-transparent w-full text-left text-sm" 
-                onClick={() => navigate("/profile")}
+                onClick={() => {
+                  setShowProfile(false);
+                  navigate("/student-profile")
+                } }
               >
                 <FaUser size={14} /> Profile
               </button>
