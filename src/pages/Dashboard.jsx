@@ -59,8 +59,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard-wrapper" style={{ backgroundColor: "#020617", minHeight: "100vh", color: "#f8fafc" }}>
       
-      {/* --- TOP NAVIGATION BAR --- */}
-      <nav className="navbar navbar-expand-lg border-bottom border-slate-800 sticky-top" style={{ backgroundColor: "#0f172a", padding: "0.75rem 2rem", zIndex: 1050 }}>
+     {/* --- TOP NAVIGATION BAR --- A STICKY NAVIGATION BAR USED FOR STICK EVEN IF WE SCROLL */}
+      <nav className="navbar navbar-expand-lg border-bottom border-slate-800 sticky-top" style={{ backgroundColor: "rgba(15, 23, 42, 1)", padding: "0.75rem 2rem", zIndex: 1050 }}>
         <div className="container-fluid d-flex justify-content-between align-items-center">
           
           {/* Logo Section */}
