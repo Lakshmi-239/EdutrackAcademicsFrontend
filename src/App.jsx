@@ -37,11 +37,12 @@ import AdminReportPage from "./pages/AdminReportPage";
 
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import InstructorDashboard from './pages/InstructorDashboard';
-import LayOut from './components/Instructor/Lay_Out';
+import Lay_Out from './components/Instructor/Lay_Out';
 import InstructorCoursePage from './pages/InstructorCoursePage';
 import InstructorAttendancePage from './pages/InstructorAttendancePage';
 import InstructorAssessmentPage from './pages/InstructorAssessmentPage';
 import InstructorModulePage from './pages/InstructorModulePage';
+import InstructorNotificationPage from './pages/InstructorNotificationPage.jsx'
 import ManageQuestionsPage from './components/InstructorAssessment/ManageAssessmentPage';
 import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
 import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
@@ -65,7 +66,10 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
+                      <Route path="/instructor-performance" element={<InstructorReportPage />} />
+                                  <Route path="/admin/performance" element={<AdminReportPage />} />
+
+
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
@@ -74,13 +78,11 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
-            <Route path="/admin/performance" element={<AdminReportPage />} />
             <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
 
-            <Route path="/instructor-performance" element={<InstructorReportPage />} />
 
             {/* PERFORMANCE */}
             {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
@@ -111,12 +113,13 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
 
 
           <Route path="/" element={<Navigate to="/instructordashboard" />} />
-          <Route element={<LayOut />}>
+          <Route element={<Lay_Out />}>
             <Route path="/instructordashboard" element={<InstructorDashboard />} />
             <Route path="/Icourses" element={<InstructorCoursePage />} />
             <Route path="/Imodules" element={<InstructorModulePage />} />
             <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
             <Route path="/Iattendances" element={<InstructorAttendancePage />} />
+            <Route path="/Inotifications" element={<InstructorNotificationPage />} />
             <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionsPage />} />
             <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />

@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/Api';
 import StudentProfileModal from './StudentProfileModal';
 import { 
+  User,
   ChevronLeft, 
   Users, 
   Mail, 
-  Phone, 
   Calendar, 
   Search,
   Loader2,
@@ -18,14 +18,12 @@ const BatchStudentsPage = () => {
   const { id: batchId } = useParams();
   const navigate = useNavigate();
   
-  // 1. ALL STATES AT THE TOP
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 2. FETCH DATA EFFECT
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -41,7 +39,6 @@ const BatchStudentsPage = () => {
     if (batchId) fetchStudents();
   }, [batchId]);
 
-  // 3. LOGIC HANDLERS
   const handleOpenProfile = (id) => {
     setSelectedStudentId(id);
     setIsModalOpen(true);
@@ -52,102 +49,98 @@ const BatchStudentsPage = () => {
     s.studentId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 4. LOADING STATE
+  // 1. THEMED LOADING STATE
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-        <div className="text-center">
-          <Loader2 className="text-primary animate-spin mb-2" size={40} />
-          <p className="text-muted fw-medium">Loading Enrollment List...</p>
-        </div>
+      <div className="flex flex-col justify-center items-center min-vh-100 bg-slate-950 text-slate-200">
+        <Loader2 className="text-teal-400 animate-spin mb-3" size={48} />
+        <p className="text-slate-400 font-medium tracking-widest uppercase text-sm">Loading Enrollment List...</p>
       </div>
     );
   }
 
-  // 5. MAIN RENDER
   return (
-    <div className="container-fluid py-4 bg-light min-vh-100">
-      <div className="container">
+    <div className="min-h-screen bg-slate-950 py-6 px-4">
+      <div className="max-w-[1400px] mx-auto">
         
-        {/* Header with Search and Total Counter */}
-        <div className="d-flex align-items-center justify-content-between mb-4 bg-white px-3 py-2 rounded-3 shadow-sm border">
-          <div className="d-flex align-items-center gap-2">
-            <button className="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" 
-                    onClick={() => navigate(-1)} 
-                    style={{ width: '40px', height: '40px' }}>
+        {/* 2. THEMED HEADER (Glassmorphism) */}
+        <div className="flex flex-wrap items-center justify-between mb-8 bg-slate-900/50 backdrop-blur-md px-5 py-4 rounded-2xl border border-slate-800 shadow-xl gap-4">
+          <div className="flex items-center gap-4">
+            <button 
+              className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-teal-400 hover:border-teal-400 transition-all shadow-lg" 
+              onClick={() => navigate(-1)} 
+            >
               <ChevronLeft size={20} />
             </button>
-            <div className="d-flex flex-column align-items-start ms-2">
-              <h5 className="fw-bold mb-0 text-dark">Batch Students</h5>
-              <small className="text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>
-                Batch ID: <span className="text-primary">{batchId}</span>
-              </small>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-extrabold text-white tracking-tight">Batch <span className="text-teal-400">Students</span></h1>
+              <span className="text-slate-500 font-mono text-xs uppercase tracking-tighter">
+                ID: <span className="text-slate-300">{batchId}</span>
+              </span>
             </div>
           </div>
 
-          <div className="d-flex align-items-center gap-3">
-            <div className="position-relative d-none d-md-block" style={{ width: '250px' }}>
-              <Search className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" size={16} />
+          <div className="flex items-center gap-4 flex-grow md:flex-grow-0">
+            {/* Themed Search Input */}
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
               <input 
                 type="text" 
-                className="form-control ps-5 rounded-pill border-light-subtle shadow-sm" 
+                className="w-full bg-slate-800/50 border border-slate-700 text-slate-200 ps-11 pe-4 py-2.5 rounded-xl focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none transition-all placeholder:text-slate-600 shadow-inner" 
                 placeholder="Search students..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ fontSize: '0.85rem' }}
               />
             </div>
 
-            <div className="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 py-2 fw-bold border border-primary border-opacity-25 d-flex align-items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 bg-teal-500/10 text-teal-400 px-4 py-2 rounded-xl border border-teal-500/20 font-bold text-sm shadow-[0_0_15px_rgba(20,184,166,0.1)]">
               <Users size={16} />
-              <span>{filteredStudents.length} Enrolled</span>
+              <span>{filteredStudents.length}</span>
             </div>
           </div>
         </div>
 
-        {/* Students List */}
-        <div className="row">
+        {/* 3. THEMED STUDENTS LIST */}
+        <div className="grid gap-4">
           {filteredStudents.length > 0 ? (
             filteredStudents.map((student, idx) => (
-              <div key={student.studentId || idx} className="col-12 mb-3">
-                <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                  <div className="row g-0 align-items-center">
+              <div key={student.studentId || idx} className="group transition-all duration-300 hover:-translate-y-1">
+                <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 hover:shadow-2xl transition-all">
+                  <div className="flex flex-col md:flex-row items-center">
                     
-                    {/* Identity - studentName */}
-                    <div className="col-md-4 p-4 bg-white border-end">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
-                             style={{ width: '50px', height: '50px', fontSize: '1.2rem' }}>
-                          {student.studentName?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h6 className="fw-bold mb-0 text-dark">{student.studentName}</h6>
-                          <span className="badge bg-light text-primary border rounded-pill px-2 mt-1" style={{fontSize: '0.7rem'}}>
-                             ID: {student.studentId}
-                          </span>
+                    {/* Identity Section */}
+                    <div className="w-full md:w-1/3 p-5 flex items-center gap-4 border-b md:border-b-0 md:border-e border-slate-800 bg-slate-900/20">
+                      <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl flex items-center justify-center text-teal-400 font-black text-xl shadow-lg border border-slate-600 group-hover:border-teal-500/50 transition-colors">
+                        {student.studentName?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-white group-hover:text-teal-400 transition-colors">{student.studentName}</h3>
+                        <div className="inline-block bg-slate-800 text-slate-400 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700 mt-1 uppercase">
+                          UID: {student.studentId}
                         </div>
                       </div>
                     </div>
 
-                    {/* Details - studentEmail */}
-                    <div className="col-md-5 p-4 bg-white">
-                       <div className="d-flex align-items-center gap-2 text-muted mb-2">
-                          <Mail size={14} className="text-primary" />
-                          <span style={{ fontSize: '0.85rem' }}>{student.studentEmail}</span>
+                    {/* Details Section */}
+                    <div className="w-full md:w-1/3 p-5 space-y-2">
+                       <div className="flex items-center gap-3 text-slate-400">
+                          <div className="p-1.5 bg-slate-800 rounded-lg"><Mail size={14} className="text-teal-500" /></div>
+                          <span className="text-sm truncate font-medium">{student.studentEmail}</span>
                        </div>
-                       <div className="d-flex align-items-center gap-2 text-muted">
-                          <Calendar size={14} className="text-primary" />
-                          <span style={{ fontSize: '0.85rem' }}>Status: <span className="text-success fw-bold">Enrolled</span></span>
+                       <div className="flex items-center gap-3 text-slate-400">
+                          <div className="p-1.5 bg-slate-800 rounded-lg"><Calendar size={14} className="text-teal-500" /></div>
+                          <span className="text-sm font-medium">Status: <span className="text-emerald-400 font-bold uppercase text-[10px] tracking-widest ml-1">Enrolled</span></span>
                        </div>
                     </div>
 
-                    {/* Action Button */}
-                    <div className="col-md-3 bg-light p-4 d-flex align-items-center justify-content-center">
+                    {/* Action Section */}
+                    <div className="w-full md:w-1/3 p-5 flex items-center justify-center md:justify-end bg-slate-800/10">
                       <button 
-                        className="btn btn-outline-dark btn-sm px-4 py-2 rounded-pill d-flex align-items-center gap-2 fw-bold shadow-sm"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-teal-500 text-slate-300 hover:text-white font-bold rounded-xl border border-slate-700 hover:border-teal-400 transition-all shadow-md group/btn"
                         onClick={() => handleOpenProfile(student.studentId)}
                       >
-                        <ExternalLink size={14} /> Profile
+                        <ExternalLink size={16} className="group-hover/btn:scale-110 transition-transform" /> 
+                        View Profile
                       </button>
                     </div>
                   </div>
@@ -155,17 +148,17 @@ const BatchStudentsPage = () => {
               </div>
             ))
           ) : (
-            <div className="col-12">
-              <div className="text-center py-5 bg-white rounded-4 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center">
-                <UserCheck size={48} className="text-muted mb-3 opacity-25" />
-                <p className="text-muted mb-0 fw-medium">No students found in this batch.</p>
+            <div className="py-20 bg-slate-900/30 border-2 border-dashed border-slate-800 rounded-3xl flex flex-col items-center justify-center text-center">
+              <div className="p-6 bg-slate-800/50 rounded-full mb-4">
+                <UserCheck size={64} className="text-slate-700" />
               </div>
+              <h3 className="text-xl font-bold text-slate-400">No students found</h3>
+              <p className="text-slate-600 mt-1">Try adjusting your search or check back later.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* 6. MODAL COMPONENT (Placed outside the container) */}
       <StudentProfileModal 
         studentId={selectedStudentId} 
         isOpen={isModalOpen} 
