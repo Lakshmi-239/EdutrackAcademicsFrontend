@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../services/Api'; 
-import {
-  Edit, Save, Globe, Home, Award
-} from 'lucide-react';
+import { api } from '../../services/Api';
+import { Edit, Save, Globe, Home, Award, History, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdditionalInfoSection = ({ additionalInfo, onUpdate }) => {
@@ -11,143 +9,162 @@ export const AdditionalInfoSection = ({ additionalInfo, onUpdate }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (additionalInfo) {
-      setFormData(additionalInfo);
-    }
+    if (additionalInfo) setFormData(additionalInfo);
   }, [additionalInfo]);
-
-  const handleEdit = () => setIsEditing(true);
-
-  const handleCancel = () => {
-    setFormData(additionalInfo);
-    setIsEditing(false);
-  };
 
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      const studentId = localStorage.getItem('studentId');
-      
-      // Formatting payload to match C# StudentAdditionalDetailsDTO
-      const payload = {
-        nationality: formData.nationality || null,
-        citizenship: formData.citizenship || null,
-        dayscholarHosteller: formData.dayscholarHosteller || null,
-        certifications: formData.certifications || null,
-        clubs_Chapters: formData.clubs_Chapters || null,
-        achievements: formData.achievements || null,
-        educationGap: formData.educationGap ? parseInt(formData.educationGap, 10) : 0
-      };
-
-      // Ensure your api.js has updateAdditionalInfo using the PUT route
-      await api.updateAdditionalInfo(studentId, payload);
-      
-      toast.success("Additional details updated!");
+      await api.updateAdditionalInfo(localStorage.getItem('studentId'), formData);
+      toast.success('Profile Synchronized');
       setIsEditing(false);
-      onUpdate(); // Refreshes profile state in StudentProfile.jsx
-    } catch (error) {
-      console.error('Update Error:', error);
-      toast.error(error.response?.data?.message || "Check your input formats");
+      onUpdate();
+    } catch {
+      toast.error('Update failed');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  /* ================== FIELD ================== */
+  const FieldBlock = ({ label, field, value, icon: Icon, type = 'text' }) => (
+    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-slate-950/30 border border-slate-800/50 hover:border-slate-700 transition-colors">
+      <div className="flex items-center gap-2 text-slate-400">
+        {Icon && <Icon size={14} />}
+        <span className="text-[11px] font-medium uppercase tracking-wide">
+          {label}
+        </span>
+      </div>
 
-  const InputField = ({ label, value, field, placeholder, type = "text" }) => (
-    <div className="space-y-2">
-      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</label>
       {isEditing ? (
         <input
           type={type}
           value={value || ''}
-          onChange={(e) => handleChange(field, e.target.value)}
-          placeholder={placeholder}
-          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+          onChange={(e) =>
+            setFormData({ ...formData, [field]: e.target.value })
+          }
+          className="bg-transparent border-b border-teal-500/30 py-1.5 text-sm text-white font-medium focus:border-teal-400 outline-none"
         />
       ) : (
-        <p className="text-slate-700 font-medium px-1">{value || 'Not Provided'}</p>
+        <p
+          className={`text-sm font-medium ${
+            value ? 'text-white' : 'text-slate-600'
+          }`}
+        >
+          {value || 'Not Disclosed'}
+        </p>
       )}
     </div>
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+    <div className="w-full space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Additional Details</h2>
-          <p className="text-slate-500 mt-1">Official background and extra-curricular information.</p>
+          <h2 className="text-2xl font-semibold text-white tracking-tight">
+            Background
+          </h2>
+          <p className="text-xs text-slate-500 font-normal mt-1">
+            Manage your institutional registration data.
+          </p>
         </div>
+
         {!isEditing && (
           <button
-            onClick={handleEdit}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-all shadow-md active:scale-95"
+            onClick={() => setIsEditing(true)}
+            className="group flex items-center gap-2 px-5 py-2.5 bg-teal-500 text-slate-950 rounded-xl text-xs font-semibold uppercase tracking-wide hover:bg-teal-400 transition"
           >
-            <Edit className="w-4 h-4" /> Edit Details
+            <Edit size={14} className="group-hover:rotate-12 transition-transform" />
+            Modify Records
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <Globe className="w-5 h-5 text-blue-600" /> Citizenship & Origin
-          </h3>
-          <InputField label="Nationality" field="nationality" value={formData.nationality} />
-          <InputField label="Citizenship" field="citizenship" value={formData.citizenship} />
+      {/* Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Residency */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-2 ml-2">
+            <Globe size={16} className="text-teal-500" />
+            <span className="text-xs font-semibold text-white uppercase tracking-wide">
+              Origin & Residency
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldBlock
+              label="Nationality"
+              field="nationality"
+              value={formData.nationality}
+            />
+            <FieldBlock
+              label="Citizenship"
+              field="citizenship"
+              value={formData.citizenship}
+            />
+          </div>
+
+          <FieldBlock
+            label="Residential Status"
+            field="dayscholarHosteller"
+            value={formData.dayscholarHosteller}
+            icon={Home}
+          />
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <Home className="w-5 h-5 text-emerald-600" /> Residential Status
-          </h3>
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase">Status</label>
-            {isEditing ? (
-              <select
-                value={formData.dayscholarHosteller || ''}
-                onChange={(e) => handleChange('dayscholarHosteller', e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-indigo-500"
-              >
-                <option value="">Select Option</option>
-                <option value="Dayscholar">Dayscholar</option>
-                <option value="Hosteller">Hosteller</option>
-              </select>
-            ) : (
-              <p className="text-slate-700 font-medium">{formData.dayscholarHosteller || 'Not Selected'}</p>
-            )}
+        {/* Achievements */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-2 ml-2">
+            <Award size={16} className="text-blue-500" />
+            <span className="text-xs font-semibold text-white uppercase tracking-wide">
+              Campus Engagement
+            </span>
           </div>
-        </div>
 
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <InputField label="Certifications" field="certifications" value={formData.certifications} />
-          </div>
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <InputField label="Clubs & Chapters" field="clubs_Chapters" value={formData.clubs_Chapters} />
-          </div>
-        </div>
+          <FieldBlock
+            label="Certifications"
+            field="certifications"
+            value={formData.certifications}
+          />
 
-        <div className="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField label="Achievements" field="achievements" value={formData.achievements} />
-          <InputField label="Education Gap (Years)" field="educationGap" type="number" value={formData.educationGap} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldBlock
+              label="Clubs & Chapters"
+              field="clubs_Chapters"
+              value={formData.clubs_Chapters}
+            />
+            <FieldBlock
+              label="Education Gap"
+              field="educationGap"
+              value={formData.educationGap}
+              type="number"
+              icon={History}
+            />
+          </div>
         </div>
       </div>
 
+      {/* Action Bar */}
       {isEditing && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-4 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom-4">
-          <button onClick={handleCancel} className="px-6 py-2.5 text-slate-600 font-semibold hover:bg-slate-100 rounded-xl">
+        <div className="mt-12 flex items-center justify-end gap-4 p-6 bg-slate-900/40 border border-slate-800 rounded-[2rem] animate-in slide-in-from-bottom-4">
+          <button
+            onClick={() => {
+              setIsEditing(false);
+              setFormData(additionalInfo);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-white transition"
+          >
+            <RotateCcw size={14} />
             Cancel
           </button>
+
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-3 bg-teal-500 text-slate-950 rounded-2xl text-xs font-semibold uppercase tracking-wide hover:bg-teal-400 shadow-lg shadow-teal-500/20 disabled:opacity-50"
           >
-            {isSaving ? "Saving..." : <><Save size={18} /> Save Changes</>}
+            {isSaving ? 'Synchronizing…' : <><Save size={16} /> Save Changes</>}
           </button>
         </div>
       )}
