@@ -124,6 +124,41 @@ const StudentDashboard = () => {
           ))}
         </div>
 
+        {/* Live Session Section */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between bg-slate-900/40 border border-slate-800 rounded-3xl p-6 backdrop-blur-md">
+
+            {/* Left Side */}
+            <div className="flex items-center gap-4">
+              <div className="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></div>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest">
+                    Live Session
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Join your ongoing live workshop
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Side – Teams Join Button */}
+              <a
+                href="https://teams.microsoft.com/l/meetup-join/19%3ameeting_default_link"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-gradient-to-r from-indigo-600 to-violet-600 
+                 hover:from-indigo-500 hover:to-violet-500 
+                 text-white px-5 py-2 rounded-lg 
+                 text-xs font-bold uppercase tracking-widest 
+                 shadow-md shadow-indigo-500/30 
+                 transition-all duration-200"
+            >
+              Join Session
+            </a>
+
+          </div>
+        </div>
+
         {/* Assignments Table */}
         <div className="bg-slate-900/40 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-md">
           <div className="p-8 border-b border-slate-800">
