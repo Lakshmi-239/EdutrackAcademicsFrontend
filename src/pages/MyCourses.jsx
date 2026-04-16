@@ -329,6 +329,16 @@ const MyCourses = () => {
                       </div>
                     )}
                   </div>
+                  {activeTab === "enrolled" && !canAccess && (
+                    <div className="mb-6 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-amber-400">
+                        Batch not yet started
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        You will be able to access this course once the batch begins.
+                      </p>
+                    </div>
+                  )}
                   <p className="text-slate-400 leading-relaxed mb-10 line-clamp-2 text-sm">{course.learningObjective}</p>
                   <div className="flex items-center justify-between pt-6 border-t border-slate-800/40">
                     <div className="flex gap-8 text-slate-200 font-bold">
