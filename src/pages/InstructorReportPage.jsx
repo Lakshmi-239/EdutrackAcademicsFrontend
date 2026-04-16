@@ -350,3 +350,4 @@ const InstructorReportPage = () => {
 };
 
 export default InstructorReportPage;
+

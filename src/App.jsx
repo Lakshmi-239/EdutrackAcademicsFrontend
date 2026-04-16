@@ -65,7 +65,10 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
+                      <Route path="/instructor-performance" element={<InstructorReportPage />} />
+                                  <Route path="/admin/performance" element={<AdminReportPage />} />
+
+
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
@@ -74,13 +77,11 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
-            <Route path="/admin/performance" element={<AdminReportPage />} />
             <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
 
-            <Route path="/instructor-performance" element={<InstructorReportPage />} />
 
             {/* PERFORMANCE */}
             {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
