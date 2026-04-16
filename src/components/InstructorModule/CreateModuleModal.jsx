@@ -6,6 +6,7 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
   const [courses, setCourses] = useState([]);
   const [fetchingCourses, setFetchingCourses] = useState(false);
   const [loading, setLoading] = useState(false);
+  const instructorId = localStorage.getItem("instructorId");
   
   const [formData, setFormData] = useState({
     courseId: '', 
@@ -18,7 +19,7 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
     const loadCourses = async () => {
       try {
         setFetchingCourses(true);
-        const data = await api.getCoursesByInstructor('I003');
+        const data = await api.getCoursesByInstructor(instructorId);
         const activeCourses = data.filter(c => c.isActive);
         setCourses(activeCourses);
         if (activeCourses.length > 0) {
@@ -55,80 +56,75 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
   };
 
   return (
-    <div className="fixed inset-0 z-[1060] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      {/* max-w-4xl for width, but tightly packed vertically */}
-      <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[1.5rem] shadow-2xl transform animate-in zoom-in-95 duration-300">
+    <div className="modal-overlay">
+      {/* Container restricted to 85% of viewport height */}
+      <div className="modal-container animate-slide-up flex flex-column" style={{ maxHeight: '85vh' }}>
         
-        {/* HEADER - Reduced Padding */}
-        <div className="px-6 py-2 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center rounded-t-[1.5rem]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400">
-              <PlusCircle size={20} />
+        {/* FIXED HEADER */}
+        <div className="modal-header-enterprise shrink-0">
+          <div className="d-flex align-items-center gap-3">
+            <div className="header-icon-wrapper">
+              <PlusCircle size={22} className="text-teal-400" />
             </div>
             <div>
-              <h5 className="text-white font-black tracking-tight mb-0 text-base">New Module</h5>
-              <p className="text-slate-500 font-mono text-[9px] uppercase tracking-widest mb-0">Configuration</p>
+              <h5 className="mb-0 fw-bold text-white tracking-tight">New Module</h5>
+              <p className="text-slate-400 mb-0 extra-small uppercase tracking-widest">Curriculum Configuration</p>
             </div>
           </div>
-          <button className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition-colors" onClick={onClose}>
-            <X size={18} />
-          </button>
+          <button onClick={onClose} className="btn-close-enterprise"><X size={20} /></button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-4">
-            
-            {/* ROW 1: Course Selection */}
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-indigo-400 mb-1.5">Active Course</label>
-              <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400">
-                  {fetchingCourses ? <Loader2 size={16} className="animate-spin" /> : <BookOpen size={16}/>}
-                </span>
-                <select 
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-xl ps-11 pe-4 py-2.5 outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer"
-                  required
-                  value={formData.courseId}
-                  onChange={(e) => setFormData({...formData, courseId: e.target.value})}
-                >
-                  <option value="" className="bg-slate-900">-- Choose Active Course --</option>
-                  {courses.map(course => (
-                    <option key={course.courseId} value={course.courseId} className="bg-slate-900">
-                      {course.courseId} - {course.courseName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* ROW 2: Name and Sequence (Side-by-Side) */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-3">
-                <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-indigo-400 mb-1.5">Module Title</label>
-                <div className="relative group">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400">
-                    <Layers size={16}/>
+        {/* SCROLLABLE BODY - This ensures content doesn't get cut off */}
+        <div className="overflow-y-auto p-4 bg-slate-900 custom-scrollbar" style={{ flex: 1 }}>
+          <form id="moduleForm" onSubmit={handleSubmit}>
+            <div className="row g-4">
+              {/* Course Selection */}
+              <div className="col-12">
+                <label className="form-label-enterprise">Select Active Course</label>
+                <div className="input-group-enterprise">
+                  <span className="input-icon">
+                      {fetchingCourses ? <Loader2 size={18} className="animate-spin" /> : <BookOpen size={18}/>}
                   </span>
+                  <select 
+                    className="form-control-enterprise"
+                    required
+                    value={formData.courseId}
+                    onChange={(e) => setFormData({...formData, courseId: e.target.value})}
+                  >
+                    <option value="" className="bg-slate-800">Choose a course...</option>
+                    {courses.map(course => (
+                      <option key={course.courseId} value={course.courseId} className="bg-slate-800">
+                        {course.courseId} — {course.courseName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Module Name */}
+              <div className="col-md-9">
+                <label className="form-label-enterprise">Module Title</label>
+                <div className="input-group-enterprise">
+                  <span className="input-icon"><Layers size={18} /></span>
                   <input 
                     type="text" 
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-xl ps-11 pe-4 py-2.5 outline-none focus:border-indigo-500/50 transition-all"
+                    className="form-control-enterprise" 
+                    placeholder="e.g. System Design Basics"
                     required 
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="e.g. Advanced Data Structures"
                   />
                 </div>
               </div>
 
-              <div className="md:col-span-1">
-                <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-indigo-400 mb-1.5">Order</label>
-                <div className="relative group">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400">
-                    <CheckCircle size={16}/>
-                  </span>
+              {/* Sequence Order */}
+              <div className="col-md-3">
+                <label className="form-label-enterprise">Order</label>
+                <div className="input-group-enterprise">
+                  <span className="input-icon"><CheckCircle size={18} /></span>
                   <input 
                     type="number" 
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-xl ps-11 pe-4 py-2.5 outline-none focus:border-indigo-500/50 transition-all font-mono"
+                    className="form-control-enterprise text-center" 
                     required 
                     min="1"
                     value={formData.sequenceOrder}
@@ -136,46 +132,102 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
                   />
                 </div>
               </div>
-            </div>
 
-            {/* ROW 3: Learning Objectives - Smaller Textarea */}
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-indigo-400 mb-1.5">Learning Objectives</label>
-              <div className="relative group">
-                <span className="absolute left-4 top-3 text-slate-500 group-focus-within:text-indigo-400">
-                  <Target size={16}/>
-                </span>
-                <textarea 
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-xl ps-11 pe-4 py-2.5 outline-none focus:border-indigo-500/50 transition-all min-h-[80px] max-h-[120px] resize-none"
-                  rows="3"
-                  value={formData.learningObjectives}
-                  onChange={(e) => setFormData({...formData, learningObjectives: e.target.value})}
-                  placeholder="Achievement outcomes..."
-                ></textarea>
+              {/* Learning Objectives */}
+              <div className="col-12">
+                <label className="form-label-enterprise">Learning Objectives</label>
+                <div className="input-group-enterprise align-items-start">
+                  <span className="input-icon mt-2"><Target size={18} /></span>
+                  <textarea 
+                    className="form-control-enterprise" 
+                    rows="4"
+                    placeholder="Describe the expected outcomes..."
+                    value={formData.learningObjectives}
+                    onChange={(e) => setFormData({...formData, learningObjectives: e.target.value})}
+                    style={{ minHeight: '120px', resize: 'none' }}
+                  ></textarea>
+                </div>
               </div>
             </div>
-          </div>
+          </form>
+        </div>
 
-          {/* FOOTER - Reduced Padding */}
-          <div className="px-6 py-4 bg-slate-800/30 border-t border-slate-800 flex justify-end gap-3 rounded-b-[1.5rem]">
-            <button 
-              type="button" 
-              className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] uppercase tracking-widest rounded-lg border border-slate-700 transition-all" 
-              onClick={onClose}
-            >
-              Cancel
+        {/* FIXED FOOTER */}
+        <div className="modal-footer-enterprise p-4 bg-slate-900 border-top border-slate-800 shrink-0">
+          <div className="d-flex gap-3">
+            <button type="button" onClick={onClose} className="btn-enterprise-secondary">
+              Discard
             </button>
             <button 
+              form="moduleForm"
               type="submit" 
-              className="px-8 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] uppercase tracking-widest rounded-lg shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2"
               disabled={loading || fetchingCourses}
+              className="btn-enterprise-primary"
             >
-              {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              Save Module
+              {loading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <>
+                  <Save size={18} />
+                  <span>Save Module</span>
+                </>
+              )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
+
+      <style>{`
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(7, 10, 25, 0.85); backdrop-filter: blur(8px);
+          display: flex; align-items: center; justify-content: center; z-index: 9999;
+          padding: 20px;
+        }
+        .modal-container {
+          background: #0f172a; width: 100%; max-width: 580px;
+          border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+          overflow: hidden;
+        }
+        .modal-header-enterprise {
+          background: #0f172a; padding: 1.25rem 2rem;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-icon-wrapper {
+          background: rgba(20, 184, 166, 0.1); padding: 8px; border-radius: 10px;
+          border: 1px solid rgba(20, 184, 166, 0.2);
+        }
+        .form-label-enterprise {
+          color: #94a3b8; font-size: 10px; font-weight: 800;
+          text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+        }
+        .input-group-enterprise { position: relative; display: flex; align-items: center; }
+        .input-icon { position: absolute; left: 16px; color: #5eead4; z-index: 5; opacity: 0.8; }
+        .form-control-enterprise {
+          background: #1e293b !important; border: 1px solid #334155 !important;
+          color: #f8fafc !important; padding: 10px 16px 10px 48px !important;
+          border-radius: 12px !important; width: 100%; font-size: 14px;
+        }
+        .form-control-enterprise:focus { border-color: #14b8a6 !important; outline: none; }
+        .btn-enterprise-primary {
+          background: #14b8a6; color: #0f172a; border: none; padding: 10px 24px;
+          border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-grow: 2;
+        }
+        .btn-enterprise-secondary {
+          background: transparent; color: #94a3b8; border: 1px solid #334155;
+          padding: 10px 24px; border-radius: 12px; font-weight: 600; flex-grow: 1;
+        }
+        .btn-close-enterprise {
+          background: rgba(255,255,255,0.05); border: none; color: #64748b;
+          width: 32px; height: 32px; border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      `}</style>
     </div>
   );
 }

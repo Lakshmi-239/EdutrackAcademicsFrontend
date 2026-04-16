@@ -10,7 +10,7 @@ export default function InstructorCoursePage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
 
-  const instructorId = localStorage.getItem("InstructorId");
+  const instructorId = localStorage.getItem("instructorId");
 
   const fetchData = async () => {
     try {

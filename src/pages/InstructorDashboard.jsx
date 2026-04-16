@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { api } from '../services/Api'; 
 import { GraduationCap, Video, Calendar as CalendarIcon, FileText, CheckCircle, Users, Layout } from 'lucide-react';
+import axios from 'axios';
 
 const InstructorDashboard = () => {
   const navigate = useNavigate(); 
@@ -9,6 +10,7 @@ const InstructorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [todaysDeadlines, setTodaysDeadlines] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date()); 
+  const [instructorName, setinstructorName] = useState('');
   
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -17,13 +19,12 @@ const InstructorDashboard = () => {
     totalModules: 0
   });
 
-  const instructorId = "I003";
+  const instructorId = localStorage.getItem("instructorId");
   const today = new Date();
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
   const daysInMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
   const fetchDeadlinesByDate = async (date) => {
     try {
       const yyyy = date.getFullYear();
@@ -43,6 +44,17 @@ const InstructorDashboard = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        const instRes = await axios.get('https://localhost:7157/api/coordinator/instructors/all');
+        const allInstructors = instRes.data || [];
+        
+        // LocalStorage lo unna ID tho match ayye instructor ni vethukutunnam
+        const currentInstructor = allInstructors.find(i => i.instructorId === instructorId);
+        
+        if (currentInstructor) {
+          setinstructorName(currentInstructor.instructorName || currentInstructor.name);
+        } else {
+          setinstructorName("Instructor"); // Fallback
+        }
         const data = await api.getInstructorCurriculumData(instructorId);
         const safeData = Array.isArray(data) ? data : [];
         setCurriculumData(safeData);
@@ -89,7 +101,7 @@ const InstructorDashboard = () => {
       {/* Page Header */}
       <div className="mb-8">
         <h2 className="text-3xl font-extrabold tracking-tight">
-          Hi <span className="text-teal-400">Jyothirmyee,</span>
+          Hi <span className="text-teal-400">{instructorName}</span>
         </h2>
       </div>
 

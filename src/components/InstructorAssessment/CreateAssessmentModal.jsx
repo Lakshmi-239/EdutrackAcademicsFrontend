@@ -5,6 +5,7 @@ import { X, Save, BookOpen, Calendar, Award, Layers, ChevronRight } from 'lucide
 export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const instructorId = localStorage.getItem("instructorId");
   const [formData, setFormData] = useState({
     courseId: '',
     type: 'Quiz',
@@ -16,7 +17,7 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
     if (isOpen) {
       const loadCourses = async () => {
         try {
-          const data = await api.getCoursesByInstructor('I003');
+          const data = await api.getCoursesByInstructor(instructorId);
           setCourses(data.filter(c => c.isActive));
         } catch (err) {
           console.error("Failed to load courses", err);
