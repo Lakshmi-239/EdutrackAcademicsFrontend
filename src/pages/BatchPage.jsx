@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Added for navigation
-import { 
-  FiUsers, FiBookOpen, FiArrowRight, FiActivity, 
-  FiSearch, FiFilter, FiArrowLeft 
-} from "react-icons/fi";
+import { FiUsers, FiBookOpen, FiUser, FiArrowRight, FiActivity, FiSearch, FiFilter } from "react-icons/fi";
 
 const BatchPage = () => {
   const navigate = useNavigate(); // Hook for navigation
@@ -19,58 +15,42 @@ const BatchPage = () => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [selectedBatchId, setSelectedBatchId] = useState(null); // Added missing state
+  const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [loadingStudents, setLoadingStudents] = useState(false);
 
-  // --- API Logic ---
+  // --- API Logic (Unchanged) ---
   useEffect(() => {
-    axios.get("https://localhost:7157/api/coordinator/programs")
-      .then((res) => setPrograms(res.data))
-      .catch((err) => console.error("Error fetching programs:", err));
+    axios.get("https://localhost:7157/api/coordinator/programs").then(res => setPrograms(res.data || []));
   }, []);
 
   useEffect(() => {
     if (selectedProgram) {
-      axios.get(`https://localhost:7157/api/coordinator/program/${selectedProgram.programId}/years`)
-        .then((res) => setYears(res.data))
-        .catch((err) => console.error("Error fetching years:", err));
-    } else {
-      setYears([]);
-      setSelectedYear(null);
+      axios.get(`https://localhost:7157/api/coordinator/program/${selectedProgram.programId}/years`).then(res => setYears(res.data || []));
     }
   }, [selectedProgram]);
 
   useEffect(() => {
     if (selectedYear) {
-      axios.get(`https://localhost:7157/api/coordinator/academic-year/${selectedYear.academicYearId}/courses`)
-        .then((res) => setCourses(res.data))
-        .catch((err) => console.error("Error fetching courses:", err));
-    } else {
-      setCourses([]);
-      setSelectedCourse(null);
+      axios.get(`https://localhost:7157/api/coordinator/academic-year/${selectedYear.academicYearId}/courses`).then(res => setCourses(res.data || []));
     }
   }, [selectedYear]);
 
   useEffect(() => {
     if (selectedCourse) {
-      axios.get(`https://localhost:7157/api/coordinator/course/${selectedCourse.courseId}/batches`)
-        .then((res) => setBatches(res.data))
-        .catch((err) => console.error("Error fetching batches:", err));
-    } else {
-      setBatches([]);
+      axios.get(`https://localhost:7157/api/coordinator/course/${selectedCourse.courseId}/batches`).then(res => {
+        setBatches(res.data || []);
+        setStudents([]);
+        setSelectedBatchId(null);
+      });
     }
   }, [selectedCourse]);
 
   const handleBatchClick = (batchId) => {
     setSelectedBatchId(batchId);
     setLoadingStudents(true);
-    axios.get(`https://localhost:7157/api/coordinator/course/${selectedCourse.courseId}/students`)
+    axios.get(`https://localhost:7157/api/coordinator/batch/${batchId}/students`)
       .then((res) => {
-        setStudents(res.data);
-        setLoadingStudents(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching students:", err);
+        setStudents(res.data || []);
         setLoadingStudents(false);
       });
   };
@@ -78,17 +58,7 @@ const BatchPage = () => {
   return (
     <div className="batch-mgmt-dark min-vh-100 py-4 px-lg-5">
       
-      {/* --- BACK BUTTON & HEADER --- */}
-      <div className="mb-4">
-        <button 
-          onClick={() => navigate("/coordinator-dashboard")} 
-          className="btn d-inline-flex align-items-center gap-2 text-slate-400 p-0 border-0 hover-text-teal transition-all mb-3"
-          style={{ background: 'none' }}
-        >
-          <FiArrowLeft /> Back to Coordinator Dashboard
-        </button>
-      </div>
-
+      {/* --- HEADER --- */}
       <div className="d-flex justify-content-between align-items-end mb-5">
         <div>
           <div className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-2" 
@@ -99,7 +69,7 @@ const BatchPage = () => {
           <h1 className="display-6 fw-bold text-white mb-1">Batch Management</h1>
           <p className="text-slate-400 mb-0">Monitor student enrollment and instructor assignments</p>
         </div>
-        <div className="avatar-pill">CO</div>
+        <div className="avatar-pill">AD</div>
       </div>
 
       {/* --- FLOATING FILTER BAR --- */}
@@ -132,43 +102,39 @@ const BatchPage = () => {
         </div>
       </div>
 
-      {/* --- CONTENT AREA --- */}
       {selectedCourse && (
         <div className="row g-4 animate-fade-in">
-          {/* BATCH TILES SIDEBAR */}
+          {/* --- BATCH TILES SIDEBAR --- */}
           <div className="col-lg-4">
             <h6 className="text-slate-500 fw-bold uppercase tracking-widest mb-4">
               <FiUsers className="me-2 text-teal"/> Available Batches ({batches.length})
             </h6>
             <div className="pe-2 custom-scrollbar" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              {batches.length > 0 ? (
-                batches.map((batch) => (
-                  <div 
-                    key={batch.batchId} 
-                    className={`batch-tile-dark ${selectedBatchId === batch.batchId ? "active" : ""}`}
-                    onClick={() => handleBatchClick(batch.batchId)}
-                  >
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <h5 className="fw-bold mb-1 text-white">{batch.batchName}</h5>
-                        <div className="d-flex align-items-center mt-2">
-                          <div className="instructor-mini-avatar me-2">
-                            {batch.instructor?.charAt(0) || "G"}
-                          </div>
-                          <span className="text-slate-400 small">Instructor: <b className="text-slate-200">{batch.instructor || "Gowri"}</b></span>
+              {batches.map((batch) => (
+                <div 
+                  key={batch.batchId} 
+                  className={`batch-tile-dark ${selectedBatchId === batch.batchId ? "active" : ""}`}
+                  onClick={() => handleBatchClick(batch.batchId)}
+                >
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h5 className="fw-bold mb-1 text-white">{batch.batchName}</h5>
+                      <div className="d-flex align-items-center mt-2">
+                        <div className="instructor-mini-avatar me-2">
+                          {batch.instructor?.charAt(0) || "G"}
                         </div>
+                        <span className="text-slate-400 small">Instructor: <b className="text-slate-200">{batch.instructor || "Gowri"}</b></span>
                       </div>
                       <FiArrowRight className={`arrow-icon ${selectedBatchId === batch.batchId ? "active" : ""}`} />
                     </div>
+                    <FiArrowRight className={`arrow-icon ${selectedBatchId === batch.batchId ? "active" : ""}`} />
                   </div>
-                ))
-              ) : (
-                <p className="text-slate-500">No batches found for this course.</p>
-              )}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* STUDENT LIST MAIN VIEW */}
+          {/* --- STUDENT LIST MAIN VIEW --- */}
           <div className="col-lg-8">
             <div className="student-container-dark overflow-hidden">
               <div className="container-header d-flex justify-content-between align-items-center">
@@ -198,7 +164,7 @@ const BatchPage = () => {
                           <td className="ps-4 py-3">
                             <div className="d-flex align-items-center">
                               <div className="student-avatar-box">
-                                {stu.studentName?.charAt(0) || "S"}
+                                {stu.studentName.charAt(0)}
                               </div>
                               <div>
                                 <div className="fw-bold text-white mb-0">{stu.studentName}</div>
@@ -231,7 +197,6 @@ const BatchPage = () => {
       <style>{`
         .batch-mgmt-dark { background-color: #020617; font-family: 'Inter', sans-serif; }
         .text-teal { color: #14b8a6 !important; }
-        .hover-text-teal:hover { color: #14b8a6 !important; transform: translateX(-3px); }
         .text-slate-400 { color: #94a3b8 !important; }
         .text-slate-500 { color: #64748b !important; }
 
@@ -241,6 +206,7 @@ const BatchPage = () => {
             border-radius: 12px; font-weight: 800; border: 1px solid #1e293b;
         }
 
+        /* Filter Bar */
         .filter-bar-dark {
           background: #0f172a; border-radius: 100px; 
           border: 1px solid #1e293b; overflow: hidden;
@@ -250,10 +216,10 @@ const BatchPage = () => {
           background: transparent; border: none; color: white; font-weight: 600; font-size: 0.95rem;
           width: 100%; outline: none; cursor: pointer; padding: 0;
         }
-        .filter-select:disabled { opacity: 0.4; cursor: not-allowed; }
         .filter-select.highlight { color: #14b8a6; }
         .filter-select option { background-color: #0f172a; color: white; }
 
+        /* Batch Tiles */
         .batch-tile-dark {
           background: #0f172a; border-radius: 18px; padding: 20px;
           margin-bottom: 12px; border: 1px solid #1e293b; cursor: pointer;
@@ -271,6 +237,7 @@ const BatchPage = () => {
         .arrow-icon { color: #334155; font-size: 1.2rem; transition: 0.3s; }
         .arrow-icon.active { color: #14b8a6; transform: rotate(0deg); }
 
+        /* Student List Table */
         .student-container-dark { background: #0f172a; border-radius: 24px; border: 1px solid #1e293b; }
         .container-header { padding: 25px; border-bottom: 1px solid #1e293b; }
         .batch-id-pill { background: rgba(20, 184, 166, 0.1); color: #14b8a6; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; }
@@ -280,7 +247,7 @@ const BatchPage = () => {
           text-transform: uppercase; font-size: 11px; letter-spacing: 1px;
           padding: 15px; border-bottom: 1px solid #1e293b;
         }
-        .table-dark-custom tbody td { border-bottom: 1px solid #1e293b; color: #94a3b8; }
+        .table-dark-custom tbody td { border-bottom: 1px solid #1e293b; }
         .student-avatar-box {
           width: 38px; height: 38px; border-radius: 10px; background: #1e293b;
           color: #14b8a6; display: flex; align-items: center; justify-content: center;
@@ -288,6 +255,7 @@ const BatchPage = () => {
         }
         .status-pill-success { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 700; }
 
+        /* Animation & Loader */
         .spinner-teal {
           width: 30px; height: 30px; border: 3px solid rgba(20, 184, 166, 0.1);
           border-top-color: #14b8a6; border-radius: 50%; animation: spin 0.8s linear infinite;
@@ -299,7 +267,6 @@ const BatchPage = () => {
 
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .transition-all { transition: all 0.2s ease-in-out; }
       `}</style>
     </div>
   );

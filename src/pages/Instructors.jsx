@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-<<<<<<< HEAD
-=======
 import { Modal } from "bootstrap";
 import { 
   FiSearch, FiMail, FiBook, FiUsers, 
@@ -9,47 +7,36 @@ import {
   FiCalendar, FiDownload, FiCheckCircle, FiActivity
 } from "react-icons/fi";
 
->>>>>>> 18bbe9b (adding data)
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const Instructors = () => {
   const [instructors, setInstructors] = useState([]);
   const [skill, setSkill] = useState("");
+  const [selectedInstructor, setSelectedInstructor] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
-<<<<<<< HEAD
-  // Fetch all instructors on mount
-  useEffect(() => {
-=======
   const fetchAll = () => {
->>>>>>> 18bbe9b (adding data)
     axios
       .get("https://localhost:7157/api/coordinator/instructors/all")
       .then((res) => setInstructors(res.data))
       .catch((err) => console.error("Error fetching instructors:", err));
+  };
+
+  useEffect(() => {
+    fetchAll();
   }, []);
 
-<<<<<<< HEAD
-  // Handle skill filter
-=======
->>>>>>> 18bbe9b (adding data)
   const handleSkillChange = (e) => {
     const selectedSkill = e.target.value;
     setSkill(selectedSkill);
     if (!selectedSkill) {
-      // Reload all instructors if skill is cleared
-      axios
-        .get("https://localhost:7157/api/coordinator/instructors/all")
-        .then((res) => setInstructors(res.data))
-        .catch((err) => console.error("Error fetching instructors:", err));
+      fetchAll();
     } else {
-      // Fetch instructors filtered by skill
       axios
-        .get(
-          `https://localhost:7157/api/coordinator/instructors?skill=${selectedSkill}`
-        )
+        .get(`https://localhost:7157/api/coordinator/instructors?skill=${selectedSkill}`)
         .then((res) => setInstructors(res.data))
-        .catch((err) => console.error("Error fetching instructors:", err));
+        .catch((err) => console.error("Error filtering:", err));
     }
   };
 

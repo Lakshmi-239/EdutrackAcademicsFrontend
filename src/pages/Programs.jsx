@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { FiLayers, FiCalendar, FiBookOpen, FiArrowRight, FiInfo, FiActivity } from "react-icons/fi";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const Programs = () => {
   const [programs, setPrograms] = useState([]);
@@ -10,43 +10,26 @@ const Programs = () => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [courses, setCourses] = useState([]);
 
-<<<<<<< HEAD
-  // Fetch all programs on mount
-=======
   // Logic remains untouched
->>>>>>> 18bbe9b (adding data)
   useEffect(() => {
-    axios
-      .get("https://localhost:7157/api/coordinator/programs")
+    axios.get("https://localhost:7157/api/coordinator/programs")
       .then((res) => setPrograms(res.data))
-      .catch((err) => console.error("Error fetching programs:", err));
+      .catch((err) => console.error("Error:", err));
   }, []);
 
-  // Fetch years when a program is selected
   useEffect(() => {
     if (selectedProgram) {
-      axios
-        .get(
-          `https://localhost:7157/api/coordinator/program/${selectedProgram.programId}/years`
-        )
-        .then((res) => setYears(res.data))
-        .catch((err) => console.error("Error fetching years:", err));
+      axios.get(`https://localhost:7157/api/coordinator/program/${selectedProgram.programId}/years`)
+        .then((res) => setYears(res.data));
     } else {
-      setYears([]);
-      setSelectedYear(null);
-      setCourses([]);
+      setYears([]); setSelectedYear(null); setCourses([]);
     }
   }, [selectedProgram]);
 
-  // Fetch courses when a year is selected
   useEffect(() => {
     if (selectedYear) {
-      axios
-        .get(
-          `https://localhost:7157/api/coordinator/academic-year/${selectedYear.academicYearId}/courses`
-        )
-        .then((res) => setCourses(res.data))
-        .catch((err) => console.error("Error fetching courses:", err));
+      axios.get(`https://localhost:7157/api/coordinator/academic-year/${selectedYear.academicYearId}/courses`)
+        .then((res) => setCourses(res.data));
     } else {
       setCourses([]);
     }

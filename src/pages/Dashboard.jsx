@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-<<<<<<< HEAD
-=======
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // Import the Auth Context
->>>>>>> 18bbe9b (adding data)
 import DashboardCard from "../components/Coordinator/DashboardCard.jsx";
 import {
   EnrollmentChart,
@@ -12,11 +9,7 @@ import {
   StudentsByProgramChart,
   GenderDistributionChart,
 } from "../components/Coordinator/Charts.jsx";
-<<<<<<< HEAD
-import "bootstrap/dist/css/bootstrap.min.css";
-=======
 import { FiHome, FiUser, FiLogOut, FiRefreshCw } from "react-icons/fi";
->>>>>>> 18bbe9b (adding data)
 
 const Dashboard = () => {
   const { user, logout } = useAuth(); // Access user info and logout function
@@ -28,73 +21,12 @@ const Dashboard = () => {
   const [studentsByProgramData, setStudentsByProgramData] = useState([]);
   const [genderDistributionData, setGenderDistributionData] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [batches, setBatches] = useState([]);
   const [instructors, setInstructors] = useState([]);
   const [students, setStudents] = useState([]);
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
-<<<<<<< HEAD
-  // Stats summary (already matches DashboardCard props)
-  axios.get("https://localhost:7157/api/coordinator/dashboard/stats")
-    .then(res => setStats(res.data));
-
-  // Enrollment trends → backend gives { month, count }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/enrollment-trends")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        course: `Month ${item.month}`,   // rename to "course"
-        students: item.count             // rename to "students"
-      }));
-      setEnrollmentData(formatted);
-    });
-
-  // Performance → backend gives { batchId, progress }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/performance")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        batch: item.batchId,             // rename to "batch"
-        performance: item.progress       // rename to "performance"
-      }));
-      setPerformanceData(formatted);
-    });
-
-  // Students by program → backend gives { program, count }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/students-by-program")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        program: item.program,           // keep "program"
-        students: item.count             // rename to "students"
-      }));
-      setStudentsByProgramData(formatted);
-    });
-
-  // Gender distribution → backend gives { gender, count }
-  axios.get("https://localhost:7157/api/coordinator/dashboard/gender-distribution")
-    .then(res => {
-      const formatted = res.data.map(item => ({
-        gender: item.gender,             // keep "gender"
-        value: item.count                // rename to "value"
-      }));
-      setGenderDistributionData(formatted);
-    });
-
-  // Notifications (already matches your UI)
-  axios.get("https://localhost:7157/api/coordinator/dashboard/notifications")
-    .then(res => setNotifications(res.data));
-
-  // Batches overview
-  axios.get("https://localhost:7157/api/coordinator/batches")
-    .then(res => setBatches(res.data));
-
-  // Instructors overview
-  axios.get("https://localhost:7157/api/coordinator/instructors/all")
-    .then(res => setInstructors(res.data));
-
-  // Students overview
-  axios.get("https://localhost:7157/api/coordinator/details")
-    .then(res => setStudents(res.data));
-}, []);
-=======
     // API logic
     axios.get("https://localhost:7157/api/coordinator/dashboard/stats").then(res => setStats(res.data));
     axios.get("https://localhost:7157/api/coordinator/dashboard/enrollment-trends").then(res => {
@@ -117,7 +49,6 @@ const Dashboard = () => {
     axios.get("https://localhost:7157/api/coordinator/instructors/all").then(res => setInstructors(res.data));
     axios.get("https://localhost:7157/api/coordinator/details").then(res => setStudents(res.data));
   }, []);
->>>>>>> 18bbe9b (adding data)
 
   // Handle Logout
   const handleLogout = () => {
@@ -128,8 +59,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard-wrapper" style={{ backgroundColor: "#020617", minHeight: "100vh", color: "#f8fafc" }}>
       
-      {/* --- TOP NAVIGATION BAR --- */}
-      <nav className="navbar navbar-expand-lg border-bottom border-slate-800 sticky-top" style={{ backgroundColor: "#0f172a", padding: "0.75rem 2rem", zIndex: 1050 }}>
+     {/* --- TOP NAVIGATION BAR --- A STICKY NAVIGATION BAR USED FOR STICK EVEN IF WE SCROLL */}
+      <nav className="navbar navbar-expand-lg border-bottom border-slate-800 sticky-top" style={{ backgroundColor: "rgba(15, 23, 42, 1)", padding: "0.75rem 2rem", zIndex: 1050 }}>
         <div className="container-fluid d-flex justify-content-between align-items-center">
           
           {/* Logo Section */}

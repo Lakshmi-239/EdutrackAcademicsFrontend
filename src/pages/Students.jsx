@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-<<<<<<< HEAD
-=======
 import { FiSearch, FiMail, FiBookOpen, FiUser, FiHash, FiActivity, FiLayers, FiCheckCircle, FiSlash } from "react-icons/fi";
->>>>>>> 18bbe9b (adding data)
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
@@ -11,36 +8,26 @@ const Students = () => {
   const [students, setStudents] = useState([]);
   const [courseId, setCourseId] = useState("");
 
-<<<<<<< HEAD
-  // Fetch all students on mount
-  useEffect(() => {
-=======
   // --- Working Logic (Unchanged) ---
   const fetchStudents = (url = "https://localhost:7157/api/coordinator/details") => {
->>>>>>> 18bbe9b (adding data)
     axios
-      .get("https://localhost:7157/api/coordinator/details")
+      .get(url)
       .then((res) => setStudents(res.data))
       .catch((err) => console.error("Error fetching students:", err));
+  };
+
+  useEffect(() => {
+    fetchStudents();
   }, []);
 
-  // Handle course filter
   const handleCourseChange = (e) => {
     const selectedCourseId = e.target.value.trim();
     setCourseId(selectedCourseId);
 
     if (!selectedCourseId) {
-      // Reload all students if filter cleared
-      axios
-        .get("https://localhost:7157/api/coordinator/details")
-        .then((res) => setStudents(res.data))
-        .catch((err) => console.error("Error fetching students:", err));
+      fetchStudents();
     } else {
-      // Fetch students filtered by courseId
-      axios
-        .get(`https://localhost:7157/api/coordinator/details/${selectedCourseId}`)
-        .then((res) => setStudents(res.data))
-        .catch((err) => console.error("Error fetching students:", err));
+      fetchStudents(`https://localhost:7157/api/coordinator/details/${selectedCourseId}`);
     }
   };
 

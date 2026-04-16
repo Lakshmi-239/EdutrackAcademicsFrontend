@@ -6,10 +6,7 @@ import {
   StudentsByProgramChart,
   GenderDistributionChart,
 } from "../components/Coordinator/Charts.jsx";
-<<<<<<< HEAD
-=======
 import { FiTrendingUp, FiPieChart, FiBarChart2, FiActivity, FiArrowUpRight, FiZap } from "react-icons/fi";
->>>>>>> 18bbe9b (adding data)
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const Reports = () => {
@@ -20,10 +17,6 @@ const Reports = () => {
 
   // --- Logic remains untouched ---
   useEffect(() => {
-<<<<<<< HEAD
-    // Enrollment trends -> { month, count }
-=======
->>>>>>> 18bbe9b (adding data)
     axios.get("https://localhost:7157/api/coordinator/dashboard/enrollment-trends")
       .then(res => {
         const formatted = res.data.map(item => ({
@@ -33,10 +26,6 @@ const Reports = () => {
         setEnrollmentData(formatted);
       });
 
-<<<<<<< HEAD
-    // Performance -> { batchId, progress }
-=======
->>>>>>> 18bbe9b (adding data)
     axios.get("https://localhost:7157/api/coordinator/dashboard/performance")
       .then(res => {
         const formatted = res.data.map(item => ({
@@ -46,10 +35,6 @@ const Reports = () => {
         setPerformanceData(formatted);
       });
 
-<<<<<<< HEAD
-    // Students by program -> { program, count }
-=======
->>>>>>> 18bbe9b (adding data)
     axios.get("https://localhost:7157/api/coordinator/dashboard/students-by-program")
       .then(res => {
         const formatted = res.data.map(item => ({
