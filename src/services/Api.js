@@ -181,13 +181,6 @@ getAllModules: async () => {
     // This matches the URL in your Swagger screenshot
     return await axios.get(`${BASE_URL}/instructorModuleContent/modules`);
   },
-
-
-
-
-
-
-
   updateContent: (id, data) => axios.put(`${BASE_URL}/instructorModuleContent/content/${id}`, data),  //** 
   //  getModulesByCourseId: (courseId) => axios.get(`${BASE_URL}/instructorModuleContent/modules/${courseId}`),   // **
    updateModule: (moduleId, dto) => axios.put(`${BASE_URL}/instructorModuleContent/module/${moduleId}`, dto),  //** 
@@ -323,8 +316,7 @@ deleteQuestion: async (questionId) => {
   getPersonalInfo: async (studentId) => {
     try {
       // Use the passed ID, or fallback to localStorage
-      const id = studentId || localStorage.getItem("studentId");
-      
+      const id = studentId || localStorage.getItem("studentId");      
       // CRITICAL FIX: Use 'id' in the template literal, not 'studentId'
       const response = await axios.get(`${BASE_URL}/profile/Personal-Information/${id}`);
       return response.data;
@@ -368,17 +360,112 @@ deleteQuestion: async (questionId) => {
   // Ensure you still have this for the Personal Info section
   updatePersonalInfo: async (studentId, data) => {
     const id = studentId || localStorage.getItem("studentId");
-    const response = await axios.put(`${BASE_URL}/profile/Personal-Information/${id}`, data);
+    const response = await axios.put(`${BASE_URL}/profile/Additional-Information/${id}`, data,
+      {
+          headers: {
+                'Content-Type': 'application/json'
+            }
+      });
+    return response.data;
+  },
+  getAdditionalInfo: async (studentId) => {
+    const id = studentId || localStorage.getItem("studentId");
+    const response = await axios.get(`${BASE_URL}/profile/GetAdditional-Information/${id}`);
     return response.data;
   },
   changePassword: async (passwordData) => {
-    // passwordData will look like: { email: "...", newPassword: "..." }
-    const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, passwordData);
-    return response.data;
-   },
+  const password = passwordData.NewPassword || passwordData.newPassword;
 
+  const formattedData = {
+    Email: passwordData.Email || passwordData.email || '', // safe fallback
+    NewPassword: password
+  };
+
+  console.log("Sending to backend:", formattedData);
+
+  const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, formattedData);
+  return response.data;
+},
+
+  getInstructorBatches: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);
+    return response.data;
+  },
+  getClassCounts: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/class-counts/${id}`);
+    return response.data;
+  },
+
+  // Dashboard Card 4 kosam
+  getOngoingBatches: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/ongoing-batches/${id}`);
+    return response.data;
+  },
+
+ getBatchCompletionRate: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/instructor-completion/${id}`);
+    return response.data;
+  },
+
+  // Ensure you also have the Batch Report function for the detailed view
+  getBatchReport: async (batchId) => {
+    const res = await axios.get(`${BASE_URL}/Performance/batch-report/${batchId}`);
+    return res.data;
+  },
+  getOngoingBatches: async (id) => {
+    const response = await axios.get(`${BASE_URL}/Performance/ongoing-batches/${id}`);
+    return response.data;
+  },
+getStudentAssessmentStats: (studentId, courseId) => {
+  // We move studentId into the URL path as required by your backend
+  return axios.get(`${BASE_URL}/Performance/student-assessment-stats/${studentId}`, {
+    params: { courseId } // courseId remains a query parameter
+  }).then(res => res.data);
+},
+getCourseDropout: async (courseId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/Performance/course-dropout/${courseId}`);
+    
+    // Axios lo response data 'response.data' lo untundi.
+    // Backend {"dropoutRate": 0} pampisthe, manam direct ga aa object ne return chesthunnam.
+    return response.data; 
+  } catch (error) {
+    console.error("Dropout API Error:", error);
+    // Error vachina sare 0 return chesthe UI break avvadhu
+    return { dropoutRate: 0 };
+  }
+},
+getInstructorBatches: async (id) => {
+    const response = await fetch(`https://localhost:7157/api/Performance/instructor-batches/${id}`);
+    return await response.json();
+  },
+
+  // 2. Get specific batch report (Matches your Swagger screenshot for /batch-report/B001)
+  getBatchReport: async (batchId) => {
+    const response = await fetch(`https://localhost:7157/api/Performance/batch-report/${batchId}`);
+    return await response.json();
+  },
+
+  // 3. Get assessment stats (Matches your Swagger screenshot for /student-assessment-stats/S001)
+  getStudentAssessmentStats: async (studentId) => {
+    const response = await fetch(`https://localhost:7157/api/Performance/student-assessment-stats/${studentId}`);
+    return await response.json();
+  },
+getAdminFullReport: async () => {
+    // Corrected path: ${BASE_URL} already includes /api
+    const response = await axios.get(`${BASE_URL}/AcademicReport/full-report`);
+    return response.data; // This returns the { "batches": [...] } object
+  },
+getBatchStartDates: async () => {
+    try {
+      // Corrected: Matches https://localhost:7157/api/Performance/batch-start-dates
+      const response = await axios.get(`${BASE_URL}/Performance/batch-start-dates`);
+      return response.data;
+    } catch (error) {
+      console.error("Batch Dates API Error:", error);
+      throw error;
+    }
+  },
 };
 
-
-
-
+  

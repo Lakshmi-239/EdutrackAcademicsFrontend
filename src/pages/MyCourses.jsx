@@ -27,7 +27,7 @@ const MyCourses = () => {
   const [watchedProgress, setWatchedProgress] = useState({}); 
   const [completedContentIds, setCompletedContentIds] = useState(new Set());
 
-  const studentId = "S001";
+  const studentId = localStorage.getItem("studentId");
   const BASE_URL = "https://localhost:7157/api/Enrollment";
 
   // --- LOGIC: REMAINS EXACTLY AS PROVIDED ---

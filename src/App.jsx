@@ -30,7 +30,10 @@ import Instructors from "./pages/Instructors.jsx";
 import Students from "./pages/Students.jsx";
 import Reports from "./pages/Reports.jsx";
 import BatchPage from "./pages/BatchPage.jsx";
-
+import { AuthGuard } from './guards/AuthGuard';
+//instrcutorreport
+import InstructorReportPage from './pages/InstructorReportPage';
+import AdminReportPage from "./pages/AdminReportPage";
 
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import InstructorDashboard from './pages/InstructorDashboard';
@@ -52,6 +55,8 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
       <Toaster position="top-center" reverseOrder={false} />
       <div className="app-container">
         <Routes>
+          {/* <Route path="/instructor-dashboard" element={<Dashboard/>}/> */}
+         {/* <Route path="/batch/:id" element={<BatchDetails/>}/> */}
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RoleSelection />} />
           <Route path="/register/student" element={<StudentRegistration />} />
@@ -61,6 +66,7 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
 
           {/* Redirect base URL to the dashboard */}
@@ -69,15 +75,22 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
+            <Route path="/admin/performance" element={<AdminReportPage />} />
             <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
+
+            <Route path="/instructor-performance" element={<InstructorReportPage />} />
+
+            {/* PERFORMANCE */}
+            {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
           <Route path="/notifications" element={<Notifications />} />
              <Route
               path="/coordinator/*"
               element={
+               <AuthGuard>
                 <div className="d-flex">
                   <Sidebar />
                   <main className="flex-grow-1 p-4 bg-light">
@@ -85,15 +98,15 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
                       <Route path="dashboard" element={<Dashboard />} />
                       <Route path="programs" element={<Programs />} />
                       <Route path="courses" element={<CoursePage />} />
-                    
                       <Route path="instructors" element={<Instructors />} />
                       <Route path="students" element={<Students />} />
-                      <Route path="reports" element={<Reports />} />
                       <Route path="batch" element={<BatchPage />} />
+                        <Route path="reports" element={<Reports />} />
                       <Route path="notifications" element={<NotificationPanel />} />
                     </Routes>
                   </main>
                 </div>
+              </AuthGuard>
               }
             />
 
