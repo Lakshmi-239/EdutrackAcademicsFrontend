@@ -277,10 +277,10 @@ deleteQuestion: async (questionId) => {
     const response = await axios.post(`${BASE_URL}/Authentication/generate-OTP`, { email });
     return response.data;
   },
-  verifyEmail: async (email, otp) => {
-    const response = await axios.post(`${BASE_URL}/Authentication/verify-Email`, { email, otp });
-    return response.data;
-  },
+  // verifyEmail: async (email, otp) => {
+  //   const response = await axios.post(`${BASE_URL}/Authentication/verify-Email`, { email, otp });
+  //   return response.data;
+  // },
   forgotPassword: async (email) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Forgot-Password`, { email });
     return response.data;
@@ -363,6 +363,13 @@ deleteQuestion: async (questionId) => {
   const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, formattedData);
   return response.data;
 },
+  generateOtp: (emailData) => axios.post(`${BASE_URL}/Authentication/generate-OTP`, {
+    Email: emailData.email || emailData.Email
+  }),
+  verifyEmail: (verifyData) => axios.post(`${BASE_URL}/Authentication/verify-Email`, {
+    Email: verifyData.email || verifyData.Email,
+    Otp: verifyData.otp || verifyData.Otp
+  }),
 
   getInstructorBatches: async (id) => {
     const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);
