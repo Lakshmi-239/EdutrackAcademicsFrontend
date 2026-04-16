@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, User, Phone, Eye, EyeOff, Calendar, Briefcase, Award, Upload } from 'lucide-react';
+import { GraduationCap, Mail, Lock, User, Phone, Eye, EyeOff, Calendar, Briefcase, Award, Upload, ArrowRight } from 'lucide-react';
 import { api } from "../../services/api";
 import toast from 'react-hot-toast';
 
@@ -24,12 +24,11 @@ export const InstructorRegistration = () => {
     confirmPassword: '',
   });
 
-  const qualifications = ['Bachelor\'s Degree', 'Master\'s Degree', 'PhD', 'Professional Certificate'];
+  const qualifications = ["Bachelor's Degree", "Master's Degree", "PhD", "Professional Certificate"];
   const genders = ['Male', 'Female', 'Non-Binary', 'Other', 'Prefer Not To Say'];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Ensure experience is treated as a number for the DTO
     const finalValue = name === 'InstructorExperience' ? parseInt(value, 10) || 0 : value;
     setFormData((prev) => ({ ...prev, [name]: finalValue }));
   };
@@ -44,113 +43,120 @@ export const InstructorRegistration = () => {
     e.preventDefault();
     setError('');
 
-    // 1. Client-side Validation: Password Match
     if (formData.InstructorPassword !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // 2. Client-side Validation: Password Complexity (Matching DTO Regex)
     const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,64}$/;
     if (!passwordRegex.test(formData.InstructorPassword)) {
-      setError('Password must be 8-64 chars and include uppercase, lowercase, number, and special character.');
+      setError('Password must be 8-64 characters with uppercase, lowercase, number, and special character.');
       return;
     }
 
     setLoading(true);
-
     try {
-      // Create the payload matching InstructorDTO
       const { confirmPassword, ...submitData } = formData;
-      const finalData = {
-        ...submitData,
-        InstructorResume: resumeFile // This will be handled as [FromForm] in C#
-      };
+      const finalData = { ...submitData, InstructorResume: resumeFile };
       
       await api.registerInstructor(finalData);
-      toast.success('Instructor registered successfully! Please login.');
+      toast.success('Registration successful!');
       navigate('/login');
     } catch (err) {
-      console.error("Registration Error:", err);
-
-      // Backend Validation Error Parsing
-      if (err.response?.data?.errors) {
-        const validationErrors = err.response.data.errors;
-        const firstMessage = Object.values(validationErrors).flat()[0];
-        setError(firstMessage);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('Server connection failed. Please try again later.');
-      }
+      const msg = err.response?.data?.errors 
+        ? Object.values(err.response.data.errors).flat()[0] 
+        : err.response?.data?.message || 'Connection failed.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  const FieldLabel = ({ children, required }) => (
+    <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">
+      {children}
+      {required && <span className="text-teal-400 ml-1">*</span>}
+    </label>
+  );
+
+  const inputClassName = "w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-4 focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all text-white placeholder:text-slate-600 h-[54px] flex items-center";
+  const selectClassName = "w-full bg-slate-900 border border-slate-700 rounded-xl pl-12 pr-10 focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all cursor-pointer text-white appearance-none bg-no-repeat bg-[length:1.25rem] bg-[right_1rem_center] h-[54px]";
+
+  const selectBackgroundStyle = {
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E")`
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12 font-sans">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-12 h-12 bg-teal-600 rounded-lg flex items-center justify-center shadow-lg">
-              <GraduationCap className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-teal-500/30">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-6 pt-32 pb-20">
+        <div className="text-center mb-12">
+          <Link to="/" className="inline-flex items-center gap-3 mb-6 group">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-teal-400 to-emerald-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-500" />
+              <div className="relative w-12 h-12 bg-slate-900 border border-slate-700 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-7 h-7 text-teal-400" />
+              </div>
             </div>
-            <span className="text-3xl font-bold text-gray-900 tracking-tight">EduTrack</span>
+            <span className="text-3xl font-extrabold tracking-tight text-white italic">
+              Edu<span className="text-teal-400 not-italic">Track</span>
+            </span>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Instructor Registration</h2>
-          <p className="text-gray-600">Join our faculty and start teaching</p>
+          <h4 className="text-4xl font-bold text-white mb-3">Instructor Onboarding</h4>
+          <p className="text-slate-400">Join our elite faculty and shape the future of industry mastery</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 md:p-12 shadow-2xl">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md text-red-700 text-sm animate-pulse">
-              <p className="font-bold">Registration Error:</p>
-              {error}
+            <div className="mb-8 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm flex items-center gap-3 animate-pulse">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              <p>{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <FieldLabel required>Full Name</FieldLabel>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10" />
                   <input
                     name="InstructorName"
                     type="text"
                     value={formData.InstructorName}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className={inputClassName}
                     placeholder="Dr. Jane Smith"
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <div className="space-y-1">
+                <FieldLabel required>Email Address</FieldLabel>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10" />
                   <input
                     name="InstructorEmail"
                     type="email"
                     value={formData.InstructorEmail}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className={inputClassName}
                     placeholder="instructor@gmail.com"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <FieldLabel required>Phone Number</FieldLabel>
+                <div className="relative group">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10" />
                   <input
                     name="InstructorPhone"
                     type="tel"
@@ -158,95 +164,93 @@ export const InstructorRegistration = () => {
                     onChange={handleChange}
                     required
                     pattern="[0-9]{10}"
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className={inputClassName}
                     placeholder="10-digit number"
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Gender *</label>
-                <select
-                  name="InstructorGender"
-                  value={formData.InstructorGender}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-white transition-all"
-                >
-                  <option value="">Select Gender</option>
-                  {genders.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
+              <div className="space-y-1">
+                <FieldLabel required>Gender</FieldLabel>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10 pointer-events-none" />
+                  <select
+                    name="InstructorGender"
+                    value={formData.InstructorGender}
+                    onChange={handleChange}
+                    required
+                    className={selectClassName}
+                    style={selectBackgroundStyle}
+                  >
+                    <option value="" className="bg-slate-900 text-slate-400">Select Gender</option>
+                    {genders.map(g => <option key={g} value={g} className="bg-slate-900 text-white">{g}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 border-t border-gray-50 pt-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Qualification *</label>
-                <div className="relative">
-                  <Award className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <div className="border-t border-slate-800 pt-8 grid md:grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <FieldLabel required>Highest Qualification</FieldLabel>
+                <div className="relative group">
+                   <Award className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10 pointer-events-none" />
                   <select
                     name="InstructorQualification"
                     value={formData.InstructorQualification}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-white transition-all"
+                    className={selectClassName}
+                    style={selectBackgroundStyle}
                   >
-                    <option value="">Select Qualification</option>
-                    {qualifications.map(q => <option key={q} value={q}>{q}</option>)}
+                    <option value="" className="bg-slate-900 text-slate-400">Select Degree</option>
+                    {qualifications.map(q => <option key={q} value={q} className="bg-slate-900 text-white">{q}</option>)}
                   </select>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Experience (Years) *</label>
-                <div className="relative">
-                  <Briefcase className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <div className="space-y-1">
+                <FieldLabel required>Experience (Years)</FieldLabel>
+                <div className="relative group">
+                  <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors pointer-events-none z-10"/>
                   <input
                     name="InstructorExperience"
                     type="number"
                     min="0"
-                    max="50"
                     value={formData.InstructorExperience}
                     onChange={handleChange}
-                    required
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className={`${inputClassName} [&::-webkit-inner-spin-button]:appearance-auto [&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:appearance-auto [&::-webkit-outer-spin-button]:opacity-100`}
                   />
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Skills (comma separated) *</label>
-              <textarea
-                name="InstructorSkills"
-                value={formData.InstructorSkills}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
-                placeholder="React, C#, SQL Server, Azure..."
-                rows="2"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Available Join Date *</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              <div className="space-y-1">
+                <FieldLabel>Earliest Join Date</FieldLabel>
+                <div className="relative group">
+                  <Calendar className=" absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 group-focus-within:text-teal-400 transition-colors pointer-events-none z-10" />
                   <input
                     name="InstructorJoinDate"
                     type="date"
                     value={formData.InstructorJoinDate}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className="
+                    w-full bg-slate-950/50 border border-slate-700 rounded-xl
+                    pl-14 pr-12 py-3 h-[54px] text-white
+                   focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/10
+                   outline-none transition-all
+                  /* Native calendar icon styling */
+                  [color-scheme:dark]
+                  [&::-webkit-calendar-picker-indicator]:
+                  [&::-webkit-calendar-picker-indicator]:opacity-90
+                  [&::-webkit-calendar-picker-indicator]:cursor-pointer
+                  "
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Upload Resume *</label>
-                <div className="relative">
+              
+              <div className="space-y-1">
+                <FieldLabel required>Professional Resume</FieldLabel>
+                <div className="relative group">
                   <input
                     id="resume-upload"
                     type="file"
@@ -256,52 +260,70 @@ export const InstructorRegistration = () => {
                   />
                   <label 
                     htmlFor="resume-upload"
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition-all text-gray-500"
+                    className="relative flex items-center justify w-full h-[54px] pl-12 pr-4 border border-dashed border-slate-700 rounded-xl cursor-pointer hover:border-teal-500/40 hover:bg-teal-500/5 transition-all text-slate-400 group overflow-hidden"
                   >
-                    <Upload className="w-5 h-5" />
-                    <span className="text-sm truncate">
-                      {resumeFile ? resumeFile.name : 'Choose File'}
-                    </span>
+                    <Upload className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
+                    <div className="flex flex-col items-start justify-start gap-0.5 pointer-events-none">
+                      <span className="text-sm font-medium truncate max-w-[160px] text-slate-300 ">
+                        {resumeFile ? resumeFile.name : 'Upload PDF/Word'}
+                      </span>
+                      {!resumeFile && (
+                        <span className="text-[10px] text-slate-600 uppercase tracking-tighter font-bold shrink-0 leading-none pt-0.5">
+                          MAX 5MB
+                        </span>
+                      )}
+                    </div>
                   </label>
                 </div>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 border-t border-gray-50 pt-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <div className="space-y-1">
+              <FieldLabel required>Core Expertise & Skills</FieldLabel>
+              <textarea
+                name="InstructorSkills"
+                value={formData.InstructorSkills}
+                onChange={handleChange}
+                required
+                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all text-white placeholder:text-slate-600 min-h-[100px]"
+                placeholder="e.g. React, Distributed Systems, Cloud Architecture..."
+              />
+            </div>
+
+            <div className="border-t border-slate-800 pt-8 grid md:grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <FieldLabel required>Security Password</FieldLabel>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10" />
                   <input
                     name="InstructorPassword"
                     type={showPassword ? 'text' : 'password'}
                     value={formData.InstructorPassword}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className={`${inputClassName} pr-14`}
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-slate-500 hover:text-teal-400 transition-colors p-1"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <div className="space-y-1">
+                <FieldLabel required>Confirm Password</FieldLabel>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10" />
                   <input
                     name="confirmPassword"
                     type={showPassword ? 'text' : 'password'}
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                    className={inputClassName}
                     placeholder="••••••••"
                   />
                 </div>
@@ -311,15 +333,23 @@ export const InstructorRegistration = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-teal-600 text-white rounded-xl font-bold text-lg hover:bg-teal-700 shadow-lg hover:shadow-teal-200 transition-all disabled:opacity-50 active:scale-95"
+              className="group relative w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-lg transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] disabled:opacity-50 overflow-hidden"
             >
-              {loading ? 'Registering Instructor...' : 'Create Instructor Account'}
+              <div className="relative z-10 flex items-center justify-center gap-2">
+                {loading ? 'Processing Application...' : 'Apply as Instructor'}
+                {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </form>
 
-          <div className="mt-8 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-teal-600 font-bold hover:underline ml-1">Login here</Link>
+          <div className="mt-10 text-center border-t border-slate-800 pt-8">
+            <p className="text-slate-400">
+              Already part of the faculty?{' '}
+              <Link to="/login" className="text-teal-400 font-bold hover:text-teal-300 transition-colors ml-1">
+                Instructor Login
+              </Link>
+            </p>
           </div>
         </div>
       </div>

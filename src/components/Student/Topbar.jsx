@@ -1,197 +1,82 @@
-// import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { FaBell, FaMoon, FaSun } from "react-icons/fa";
-
-// function Topbar() {
-//   const navigate = useNavigate();
-//   const [dark, setDark] = useState(false);
-//   //const [open, setOpen] = useState(false);
- 
-//   // Toggle Dark Mode
-//   const toggleDark = () => {
-//     setDark(!dark);
-//     document.body.setAttribute("data-bs-theme", dark ? "light" : "dark");
-//   };
- 
-  
-
-//   return (
-//     <div className="d-flex justify-content-between align-items-center bg-white shadow-sm px-4"
-//          style={{ height: "60px" }}>
-
-//       {/* Title */}
-//       <h5 className="mb-0 fw-bold">EduTrack</h5>
-
-//       {/* Right Section */}
-//       <div className="d-flex align-items-center gap-3">
-
-//         {/* Dark Mode */}
-//         <span style={{ cursor: "pointer" }} onClick={toggleDark}>
-//           {dark ? <FaSun /> : <FaMoon />}
-//         </span>
-
-//         {/* Notification */}
-//         <button className="btn btn-light">
-//           <FaBell  />   {/*size={20} style={{cursor:"pointer"}} onClick={()=>navigate("/notifications")}*/}
-//         </button>
-
-//         {/* Profile */}
-//         {/* <div className="d-flex align-items-center">
-//           <div className="bg-primary text-white rounded-circle px-2 py-1 me-2">
-//             ST
-//           </div>
-//         </div> */}
-
-//         {/* Profile Dropdown using Bootstrap classes */}
-//           <div className="dropdown">
-//             <div 
-//               className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-//               style={{ width: '35px', height: '35px', cursor: 'pointer' }}
-//               onClick={() => setShowProfile(!showProfile)}
-//             >
-//               JS
-//             </div>
-
-//             {showProfile && (
-//               <div className="dropdown-menu show position-absolute end-0 mt-2 shadow border-0 p-2" style={{ width: '200px' }}>
-//                 <h6 className="dropdown-header">My Account</h6>
-//                 <div className="dropdown-divider"></div>
-//                 <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => navigate("/profile")}>
-//                   <FaUser /> Profile
-//                 </button>
-//                 <div className="dropdown-divider"></div>
-//                 <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={() => { localStorage.clear(); navigate("/login"); }}>
-//                   <FaSignOutAlt /> Logout
-//                 </button>
-//               </div>
-//             )}
-//           </div>
-
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-// import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { FaBell, FaMoon, FaSun, FaUser, FaSignOutAlt } from "react-icons/fa"; // Added missing icons
-
-// function Topbar() {
-//   const navigate = useNavigate();
-//   const [dark, setDark] = useState(false);
-//   const [showProfile, setShowProfile] = useState(false); // Add this state back
-
-//   const toggleDark = () => {
-//     setDark(!dark);
-//     document.body.setAttribute("data-bs-theme", dark ? "light" : "dark");
-//   };
-
-//   return (
-
-//     <div className="d-flex justify-content-between align-items-center bg-white shadow-sm px-4"
-//          style={{ height: "60px" }}>
-
-//       {/* Title */}
-//       <h5 className="mb-0 fw-bold">EduTrack</h5>
-
-//       {/* Right Section */}
-//       <div className="d-flex align-items-center gap-3">
-
-//         {/* Dark Mode */}
-//         <span style={{ cursor: "pointer" }} onClick={toggleDark}>
-//           {dark ? <FaSun /> : <FaMoon />}
-//         </span>
-
-//         {/* Notification */}
-//         <button className="btn btn-light">
-//           <FaBell  size={20} style={{cursor:"pointer"}} onClick={()=>navigate("/notifications")}/>   {/*size={20} style={{cursor:"pointer"}} onClick={()=>navigate("/notifications")}*/}
-//         </button>
-    
-//     <div className="dropdown">
-//        <div 
-//          className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-//          style={{ width: '35px', height: '35px', cursor: 'pointer' }}
-//          onClick={() => setShowProfile(!showProfile)} // This was crashing the app
-//        >
-//          JS
-//        </div>
-//        {showProfile && (
-//               <div className="dropdown-menu show position-absolute end-0 mt-2 shadow border-0 p-2" style={{ width: '200px' }}>
-//                 <h6 className="dropdown-header">My Account</h6>
-//                 <div className="dropdown-divider"></div>
-//                 <button className="dropdown-item d-flex align-items-center gap-2" onClick={() => navigate("/profile")}>
-//                   <FaUser /> Profile
-//                 </button>
-//                 <div className="dropdown-divider"></div>
-//                 <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={() => { localStorage.clear(); navigate("/login"); }}>
-//                   <FaSignOutAlt /> Logout
-//                 </button>
-//               </div>
-//             )}
-//        {/* ... rest of dropdown code */}
-//     </div>
-//     </div>
-//     </div>
-
-//   );
-// }
-// export default Topbar;
-
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaBell, FaMoon, FaSun, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { useNavigate, Link } from "react-router-dom";
+import { FaBell, FaMoon, FaSun, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { GraduationCap } from 'lucide-react';
+import {StudentProfile} from '../../pages/StudentProfile';
 
 function Topbar() {
   const navigate = useNavigate();
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
 
   const toggleDark = () => {
     const newDark = !dark;
     setDark(newDark);
-    // This is the magic line that flips the Bootstrap variables
     document.body.setAttribute("data-bs-theme", newDark ? "dark" : "light");
   };
 
   return (
-    <div className="d-flex justify-content-between align-items-center bg-body border-bottom px-4 shadow-sm" style={{ height: "60px" }}>
-      <h5 className="mb-0 fw-bold text-body">EduTrack</h5>
-
-      <div className="d-flex align-items-center gap-3">
-        {/* Dark Mode Toggle */}
-        <span className="text-body" style={{ cursor: "pointer" }} onClick={toggleDark}>
-          {dark ? <FaSun size={18} /> : <FaMoon size={18} />}
+    <div className="flex justify-between items-center w-full h-full px-6 bg-transparent">
+      {/* Brand Identity - Precision styled */}
+      <Link to="/" className="flex items-center gap-2 !no-underline group">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center shadow-sm w-10 h-10 group-hover:border-teal-500/50 transition-all">
+          <GraduationCap size={24} className="text-teal-400" />
+        </div>
+        <span className="text-lg font-black text-white tracking-tight italic leading-none">
+          Edu<span className="text-teal-400 not-italic">Track</span>
         </span>
+      </Link>
 
-        {/* Notifications */}
-        <button className="btn btn-link text-body p-0 position-relative" onClick={() => navigate("/notifications")}>
-          <FaBell size={20} />
-          <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+      <div className="flex items-center gap-6">
+        {/* Settings Icon - Updated to Theme Color on Hover */}
+        <button className="text-slate-400 hover:text-teal-400 transition-all bg-transparent border-0 p-0 shadow-none outline-none">
+          <FaCog size={18} />
         </button>
 
-        {/* Profile Dropdown */}
-        <div className="dropdown position-relative">
+        {/* Theme Toggle - Updated to Theme Color on Hover */}
+        <button 
+          className="text-slate-400 hover:text-teal-400 transition-all bg-transparent border-0 p-0 shadow-none outline-none" 
+          onClick={toggleDark}
+        >
+          {dark ? <FaSun size={18} /> : <FaMoon size={18} />}
+        </button>
+
+        {/* Notifications Icon - Updated with Emerald Glow */}
+        <button 
+          className="relative text-slate-400 hover:text-teal-400 transition-all bg-transparent border-0 p-0 shadow-none outline-none" 
+          onClick={() => navigate("/notifications")}
+        >
+          <FaBell size={20} />
+          {/* Notification Badge matching the 'Register' button green */}
+          <span className="absolute -top-1 -right-1 p-1 bg-emerald-500 border border-slate-950 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.6)]"></span>
+        </button>
+
+        {/* User Profile Section */}
+        <div className="relative pl-4 border-l border-slate-800/60">
           <div 
-            className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
-            style={{ width: '35px', height: '35px', cursor: 'pointer' }}
+            className="rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] w-9 h-9 cursor-pointer text-xs hover:scale-105 transition-transform"
             onClick={() => setShowProfile(!showProfile)}
           >
             JS
           </div>
 
           {showProfile && (
-            <div className="dropdown-menu show position-absolute end-0 mt-2 shadow border bg-body p-2" style={{ width: '200px', zIndex: 1000 }}>
-              <h6 className="dropdown-header">My Account</h6>
-              <div className="dropdown-divider"></div>
-              <button className="dropdown-item d-flex align-items-center gap-2 text-body" onClick={() => navigate("/profile")}>
-                <FaUser /> Profile
+            <div className="absolute right-0 mt-3 shadow-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-xl p-2 rounded-2xl w-48 z-50">
+              <button 
+                className="flex items-center gap-2 text-slate-200 py-2.5 px-3 rounded-xl hover:bg-emerald-500/10 hover:text-teal-400 transition-all border-0 bg-transparent w-full text-left text-sm" 
+                onClick={() => {
+                  setShowProfile(false);
+                  navigate("/student-profile")
+                } }
+              >
+                <FaUser size={14} /> Profile
               </button>
-              <div className="dropdown-divider"></div>
-              <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={() => { localStorage.clear(); navigate("/login"); }}>
-                <FaSignOutAlt /> Logout
+              <div className="h-px bg-slate-800 mx-2 my-1"></div>
+              <button 
+                className="flex items-center gap-2 text-rose-500 py-2.5 px-3 rounded-xl hover:bg-rose-500/10 transition-all border-0 bg-transparent w-full text-left text-sm font-semibold" 
+                onClick={() => { localStorage.clear(); navigate("/login"); }}
+              >
+                <FaSignOutAlt size={14} /> Logout
               </button>
             </div>
           )}

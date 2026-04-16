@@ -1,83 +1,54 @@
-export default function Sidebar({ active, setActive }) {
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+const Sidebar = () => {
+  const location = useLocation();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const navItems = [
+    { path: "/coordinator/dashboard", label: "Dashboard", icon: "bi-grid-1x2-fill" },
+    { path: "/coordinator/programs", label: "Programs", icon: "bi-journal-code" },
+    { path: "/coordinator/courses", label: "Courses", icon: "bi-book-half" },
+    { path: "/coordinator/batch", label: "Batch Management", icon: "bi-people-fill" },
+    { path: "/coordinator/instructors", label: "Instructors", icon: "bi-person-badge-fill" },
+    { path: "/coordinator/students", label: "Students", icon: "bi-mortarboard-fill" },
+    { path: "/coordinator/reports", label: "Reports", icon: "bi-pie-chart-fill" },
+    { path: "/coordinator/notifications", label: "Notifications", icon: "bi-bell-fill" },
+  ];
+
   return (
-    <div
-      className="d-flex flex-column justify-content-between bg-white border-end vh-100 p-3"
-      style={{ width: "260px" }}
-    >
-      <div>
-        <h4 className="fw-bold">EduTrack</h4>
-        <p className="text-muted small">Coordinator Portal</p>
-
-        <ul className="nav flex-column mt-4">
-          <li className="nav-item mb-2">
-            <button
-              className={`btn w-100 text-start ${
-                active === "dashboard" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setActive("dashboard")}
-            >
-              Dashboard
-            </button>
-          </li>
-
-          <li className="nav-item mb-2">
-            <button
-              className={`btn w-100 text-start ${
-                active === "programs" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setActive("programs")}
-            >
-              Programs
-            </button>
-          </li>
-
-          <li className="nav-item mb-2">
-            <button
-              className={`btn w-100 text-start ${
-                active === "courses" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setActive("courses")}
-            >
-              Courses
-            </button>
-          </li>
-
-          <li className="nav-item mb-2">
-            <button
-              className={`btn w-100 text-start ${
-                active === "batches" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setActive("batches")}
-            >
-              Batches
-            </button>
-          </li>
-
-          <li className="nav-item mb-2">
-            <button
-              className={`btn w-100 text-start ${
-                active === "students" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setActive("students")}
-            >
-              Students
-            </button>
-          </li>
-        </ul>
+    <aside className="d-flex flex-column p-4 vh-100 sticky-top" style={{ width: "280px", backgroundColor: "#0f172a" }}>
+      <div className="mb-5 d-flex align-items-center">
+        <div className="p-2 bg-primary rounded-3 me-3">
+          <i className="bi bi-mortarboard text-white fs-4"></i>
+        </div>
+        <h5 className="text-white fw-bold mb-0">EduPortal</h5>
       </div>
 
-      <div className="d-flex align-items-center bg-light p-2 rounded">
-        <div
-          className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
-          style={{ width: "40px", height: "40px" }}
+      <div className="nav flex-column gap-2 mb-auto">
+        {navItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`nav-link-custom ${location.pathname === item.path ? "active" : ""}`}
+          >
+            <i className={`${item.icon} me-3 fs-5`}></i>
+            <span className="fw-medium">{item.label}</span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="pt-4 border-top border-secondary">
+        <button
+          onClick={() => { logout(); navigate("/login"); }}
+          className="btn btn-outline-danger w-100 rounded-3 d-flex align-items-center justify-content-center"
         >
-          C
-        </div>
-        <div>
-          <div className="fw-semibold">Coordinator</div>
-          <small className="text-muted">Coordinator</small>
-        </div>
+          <i className="bi bi-box-arrow-left me-2"></i> Logout
+        </button>
       </div>
-    </div>
+    </aside>
   );
-}
+};
+export default Sidebar;
