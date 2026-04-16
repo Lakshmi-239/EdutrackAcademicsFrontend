@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, User, Phone, Eye, EyeOff, Calendar, ArrowRight } from 'lucide-react';
-import { api } from "../../services/api";
+import { api } from "../../services/Api";
 import toast from 'react-hot-toast';
 
 export const StudentRegistration = () => {
