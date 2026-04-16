@@ -50,15 +50,8 @@ getStudentsByBatchId : (batchId) =>    // **
 getStudentPersonalInfo: (id) => axios.get(`${BASE_URL}/profile/personal-info/${id}`),   // **
 getStudentProgramDetails: (id) => axios.get(`${BASE_URL}/profile/program-details/${id}`),  // **
 
-  // Module Actions
-    // getModulesByCourse: (courseId) => axios.get(`${BASE_URL}/modules/${courseId}`),
-    // createModule: (data) => axios.post(`${BASE_URL}/module`, data),
-    // deleteModule: (moduleId) => axios.delete(`${BASE_URL}/module/${moduleId}`),
 
-    // getModulesByCourseId: (courseId) => 
-    // axios.get(`${BASE_URL}/instructorModuleContent/modules/${courseId}`),
-
-  // UNCOMMENT THESE to make the buttons in your Card work:
+//
   deleteModule: (id) => 
     axios.delete(`${BASE_URL}/instructorModuleContent/module/${id}`),
 
@@ -110,10 +103,16 @@ restoreBatchAttendance: (batchId, date) =>
     axios.put(`${BASE_URL}/instructorAttendance/attendance/restore/${batchId}/${date}`),
 getInstructorBatches: (instructorId) => 
     axios.get(`${BASE_URL}/coordinator/instructor/${instructorId}/batches`),
-updateStudentStatus: (attendanceId, status) => 
-  axios.patch(`${BASE_URL}/instructorAttendance/status/${attendanceId}`, { 
-    status: status 
-  }),
+updateStudentStatus: (attendanceId, enrollmentId, newStatus) => 
+  axios.patch(`${BASE_URL}/instructorAttendance/status/${attendanceId}`, 
+    { 
+      EnrollmentID: enrollmentId, // Required by your C# DTO
+      Status: newStatus           // Required by your C# DTO
+    }, 
+    {
+      headers: { 'Content-Type': 'application/json' }
+    }
+  ),
 getInstructorCourses : async (instructorId) => {
     try {
         const response = await axios.get(`${BASE_URL}/instructorAttendance/instructor/${instructorId}/courses`);
@@ -171,7 +170,6 @@ getAllModules: async () => {
     return await axios.get(`${BASE_URL}/instructorModuleContent/modules`);
   },
   updateContent: (id, data) => axios.put(`${BASE_URL}/instructorModuleContent/content/${id}`, data),  //** 
-  //  getModulesByCourseId: (courseId) => axios.get(`${BASE_URL}/instructorModuleContent/modules/${courseId}`),   // **
    updateModule: (moduleId, dto) => axios.put(`${BASE_URL}/instructorModuleContent/module/${moduleId}`, dto),  //** 
  
   getBatches: () => axios.get(`${BASE_URL}/batches`),
@@ -228,16 +226,6 @@ deleteQuestion: async (questionId) => {
     const response = await axios.get(`${BASE_URL}/instructorAssessmentQuestion/question/${questionId}`);
     return response.data;
   },
-// getSubmissionsByAssessment: async (assessmentId) => {
-//     try {
-//       const response = await axios.get(`${BASE_URL}/Submission/assessment/${assessmentId}`);
-//       return response.data; // This returns { status: 200, data: [...] }
-//     } catch (error) {
-//       console.error("Error fetching submissions:", error);
-//       throw error;
-//     }
-//   },
-
 
   registerStudent: async (studentData) => {
   try {
