@@ -4,12 +4,14 @@ import { AuthProvider } from './context/AuthContext';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
-import { VerifyOtp } from './pages/VerifyOtp';
 import { RoleSelection } from './pages/RoleSelection';
 import { StudentRegistration } from './components/registration/StudentRegistration';
 import {InstructorRegistration} from './components/registration/InstructorRegistration';
 import {CoordinatorRegistration} from './components/registration/CoordinatorRegistration';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { Unauthorized } from './components/Unauthorized';
+import {Footer} from './components/Footer';
+
 import { Toaster } from "react-hot-toast";
 //import CoordinatorDashboard from './pages/CoordinatorDashboard';
 import Layout from "./components/Student/Layout";
@@ -62,7 +64,7 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route path="/admin/register-coordinator" element={<CoordinatorRegistration />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           {/* <Route path="/admin/performance" element={<AdminReportPage />} /> */}
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
@@ -126,6 +128,7 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           
         </Routes>
       </div>
+      <Footer />
     </AuthProvider>
   );
 }
