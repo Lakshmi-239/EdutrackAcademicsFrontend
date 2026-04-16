@@ -19,13 +19,28 @@ export default function InstructorAssessmentPage() {
       const rawData = Array.isArray(data) ? data : [data];
 
       const enhancedData = rawData.map(item => {
-        const idValue = item.assessmentId || item.assessmentID || item.AssessmentId || item.id || 'N/A';
-        return {
-          ...item,
-          assessmentID: String(idValue),
-          displayStatus: item.status || (new Date(item.dueDate || item.date) > new Date() ? 'Open' : 'Closed')
-        };
-      });
+  const idValue = item.assessmentId || item.assessmentID || item.id || 'N/A';
+  
+  // 1. Get status from backend (Open/Closed or Active/Inactive)
+  const rawStatus = (item.status || '').toLowerCase();
+  
+  // 2. Logic: If backend says 'closed' or 'inactive', it's Inactive. 
+  // Otherwise, check the date.
+  let finalStatus = 'Active';
+  if (rawStatus === 'closed' || rawStatus === 'inactive') {
+    finalStatus = 'Inactive';
+  } else {
+    // Fallback: If status isn't explicitly closed, check if the date has passed
+    const isPastDue = new Date(item.dueDate || item.date) < new Date();
+    if (isPastDue) finalStatus = 'Inactive';
+  }
+
+  return {
+    ...item,
+    assessmentID: String(idValue),
+    displayStatus: finalStatus // This now correctly handles inactive cards
+  };
+});
       
       setAssessments(enhancedData);
       setFilteredData(enhancedData);
@@ -67,186 +82,150 @@ export default function InstructorAssessmentPage() {
     setFilteredData(results);
   }, [searchTerm, statusFilter, assessments]);
 
+  // --- THEME ADAPTED LOADING STATE ---
   if (loading) return (
-    <div className="d-flex flex-column justify-content-center align-items-center vh-100" style={{ backgroundColor: '#F4F7FE' }}>
-      <Loader2 className="animate-spin text-primary mb-3" size={40} />
-      <span className="fw-bold text-muted">Syncing Assessments...</span>
+    <div className="flex flex-col justify-center items-center min-vh-100 bg-slate-950">
+      <Loader2 className="animate-spin text-teal-400 mb-4" size={48} />
+      <span className="font-bold text-slate-400 tracking-widest uppercase text-sm">Syncing Assessments...</span>
     </div>
   );
 
   return (
-    <div className="container-fluid py-4 px-4 px-lg-5" style={{ backgroundColor: '#F4F7FE', minHeight: '100vh' }}>
+    <div className="min-h-screen bg-slate-950 pt-24 pb-12 px-4 lg:px-8 text-slate-200">
       
-      {/* --- HEADER --- */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="p-4 rounded-4 bg-white shadow-sm d-flex justify-content-between align-items-center" 
-               style={{ borderLeft: '5px solid #4318FF' }}> 
+      {/* --- PREMIUM BACKGROUND SHIMMER --- */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-5">
+        <div className="absolute -inset-[100%] animate-[spin_30s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#0ea5e9_0%,#10b981_50%,#0ea5e9_100%)]" />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        
+        {/* --- HEADER --- */}
+        <div className="mb-8">
+          <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-md flex flex-col md:flex-row justify-between items-md-center gap-4"> 
             <div className="text-start">
-              <h2 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#1B2559' }}>
-                <ClipboardCheck className="text-primary" size={28} /> Assessments
+              <h2 className="text-3xl font-extrabold mb-1 flex items-center gap-3 text-white">
+                <ClipboardCheck className="text-teal-400" size={32} /> 
+                Course <span className="text-teal-400">Assessments</span>
               </h2>
-              <p className="text-secondary small mb-0 fw-medium">Design and manage your academic evaluations and student grades.</p>
+              <p className="text-slate-400 font-medium">Design and manage academic evaluations and student grades.</p>
             </div>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="btn d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-sm text-white border-0 hover-lift"
-              style={{ background: 'linear-gradient(135deg, #4318FF 0%, #5E3BFF 100%)', fontWeight: '600' }}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-pill font-bold text-white transition-all duration-300 bg-gradient-to-r from-teal-500 to-emerald-600 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transform hover:-translate-y-0.5"
             >
-              <Plus size={20} />
+              <Plus size={16} />
               <span>Create Assessment</span>
             </button>
           </div>
         </div>
-      </div>
 
-      {/* --- ACTION BAR (PILL DESIGN) --- */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card border-0 shadow-sm p-2 rounded-pill bg-white px-3">
-            <div className="d-flex align-items-center justify-content-between">
+        {/* --- ACTION BAR (PILL DESIGN) --- */}
+        <div className="mb-10">
+          <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shadow-2xl backdrop-blur-sm">
+            <div className="flex flex-col lg:flex-row align-items-center gap-4">
               
               {/* Search Section */}
-              <div className="d-flex align-items-center flex-grow-1">
-                <Search size={18} className="text-muted ms-2 me-2" />
+              <div className="flex align-items-center flex-grow-1 bg-slate-950/50 rounded-xl px-4 py-2 border border-slate-700 focus-within:border-teal-500/50 transition-all">
+                <Search size={20} className="text-slate-500 me-3" />
                 <input 
                   type="text" 
-                  className="form-control border-0 shadow-none bg-transparent" 
+                  className="w-full bg-transparent border-0 outline-none text-slate-200 placeholder:text-slate-600 font-medium shadow-none" 
                   placeholder="Search by ID, Course, Type or Date..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ fontSize: '0.95rem', color: '#1B2559', fontWeight: '500' }}
                 />
               </div>
 
               {/* Filter Section */}
-              <div className="d-flex align-items-center gap-2">
-                <div className="d-flex align-items-center bg-light rounded-pill px-3 py-1 border">
-                  <Filter size={14} className="text-muted me-2" />
+              <div className="flex align-items-center gap-3 w-full lg:w-auto">
+                <div className="flex align-items-center bg-slate-950/50 rounded-xl px-4 py-2 border border-slate-700">
+                  <Filter size={16} className="text-teal-400 me-3" />
                   <select 
-                    className="form-select border-0 bg-transparent shadow-none fw-bold p-0 py-1" 
-                    style={{ width: '110px', fontSize: '0.85rem', cursor: 'pointer', color: '#4318FF' }} 
+                    className="bg-transparent border-0 outline-none text-slate-300 font-bold text-sm cursor-pointer min-w-[110px]" 
                     value={statusFilter} 
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <option value="All">All Status</option>
-                    <option value="Open">Active</option>
-                    <option value="Closed">Inactive</option>
+                    <option value="All" className="bg-slate-900 text-white">All Status</option>
+                    <option value="Active" className="bg-slate-900 text-white">Active</option>
+                    <option value="Inactive" className="bg-slate-900 text-white">Inactive</option>
                   </select>
                 </div>
 
                 <button 
-                  className="btn btn-white rounded-circle p-2 shadow-sm border hover-rotate" 
+                  className="p-2.5 rounded-pill bg-slate-800 border border-slate-700 text-teal-400 hover:bg-slate-700 hover:text-white transition-all duration-300 hover:rotate-180" 
                   onClick={handleReset}
-                  style={{ width: '38px', height: '38px', backgroundColor: '#fff' }}
                 >
-                  <RefreshCcw size={14} className="text-primary" />
+                  <RefreshCcw size={18} />
                 </button>
 
-                <div className="badge rounded-pill px-4 py-2" style={{ backgroundColor: '#7c94cdff', color: '#fff', fontWeight: '700', fontSize: '0.8rem', boxShadow: '0 4px 14px 0 rgba(67, 24, 255, 0.3)' }}>
-                  {filteredData.length} Found
+                <div className="px-6 py-2.5 rounded-xl bg-slate-800 border border-teal-500/20 text-teal-400 font-black text-sm tracking-wider shadow-lg whitespace-nowrap">
+                  {filteredData.length} FOUND
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* --- GRID / LIST SECTION --- */}
-      {/* Removed justify-content-center to keep cards aligned to the left */}
-      <div className="row g-4">
-        {filteredData.length > 0 ? (
-          filteredData.map((course, index) => (
-            <div className="col-12 col-md-6 col-lg-4" key={course.batchId || index}>
-              <CourseCard course={course} />
-            </div>
-          ))
-        ) : (
-          /* --- COMPACT EMPTY STATE --- */
-          <div className="col-12 d-flex justify-content-center mt-4"> {/* Aligned left to match headers */}
-            <div 
-              className="bg-white p-4 rounded-4 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
-              style={{ maxWidth: '400px', minHeight: '280px', borderColor: '#E9EDF7', borderWidth: '2px' }}
-            >
-              <div className="position-relative mb-3 d-flex align-items-center justify-content-center">
-                <div 
-                  className="rounded-circle animate-pulse" 
-                  style={{ width: '80px', height: '80px', backgroundColor: '#F4F7FE', position: 'absolute' }}
-                ></div>
-                <SearchX size={40} className="text-muted opacity-40 position-relative z-1" />
+        {/* --- GRID / LIST SECTION --- */}
+        <div className="row g-4">
+          {filteredData.length > 0 ? (
+            filteredData.map((assessment, index) => (
+              <div className="col-12" key={assessment.assessmentID || index}>
+                <AssessmentCard assessment={assessment} onRefresh={fetchData} />
               </div>
+            ))
+          ) : (
+            /* --- EMPTY STATE --- */
+            <div className="col-12 flex justify-center mt-10">
+              <div className="bg-slate-900/50 p-10 rounded-3xl border-2 border-dashed border-slate-800 flex flex-col align-items-center max-w-lg w-full">
+                <div className="relative mb-6">
+                  <div className="w-20 h-20 bg-teal-500/10 rounded-full absolute animate-ping"></div>
+                  <div className="w-20 h-20 bg-slate-800 rounded-full flex align-items-center justify-center relative z-10 border border-slate-700">
+                    <SearchX size={40} className="text-slate-500" />
+                  </div>
+                </div>
 
-              <h5 className="fw-bold mb-2" style={{ color: '#2B3674' }}>
-                No Matches Found
-              </h5>
-              
-              <p className="text-secondary small mb-4 text-center px-3">
-                Adjust your filters or keywords to find what you're looking for.
-              </p>
+                <h3 className="text-2xl font-bold text-white mb-2 text-center">No Matches Found</h3>
+                <p className="text-slate-400 text-center mb-8">
+                  Adjust your filters or keywords to find specific evaluations.
+                </p>
 
-              <button 
-                className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" 
-                onClick={handleReset}
-                style={{ backgroundColor: '#4318FF', border: 'none', fontSize: '0.8rem' }}
-              >
-                Clear Search
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      {/* <div className="row g-3">
-        {filteredData.length > 0 ? (
-          filteredData.map((item, index) => (
-            <div className="col-12 hover-lift" key={`${item.assessmentID}-${index}`}>
-              <AssessmentCard assessment={item} onRefresh={fetchData} />
-            </div>
-          ))
-        ) : ( */}
-        
-          {/* <div className="col-12 d-flex justify-content-center mt-5">
-            <div 
-              className="bg-white p-5 rounded-5 shadow-sm border border-dashed d-flex flex-column align-items-center justify-content-center" 
-              style={{ maxWidth: '400px', minHeight: '300px', borderColor: '#D1DBFF', borderWidth: '2px' }}
-            >
-              <div className="position-relative mb-4 d-flex align-items-center justify-content-center">
-                <div 
-                  className="rounded-circle animate-pulse" 
-                  style={{ width: '100px', height: '100px', backgroundColor: '#F4F7FE', position: 'absolute' }}
-                ></div>
-                <SearchX size={50} className="text-primary opacity-40 position-relative z-1" />
+                <button 
+                  className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(20,184,166,0.2)]" 
+                  onClick={handleReset}
+                >
+                  Clear Search
+                </button>
               </div>
-
-              <h5 className="fw-bold mb-2 text-center" style={{ color: '#1B2559' }}>No Assessments Found</h5>
-              <p className="text-secondary small mb-4 text-center px-4">
-                We couldn't find any results. Try clearing your search or checking "All Status".
-              </p>
-
-              <button 
-                className="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm" 
-                onClick={handleReset}
-                style={{ backgroundColor: '#4318FF', border: 'none', fontSize: '0.85rem' }}
-              >
-                Clear Search
-              </button>
             </div>
-          </div>
-        )}
-      </div> */}
+          )}
+        </div>
+      </div>
 
       <CreateAssessmentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onRefresh={fetchData} />
 
-      {/* --- GLOBAL UI STYLES --- */}
       <style>{`
         .hover-rotate:hover { transform: rotate(180deg); transition: transform 0.4s ease; }
-        .hover-lift { transition: all 0.2s ease-in-out; }
-        .hover-lift:hover { transform: translateY(-3px); }
         .animate-pulse { animation: pulse 2.5s infinite; }
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(1.05); }
         }
-        .form-select { background-image: none !important; }
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2dd4bf; }
+        
+        select {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%232dd4bf'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+          background-repeat: no-repeat !important;
+          background-position: right 0.5rem center !important;
+          background-size: 1.2em !important;
+          padding-right: 2rem !important;
+        }
       `}</style>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../services/Api'; // Adjust path as needed
+import { api } from '../../services/Api';
 import { 
   Users, 
   BookOpen, 
@@ -19,146 +19,154 @@ const CourseCard = ({ course }) => {
   const [batchId, setBatchId] = useState(course.batchId || course.BatchId || null);
   const [isResolvingBatch, setIsResolvingBatch] = useState(false);
 
-  // Mapping Backend DTO fields
   const cId = course.courseId || course.CourseId || 'N/A';
   const cName = course.courseName || course.CourseName || 'Untitled Course';
   const credits = course.credits ?? course.Credits ?? 0;
   const duration = course.durationInWeeks || course.DurationInWeeks || 0;
   const academicYear = course.academicYearId || course.AcademicYearId || 'N/A';
-  
-  // Capacity and Enrolled mapping
   const capacity = course.batchSize || course.BatchSize || 0;
   const enrolled = course.currentStudents || course.CurrentStudents || 0;
 
-  // Logic: Active ONLY if Enrolled == Capacity
   const isActiveStatus = (enrolled === capacity && capacity > 0);
-  const statusLabel = isActiveStatus ? 'ACTIVE' : 'INACTIVE';
-  const statusColor = isActiveStatus ? 'success' : 'secondary';
-  const StatusIcon = isActiveStatus ? CheckCircle : AlertCircle;
+  const statusLabel = isActiveStatus ? 'ACTIVE' : 'ENROLLING';
 
-  // EFFECT: If BatchId is missing, fetch it using your new endpoint
   useEffect(() => {
-  const fetchBatchId = async () => {
-    // Only fetch if batchId is missing and we have a valid Course ID
-    if (!batchId && cId !== 'N/A') {
-      // CourseCard.jsx - Inside useEffect fetchBatchId
-try {
-  setIsResolvingBatch(true);
-  const response = await api.getBatchByCourse(cId, cName);
-  
-  if (response.data && response.data.batchId) {
-    setBatchId(response.data.batchId);
-  } else {
-    setBatchId("N/A"); // Explicitly set N/A if course exists but batch doesn't
-  }
-} catch (err) {
-  // If the server returns 404, we catch it here
-  if (err.response && err.response.status === 404) {
-    console.warn(`Course ${cId} exists but no batch is assigned yet.`);
-    setBatchId("N/A"); 
-  } else {
-    console.error("Connection Error:", err);
-  }
-} finally {
-  setIsResolvingBatch(false);
-}
-    }
-  };
-  fetchBatchId();
-}, [cId, cName, batchId]);
+    const fetchBatchId = async () => {
+      if (!batchId && cId !== 'N/A') {
+        try {
+          setIsResolvingBatch(true);
+          const response = await api.getBatchByCourse(cId, cName);
+          if (response.data && response.data.batchId) {
+            setBatchId(response.data.batchId);
+          } else {
+            setBatchId("N/A");
+          }
+        } catch (err) {
+          setBatchId("N/A");
+        } finally {
+          setIsResolvingBatch(false);
+        }
+      }
+    };
+    fetchBatchId();
+  }, [cId, cName, batchId]);
 
   return (
-    <div className={`card h-100 shadow-sm rounded-4 border-4 position-relative overflow-hidden hover-shadow transition-all border-${statusColor}`}>
+    <div className={`group relative h-full rounded-[2rem] border transition-all duration-500 overflow-hidden bg-slate-900/40 backdrop-blur-xl hover:-translate-y-1 ${isActiveStatus ? 'border-teal-500/30 shadow-[0_0_30px_rgba(20,184,166,0.1)]' : 'border-slate-800 shadow-2xl'}`}>
       
-      {/* Centered Status Header */}
-      <div className={`py-2 text-white text-center fw-bold bg-${statusColor} d-flex align-items-center justify-content-center gap-2 border-bottom border-white border-opacity-25`}>
-        <StatusIcon size={18} />
-        <span style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>{statusLabel}</span>
+      {/* Top Status Tab - Reduced height */}
+      <div className={`py-1.5 text-center flex items-center justify-center gap-2 transition-colors duration-300 ${isActiveStatus ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+        {isActiveStatus ? <CheckCircle size={12} className="font-bold" /> : <Loader2 size={12} className="animate-spin" />}
+        <span className="font-black tracking-[0.2em] text-[9px] uppercase">
+          {statusLabel}
+        </span>
       </div>
 
-      <div className="card-body p-4 d-flex flex-column">
-        {/* Batch & Year Badges */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <span className="badge bg-light text-dark border border-secondary border-opacity-25 px-2 py-1 extra-small fw-bold d-flex align-items-center">
-            <Hash size={12} className="text-primary me-1" /> 
-            Batch: {isResolvingBatch ? <Loader2 size={10} className="animate-spin ms-1" /> : (batchId || 'N/A')}
-          </span>
-          <span className="badge bg-primary-subtle text-primary border border-primary border-opacity-25 px-2 py-1 extra-small fw-bold">
+      <div className="p-5 flex flex-col h-full">
+        {/* Header Section - Reduced Margin */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/60 border border-slate-700 text-teal-400 shadow-inner">
+            <Hash size={10} /> 
+            <span className="text-[10px] font-black tracking-tighter">
+              {isResolvingBatch ? "..." : (batchId || 'N/A')}
+            </span>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-slate-800/80 text-slate-400 text-[9px] font-extrabold tracking-widest uppercase border border-slate-700">
             {academicYear}
           </span>
         </div>
 
-        {/* Course Name & ID */}
-        <div className="text-center mb-3">
-          <h5 className="fw-bold text-dark mb-0 text-truncate px-2">{cName}</h5>
-          <small className="text-primary fw-bold font-monospace" style={{ fontSize: '0.7rem' }}>
-            ({cId})
-          </small>
-          <div className="d-flex align-items-center justify-content-center gap-2 text-muted mt-2 extra-small">
-            <Clock size={12} /> <span>{duration} Weeks</span>
-            <span className="text-silver">|</span>
-            <Award size={12} /> <span>{credits} Credits</span>
+        {/* Title & Info - Reduced Margins and Padding */}
+        <div className="text-center mb-4">
+          <h5 className="text-xl font-black text-white mb-1 group-hover:text-teal-400 transition-colors leading-tight">{cName}</h5>
+          <div className="inline-block px-2 py-0.5 rounded-md bg-teal-500/10 border border-teal-500/20">
+             <code className="text-teal-400 text-[10px] font-bold">ID: {cId}</code>
+          </div>
+          
+          {/* Reduced space between ID and Duration (mt-3 instead of mt-5) */}
+          <div className="flex items-center justify-center gap-4 text-slate-400 text-[10px] font-bold mt-3 pt-3 border-t border-slate-800/50">
+            <div className="flex items-center gap-1.5"><Clock size={12} className="text-teal-500" /> {duration} Weeks</div>
+            <div className="flex items-center gap-1.5"><Award size={12} className="text-emerald-500" /> {credits} Credits</div>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="row g-2 mb-4">
-          <div className="col-6">
-            <div className="p-2 rounded-3 bg-light border border-secondary border-opacity-25 text-center h-100">
-              <div className="text-muted mb-1 extra-small">Capacity</div>
-              <div className="fw-bold text-dark h5 mb-0">{capacity}</div>
-            </div>
+        {/* Enrollment Stats - More compact rounded corners */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="py-3 px-2 rounded-2xl bg-slate-950/40 border border-slate-800/60 text-center">
+            <div className="text-slate-500 text-[8px] uppercase font-black mb-0.5 tracking-widest">Capacity</div>
+            <div className="text-xl font-black text-slate-100">{capacity}</div>
           </div>
-          <div className="col-6">
-            <div className={`p-2 rounded-3 border text-center h-100 ${isActiveStatus ? 'bg-success-subtle border-success' : 'bg-light border-secondary border-opacity-25'}`}>
-              <div className={`${isActiveStatus ? 'text-success' : 'text-muted'} mb-1 extra-small`}>Enrolled</div>
-              <div className={`fw-bold h5 mb-0 ${isActiveStatus ? 'text-success' : 'text-dark'}`}>{enrolled}</div>
-            </div>
+          <div className={`py-3 px-2 rounded-2xl border text-center transition-all duration-500 ${isActiveStatus ? 'bg-teal-500/10 border-teal-500/40' : 'bg-slate-950/40 border-slate-800/60'}`}>
+            <div className={`${isActiveStatus ? 'text-teal-400' : 'text-slate-500'} text-[8px] uppercase font-black mb-0.5 tracking-widest`}>Enrolled</div>
+            <div className={`text-xl font-black ${isActiveStatus ? 'text-teal-400' : 'text-slate-100'}`}>{enrolled}</div>
           </div>
         </div>
 
-        {/* Dynamic Message Area */}
-        <div style={{ minHeight: '42px' }} className="mb-3">
+        {/* Notification Area - Reduced margin */}
+        <div className="mb-4">
           {isActiveStatus ? (
-            <div className="alert alert-success py-2 px-3 m-0 border border-success border-opacity-50 rounded-3 d-flex align-items-center gap-2" style={{ fontSize: '0.7rem' }}>
-              <PartyPopper size={14} className="text-success" />
-              <span className="fw-bold text-success">Ready! Batch is fully enrolled.</span>
+            <div className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+              <PartyPopper size={14} className="text-emerald-400" />
+              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Full Capacity</span>
             </div>
           ) : (
-            <div className="alert alert-warning py-2 px-3 m-0 border border-warning border-opacity-50 rounded-3 d-flex align-items-center gap-2" style={{ fontSize: '0.7rem' }}>
-              <AlertCircle size={14} className="text-warning" />
-              <span className="text-warning-emphasis">Waiting for enrollment ({enrolled}/{capacity})</span>
+            <div className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+              <AlertCircle size={14} className="text-slate-500" />
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">In Progress</span>
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-auto d-flex flex-column gap-2">
-          <button 
-            className="btn btn-dark w-100 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm border border-dark"
-            disabled={!batchId}
-            onClick={() => navigate(`/view-batch-students/${batchId}`)}
-          >
-            <Users size={18} /> View Students
-          </button>
+        {/* --- BUTTONS --- */}
+        {/* --- PREMIUM UI BUTTONS --- */}
+<div className="mt-auto space-y-3">
+  {/* Primary Button: View Students */}
+  {/* --- COMPACT PREMIUM BUTTONS --- */}
+<div className="mt-auto space-y-2">
+  {/* Primary Button: Reduced padding from 3.5 to 2.5 */}
+  <button 
+    className="group/btn w-full py-2 rounded-pill font-black text-[10px] uppercase tracking-[0.12em] 
+               flex items-center justify-center gap-2 transition-all duration-300 
+               bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 
+               hover:shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:scale-[1.01] 
+               active:scale-95 disabled:opacity-20 disabled:pointer-events-none"
+    disabled={!batchId || batchId === 'N/A'}
+    onClick={() => navigate(`/view-batch-students/${batchId}`)}
+  >
+    <Users size={15} className="transition-transform group-hover/btn:scale-110" /> 
+    <span className="drop-shadow-sm">View Students</span>
+  </button>
 
-          <div className="d-flex gap-2">
-            <button 
-              className={`btn btn-outline-info flex-grow-1 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-1 border-2 ${!batchId ? 'disabled' : ''}`}
-              style={{ fontSize: '0.75rem' }}
-              onClick={() => batchId && navigate(`/Iattendances?batchId=${batchId}`)}
-            >
-              <CalendarCheck size={14} /> Attendance
-            </button>
-            <button 
-              className="btn btn-outline-primary flex-grow-1 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-1 border-2"
-              style={{ fontSize: '0.75rem' }}
-              onClick={() => navigate(`/Imodules?courseId=${cId}`)}
-            >
-              <BookOpen size={14} /> Modules
-            </button>
-          </div>
-        </div>
+  {/* Secondary Action Grid: Reduced padding from 3 to 2 */}
+  <div className="grid grid-cols-2 gap-2">
+    {/* Attendance Button */}
+    <button 
+      className={`py-2 rounded-pill font-black text-[8px] uppercase tracking-widest 
+                 flex items-center justify-center gap-1.5 transition-all duration-300
+                 bg-slate-800/40 border border-teal-500/20 text-teal-400
+                 hover:bg-teal-500/10 hover:border-teal-400/50 hover:text-white
+                 ${(!batchId || batchId === 'N/A') ? 'opacity-30 cursor-not-allowed' : 'active:scale-95'}`}
+      onClick={() => batchId && batchId !== 'N/A' && navigate(`/Iattendances?batchId=${batchId}`)}
+    >
+      <CalendarCheck size={13} /> 
+      Attendance
+    </button>
+
+    {/* Modules Button */}
+    <button 
+      className="py-2 rounded-pill font-black text-[8px] uppercase tracking-widest 
+                 flex items-center justify-center gap-1.5 transition-all duration-300
+                 bg-slate-800/40 border border-slate-700 text-slate-400
+                 hover:bg-slate-700 hover:border-slate-500 hover:text-white
+                 active:scale-95"
+      onClick={() => navigate(`/Imodules?courseId=${cId}`)}
+    >
+      <BookOpen size={13} /> 
+      Modules
+    </button>
+  </div>
+</div>
+</div>
       </div>
     </div>
   );

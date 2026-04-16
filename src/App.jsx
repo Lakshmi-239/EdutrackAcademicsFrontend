@@ -34,11 +34,12 @@ import BatchPage from "./pages/BatchPage.jsx";
 
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import InstructorDashboard from './pages/InstructorDashboard';
-import LayOut from './components/Instructor/Lay_Out';
+import Lay_Out from './components/Instructor/Lay_Out';
 import InstructorCoursePage from './pages/InstructorCoursePage';
 import InstructorAttendancePage from './pages/InstructorAttendancePage';
 import InstructorAssessmentPage from './pages/InstructorAssessmentPage';
 import InstructorModulePage from './pages/InstructorModulePage';
+import InstructorNotificationPage from './pages/InstructorNotificationPage.jsx'
 import ManageQuestionsPage from './components/InstructorAssessment/ManageAssessmentPage';
 import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
 import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
@@ -98,12 +99,13 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
 
 
           <Route path="/" element={<Navigate to="/instructordashboard" />} />
-          <Route element={<LayOut />}>
+          <Route element={<Lay_Out />}>
             <Route path="/instructordashboard" element={<InstructorDashboard />} />
             <Route path="/Icourses" element={<InstructorCoursePage />} />
             <Route path="/Imodules" element={<InstructorModulePage />} />
             <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
             <Route path="/Iattendances" element={<InstructorAttendancePage />} />
+            <Route path="/Inotifications" element={<InstructorNotificationPage />} />
             <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionsPage />} />
             <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />

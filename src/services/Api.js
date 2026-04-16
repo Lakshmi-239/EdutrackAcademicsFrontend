@@ -110,10 +110,21 @@ restoreBatchAttendance: (batchId, date) =>
     axios.put(`${BASE_URL}/instructorAttendance/attendance/restore/${batchId}/${date}`),
 getInstructorBatches: (instructorId) => 
     axios.get(`${BASE_URL}/coordinator/instructor/${instructorId}/batches`),
-updateStudentStatus: (attendanceId, status) => 
-  axios.patch(`${BASE_URL}/instructorAttendance/status/${attendanceId}`, { 
-    status: status 
-  }),
+// updateStudentStatus: (attendanceId, newStatus) => 
+//   axios.patch(`${BASE_URL}/instructorAttendance/status/${attendanceId}`, { 
+//     Status: newStatus 
+//   }),
+// services/Api.js
+updateStudentStatus: (attendanceId, enrollmentId, newStatus) => 
+  axios.patch(`${BASE_URL}/instructorAttendance/status/${attendanceId}`, 
+    { 
+      EnrollmentID: enrollmentId, // Required by your C# DTO
+      Status: newStatus           // Required by your C# DTO
+    }, 
+    {
+      headers: { 'Content-Type': 'application/json' }
+    }
+  ),
 getInstructorCourses : async (instructorId) => {
     try {
         const response = await axios.get(`${BASE_URL}/instructorAttendance/instructor/${instructorId}/courses`);

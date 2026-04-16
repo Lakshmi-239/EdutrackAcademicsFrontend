@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Loader2, Users, Info } from 'lucide-react';
+// Added 'X' to the imports below to fix the ReferenceError
+import { CheckCircle, XCircle, Loader2, Users, Info, X } from 'lucide-react';
 import { api } from '../../services/Api';
 
 export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
@@ -11,9 +12,8 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const instructorId = "I003"; // Hardcoded as per your current setup
+  const instructorId = "I003"; 
 
-  // Fetch batches only when modal is open
   useEffect(() => {
     if (isOpen) {
       api.getInstructorBatches(instructorId)
@@ -22,7 +22,6 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
     }
   }, [isOpen]);
 
-  // Fetch students when batch is selected
   useEffect(() => {
     if (!selectedBatch) {
       setStudents([]);
@@ -32,7 +31,6 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
       try {
         setLoading(true);
         const res = await api.getStudentsForAttendance(selectedBatch);
-        // Map to internal state with default 'Present' status
         setStudents(res.data.map(s => ({
           enrollmentId: s.enrollmentId,
           studentName: s.studentName,
@@ -59,7 +57,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
 
     const payload = {
       batchId: selectedBatch,
-      sessionDate: sessionDate, // Already formatted as YYYY-MM-DD
+      sessionDate: sessionDate,
       mode: mode,
       students: students.map(s => ({
         enrollmentId: s.enrollmentId,
@@ -71,7 +69,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
       setSubmitting(true);
       const res = await api.markBatchAttendance(payload);
       alert(res.data);
-      onRefresh(); // Refresh parent list
+      onRefresh(); 
       onClose();
     } catch (err) {
       alert(err.response?.data || "Submission failed");
@@ -83,101 +81,137 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-lg modal-dialog-centered">
-        <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
-          
-          <div className="modal-header border-0 p-4 text-white" style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}>
-            <h5 className="fw-bold mb-0 d-flex align-items-center gap-2">
-              <Users size={24} /> Mark Batch Attendance
-            </h5>
-            <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      {/* 1. Added 'max-h-[90vh]' to ensure the modal never leaves the screen.
+          2. Added 'flex flex-col' so the header/footer stay put.
+      */}
+      <div className="w-full max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+        
+        {/* Header - Stays at top */}
+        <div className="flex-none px-6 py-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+          <h5 className="text-xl font-bold text-white flex items-center gap-3">
+            <div className="p-2 bg-teal-500/10 rounded-lg">
+              <Users className="w-6 h-6 text-teal-400" />
+            </div>
+            Mark Batch Attendance
+          </h5>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Body - This section will now scroll if content is too long */}
+        <div className="flex-1 p-6 bg-slate-900 overflow-y-auto custom-scrollbar">
+          {/* Controls Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="block text-xs font-bold text-teal-400/80 uppercase tracking-wider mb-2">Batch Name</label>
+              <select 
+                className="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-xl px-4 py-2.5 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all outline-none" 
+                value={selectedBatch} 
+                onChange={(e) => setSelectedBatch(e.target.value)}
+              >
+                <option value="" className="bg-slate-900">Select Batch...</option>
+                {batches.map(b => (
+                  <option key={b.batchId} value={b.batchId} disabled={!b.isActive} className="bg-slate-900">
+                    {b.batchId} - {b.courseName} {!b.isActive ? '(Inactive)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-teal-400/80 uppercase tracking-wider mb-2">Date</label>
+              <input 
+                type="date" 
+                className="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-xl px-4 py-2.5 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none" 
+                value={sessionDate} 
+                onChange={(e) => setSessionDate(e.target.value)} 
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-teal-400/80 uppercase tracking-wider mb-2">Mode</label>
+              <select 
+                className="w-full bg-slate-800 border border-slate-700 text-slate-200 rounded-xl px-4 py-2.5 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 outline-none" 
+                value={mode} 
+                onChange={(e) => setMode(e.target.value)}
+              >
+                <option value="Online" className="bg-slate-900">Online</option>
+                <option value="Offline" className="bg-slate-900">Offline</option>
+              </select>
+            </div>
           </div>
 
-          <div className="modal-body p-4 bg-light">
-            <div className="row g-3 mb-4">
-              <div className="col-md-4">
-                <label className="small fw-bold text-secondary mb-1">Batch Name</label>
-                <select className="form-select border-0 shadow-sm" value={selectedBatch} onChange={(e) => setSelectedBatch(e.target.value)}>
-                  <option value="">Select Batch...</option>
-                  {batches.map(b => (
-                    <option key={b.batchId} value={b.batchId} disabled={!b.isActive}>
-                      {b.batchId} - {b.courseName} {!b.isActive ? '(Inactive)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label className="small fw-bold text-secondary mb-1">Date</label>
-                <input type="date" className="form-control border-0 shadow-sm" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
-              </div>
-              <div className="col-md-4">
-                <label className="small fw-bold text-secondary mb-1">Mode</label>
-                <select className="form-select border-0 shadow-sm" value={mode} onChange={(e) => setMode(e.target.value)}>
-                  <option value="Online">Online</option>
-                  <option value="Offline">Offline</option>
-                </select>
-              </div>
+          {mode === 'Offline' && (
+            <div className="mb-6 flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
+              <Info size={20} />
+              <span className="text-sm font-medium">Offline mode is currently unavailable.</span>
             </div>
+          )}
 
-            {mode === 'Offline' && (
-              <div className="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-2 rounded-3">
-                <Info size={18} /> <span>Offline mode is currently unavailable.</span>
-              </div>
-            )}
-
-            <div className="bg-white rounded-4 shadow-sm border overflow-hidden">
-              <table className="table table-borderless align-middle mb-0">
-                <thead className="bg-white border-bottom">
+          {/* Table Container */}
+          <div className="bg-slate-800/40 border border-slate-800 rounded-xl overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-800 border-b border-slate-700">
+                <tr>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Student Info</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Enrollment ID</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {loading ? (
                   <tr>
-                    <th className="ps-4 py-3 text-secondary small fw-bold">STUDENT INFO</th>
-                    <th className="py-3 text-secondary small fw-bold text-center">ENROLLMENT ID</th>
-                    <th className="pe-4 py-3 text-secondary small fw-bold text-end">STATUS</th>
+                    <td colSpan="3" className="py-12 text-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-teal-400 mx-auto" />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan="3" className="text-center py-5"><Loader2 className="spinner text-success" /></td></tr>
-                  ) : students.map((s) => (
-                    <tr key={s.enrollmentId} className="border-bottom border-light">
-                      <td className="ps-4 py-3">
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '38px', height: '38px' }}>
-                            {s.studentName.charAt(0)}
-                          </div>
-                          <div className="fw-bold text-dark">{s.studentName}</div>
+                ) : students.map((s) => (
+                  <tr key={s.enrollmentId} className="hover:bg-slate-800/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-teal-500/20 text-teal-400 rounded-full flex items-center justify-center font-bold border border-teal-500/30">
+                          {s.studentName.charAt(0)}
                         </div>
-                      </td>
-                      <td className="text-center text-muted small">{s.enrollmentId}</td>
-                      <td className="pe-4 text-end">
-                        <button 
-                          disabled={mode === 'Offline'}
-                          onClick={() => toggleStatus(s.enrollmentId)}
-                          className={`btn btn-sm rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-2 ${
-                            s.status === 'Present' ? 'btn-success shadow-sm' : 'btn-outline-danger'
-                          }`}
-                        >
-                          {s.status === 'Present' ? <CheckCircle size={16} /> : <XCircle size={16} />}
-                          <span>{s.status}</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <span className="font-semibold text-slate-200">{s.studentName}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center text-slate-500 font-mono text-sm">{s.enrollmentId}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        disabled={mode === 'Offline'}
+                        onClick={() => toggleStatus(s.enrollmentId)}
+                        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs transition-all duration-300 ${
+                          s.status === 'Present' 
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:bg-emerald-500/20' 
+                          : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30'
+                        }`}
+                      >
+                        {s.status === 'Present' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        {s.status}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          <div className="modal-footer border-0 p-4 bg-light">
-            <button className="btn btn-link text-decoration-none text-secondary" onClick={onClose}>Cancel</button>
-            <button 
-              className="btn btn-success px-5 py-2 rounded-pill fw-bold shadow" 
-              disabled={submitting || students.length === 0 || mode === 'Offline'}
-              onClick={handleSubmit}
-            >
-              {submitting ? 'Syncing...' : 'Sync Attendance'}
-            </button>
-          </div>
+        {/* Footer - Stays at bottom */}
+        <div className="flex-none px-6 py-5 border-t border-slate-800 flex justify-end gap-4 bg-slate-900/50">
+          <button 
+            className="px-6 py-2 text-slate-400 hover:text-white font-medium transition-colors" 
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-8 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
+            disabled={submitting || students.length === 0 || mode === 'Offline'}
+            onClick={handleSubmit}
+          >
+            {submitting ? 'Syncing...' : 'Sync Attendance'}
+          </button>
         </div>
       </div>
     </div>
