@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { FiUsers, FiBookOpen, FiUser, FiArrowRight, FiActivity, FiSearch, FiFilter } from "react-icons/fi";
 
 const BatchPage = () => {
+  const navigate = useNavigate(); // Hook for navigation
+  
+  // --- State Management ---
   const [programs, setPrograms] = useState([]);
   const [years, setYears] = useState([]);
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
   const [students, setStudents] = useState([]);
-
+  
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -122,6 +126,7 @@ const BatchPage = () => {
                         </div>
                         <span className="text-slate-400 small">Instructor: <b className="text-slate-200">{batch.instructor || "Gowri"}</b></span>
                       </div>
+                      <FiArrowRight className={`arrow-icon ${selectedBatchId === batch.batchId ? "active" : ""}`} />
                     </div>
                     <FiArrowRight className={`arrow-icon ${selectedBatchId === batch.batchId ? "active" : ""}`} />
                   </div>
