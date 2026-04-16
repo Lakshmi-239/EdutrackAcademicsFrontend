@@ -170,13 +170,6 @@ getAllModules: async () => {
     // This matches the URL in your Swagger screenshot
     return await axios.get(`${BASE_URL}/instructorModuleContent/modules`);
   },
-
-
-
-
-
-
-
   updateContent: (id, data) => axios.put(`${BASE_URL}/instructorModuleContent/content/${id}`, data),  //** 
   //  getModulesByCourseId: (courseId) => axios.get(`${BASE_URL}/instructorModuleContent/modules/${courseId}`),   // **
    updateModule: (moduleId, dto) => axios.put(`${BASE_URL}/instructorModuleContent/module/${moduleId}`, dto),  //** 
@@ -308,7 +301,6 @@ deleteQuestion: async (questionId) => {
     const response = await axios.post(`${BASE_URL}/Authentication/Reset-Password`, data);
     return response.data;
   },
-
   // 1. Get Personal Info
   getPersonalInfo: async (studentId) => {
     try {
@@ -357,18 +349,32 @@ deleteQuestion: async (questionId) => {
   // Ensure you still have this for the Personal Info section
   updatePersonalInfo: async (studentId, data) => {
     const id = studentId || localStorage.getItem("studentId");
-    const response = await axios.put(`${BASE_URL}/profile/Personal-Information/${id}`, data);
+    const response = await axios.put(`${BASE_URL}/profile/Additional-Information/${id}`, data,
+      {
+          headers: {
+                'Content-Type': 'application/json'
+            }
+      });
+    return response.data;
+  },
+  getAdditionalInfo: async (studentId) => {
+    const id = studentId || localStorage.getItem("studentId");
+    const response = await axios.get(`${BASE_URL}/profile/GetAdditional-Information/${id}`);
     return response.data;
   },
   changePassword: async (passwordData) => {
-    // passwordData will look like: { email: "...", newPassword: "..." }
-    const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, passwordData);
-    return response.data;
-   },
+  const password = passwordData.NewPassword || passwordData.newPassword;
 
+  const formattedData = {
+    Email: passwordData.Email || passwordData.email || '', // safe fallback
+    NewPassword: password
+  };
 
+  console.log("Sending to backend:", formattedData);
 
-
+  const response = await axios.post(`${BASE_URL}/Authentication/Change-Password`, formattedData);
+  return response.data;
+},
 
   getInstructorBatches: async (id) => {
     const response = await axios.get(`${BASE_URL}/Performance/instructor-batches/${id}`);

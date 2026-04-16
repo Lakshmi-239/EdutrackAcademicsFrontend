@@ -10,7 +10,7 @@ const Programs = () => {
   const [selectedYear, setSelectedYear] = useState(null);
   const [courses, setCourses] = useState([]);
 
-  // Logics remain untouched as per your requirement
+  // Logic remains untouched
   useEffect(() => {
     axios.get("https://localhost:7157/api/coordinator/programs")
       .then((res) => setPrograms(res.data))
@@ -36,34 +36,35 @@ const Programs = () => {
   }, [selectedYear]);
 
   return (
-    <div className="modern-dashboard">
+    <div className="modern-dashboard-dark">
       <div className="container py-5">
         
-        {/* --- DYNAMIC HEADER --- */}
+        {/* --- HEADER --- */}
         <header className="mb-5 text-center">
-          <span className="badge rounded-pill bg-soft-primary text-primary mb-3 px-3 py-2">
-            <FiActivity className="me-2" />
-            Academic Portal v2.0
-          </span>
-          <h1 className="display-5 fw-bold text-dark-blue">Curriculum Designer</h1>
-          <p className="text-muted mx-auto" style={{ maxWidth: "600px" }}>
-            Seamlessly navigate through programs, academic years, and course structures with our unified management interface.
+          <div className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" 
+               style={{ background: "rgba(20, 184, 166, 0.1)", border: "1px solid rgba(20, 184, 166, 0.2)" }}>
+            <FiActivity className="text-teal" />
+            <span className="text-teal fw-bold small uppercase tracking-wider">Curriculum Manager</span>
+          </div>
+          <h1 className="display-5 fw-bold text-white mb-2">Academic Designer</h1>
+          <p className="text-slate-400 mx-auto" style={{ maxWidth: "600px" }}>
+            Manage program structures and navigate course catalogs through our unified interface.
           </p>
         </header>
 
         <div className="row g-4">
           
-          {/* --- STEP 1: PROGRAM SELECTION (Horizontal Scroll Style) --- */}
-          <div className="col-12 mb-2">
+          {/* --- STEP 1: PROGRAM SELECTION --- */}
+          <div className="col-12 mb-4">
             <div className="section-label">
-              <FiLayers className="me-2" /> 1. Choose Your Program
+              <FiLayers className="me-2 text-teal" /> 1. Select Program
             </div>
             <div className="program-grid">
               {programs.map((p) => (
                 <div 
                   key={p.programId}
                   onClick={() => { setSelectedProgram(p); setSelectedYear(null); }}
-                  className={`program-pill ${selectedProgram?.programId === p.programId ? "active" : ""}`}
+                  className={`program-pill-dark ${selectedProgram?.programId === p.programId ? "active" : ""}`}
                 >
                   {p.programName}
                 </div>
@@ -71,21 +72,23 @@ const Programs = () => {
             </div>
           </div>
 
-          {/* --- STEP 2: YEAR SELECTION (Glass Cards) --- */}
+          {/* --- STEP 2: YEAR SELECTION --- */}
           {selectedProgram && (
-            <div className="col-12 animate-slide-up">
+            <div className="col-12 animate-slide-up mb-4">
               <div className="section-label">
-                <FiCalendar className="me-2" /> 2. Select Academic Year
+                <FiCalendar className="me-2 text-teal" /> 2. Academic Year
               </div>
-              <div className="year-container">
+              <div className="year-container-dark">
                 {years.map((y) => (
                   <button
                     key={y.academicYearId}
                     onClick={() => setSelectedYear(y)}
-                    className={`year-card ${selectedYear?.academicYearId === y.academicYearId ? "active" : ""}`}
+                    className={`year-card-dark ${selectedYear?.academicYearId === y.academicYearId ? "active" : ""}`}
                   >
-                    <span className="year-label">Session</span>
-                    <span className="year-value">{y.display}</span>
+                    <div className="year-content">
+                      <span className="year-label">Session</span>
+                      <span className="year-value">{y.display}</span>
+                    </div>
                     <FiArrowRight className="arrow-icon" />
                   </button>
                 ))}
@@ -93,21 +96,21 @@ const Programs = () => {
             </div>
           )}
 
-          {/* --- STEP 3: COURSE DISPLAY (The Modern Grid) --- */}
-          <div className="col-12 mt-4">
+          {/* --- STEP 3: COURSE DISPLAY --- */}
+          <div className="col-12">
             {!selectedYear ? (
-              <div className="empty-state">
-                <div className="icon-circle">
+              <div className="empty-state-dark">
+                <div className="icon-circle-dark">
                   <FiBookOpen size={32} />
                 </div>
-                <h4>Awaiting Selection</h4>
-                <p>Please complete the steps above to unlock the course catalog.</p>
+                <h4 className="text-white">Awaiting Selection</h4>
+                <p className="text-slate-500">Choose a program and year to reveal the curriculum.</p>
               </div>
             ) : (
               <div className="animate-fade-in">
-                <div className="d-flex align-items-center justify-content-between mb-4">
-                  <h3 className="fw-bold m-0 h4">
-                    Course Catalog <span className="text-primary-subtle fs-6">({courses.length} modules)</span>
+                <div className="d-flex align-items-center justify-content-between mb-4 px-2">
+                  <h3 className="fw-bold text-white m-0 h4">
+                    Course Catalog <span className="text-teal fs-6 fw-normal">({courses.length} Modules)</span>
                   </h3>
                 </div>
 
@@ -115,15 +118,14 @@ const Programs = () => {
                   <div className="row g-3">
                     {courses.map((course) => (
                       <div className="col-xl-4 col-md-6" key={course.courseId}>
-                        <div className="course-card">
-                          <div className="course-accent"></div>
+                        <div className="course-card-dark">
                           <div className="p-4">
                             <div className="d-flex justify-content-between align-items-start mb-3">
-                              <span className="credit-tag">{course.credits} Credits</span>
-                              <FiInfo className="text-muted" />
+                              <span className="credit-tag-dark">{course.credits} Credits</span>
+                              <FiInfo className="text-slate-500" />
                             </div>
-                            <h5 className="course-title">{course.courseName}</h5>
-                            <div className="course-footer">
+                            <h5 className="course-title-dark">{course.courseName}</h5>
+                            <div className="course-footer-dark">
                               <code>REF-{course.courseId}</code>
                             </div>
                           </div>
@@ -132,8 +134,8 @@ const Programs = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="modern-alert">
-                    <FiInfo className="me-2" /> No curriculum data found for this period.
+                  <div className="modern-alert-dark">
+                    <FiInfo className="me-2 text-teal" /> No course data available for this selection.
                   </div>
                 )}
               </div>
@@ -143,199 +145,155 @@ const Programs = () => {
       </div>
 
       <style>{`
-        :root {
-          --primary-color: #4361ee;
-          --secondary-color: #3f37c9;
-          --bg-gray: #f8f9fd;
-          --text-dark: #2b2d42;
-        }
-
-        .modern-dashboard {
-          background-color: var(--bg-gray);
+        .modern-dashboard-dark {
+          background-color: #020617;
           min-height: 100vh;
           font-family: 'Inter', sans-serif;
-          color: var(--text-dark);
+          color: #94a3b8;
         }
 
-        .text-dark-blue { color: #001233; }
-        .bg-soft-primary { background: #e0e7ff; }
+        .text-teal { color: #14b8a6 !important; }
+        .text-slate-400 { color: #94a3b8 !important; }
+        .text-slate-500 { color: #64748b !important; }
 
         .section-label {
-          font-size: 0.85rem;
-          font-weight: 700;
+          font-size: 0.75rem;
+          font-weight: 800;
           text-transform: uppercase;
-          color: #64748b;
-          margin-bottom: 1.5rem;
+          letter-spacing: 0.1em;
+          color: #475569;
+          margin-bottom: 1.25rem;
           display: flex;
           align-items: center;
         }
 
-        /* Program Selection Styles */
-        .program-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-
-        .program-pill {
-          padding: 12px 24px;
-          background: white;
-          border-radius: 100px;
+        /* Program Pill */
+        .program-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .program-pill-dark {
+          padding: 10px 20px;
+          background: #0f172a;
+          border-radius: 12px;
           cursor: pointer;
           font-weight: 500;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+          color: #94a3b8;
+          transition: all 0.2s ease;
+          border: 1px solid #1e293b;
+        }
+        .program-pill-dark:hover {
+          border-color: #14b8a6;
+          color: #14b8a6;
+          background: rgba(20, 184, 166, 0.05);
+        }
+        .program-pill-dark.active {
+          background: #14b8a6;
+          color: #ffffff;
+          border-color: #14b8a6;
+          box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
         }
 
-        .program-pill:hover {
-          transform: translateY(-2px);
-          border-color: var(--primary-color);
-          color: var(--primary-color);
-        }
-
-        .program-pill.active {
-          background: var(--primary-color);
-          color: white;
-          border-color: var(--primary-color);
-          box-shadow: 0 10px 15px -3px rgba(67, 97, 238, 0.3);
-        }
-
-        /* Year Selection Styles */
-        .year-container {
+        /* Year Cards */
+        .year-container-dark {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 12px;
         }
-
-        .year-card {
-          background: white;
-          border: none;
-          padding: 20px;
+        .year-card-dark {
+          background: #0f172a;
+          border: 1px solid #1e293b;
+          padding: 18px;
           border-radius: 16px;
           text-align: left;
           position: relative;
           transition: all 0.3s ease;
-          border: 1px solid transparent;
-        }
-
-        .year-card.active {
-          background: #ffffff;
-          border-color: #10b981;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        }
-
-        .year-card .year-label {
-          display: block;
-          font-size: 0.75rem;
-          color: #94a3b8;
-          text-transform: uppercase;
-          font-weight: 600;
-        }
-
-        .year-card .year-value {
-          display: block;
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #1e293b;
-        }
-
-        .year-card.active .year-value { color: #10b981; }
-
-        .arrow-icon {
-          position: absolute;
-          right: 20px;
-          top: 50%;
-          transform: translateY(-50%);
-          opacity: 0;
-          transition: all 0.3s ease;
-        }
-
-        .year-card.active .arrow-icon {
-          opacity: 1;
-          right: 15px;
-          color: #10b981;
-        }
-
-        /* Course Card Styles */
-        .course-card {
-          background: white;
-          border-radius: 20px;
-          overflow: hidden;
-          position: relative;
-          transition: all 0.3s ease;
-          border: 1px solid #edf2f7;
-          height: 100%;
-        }
-
-        .course-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-        }
-
-        .course-accent {
-          height: 4px;
-          background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-          width: 100%;
-        }
-
-        .credit-tag {
-          background: #f1f5f9;
-          padding: 4px 12px;
-          border-radius: 6px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #475569;
-        }
-
-        .course-title {
-          font-weight: 700;
-          color: #1e293b;
-          min-height: 50px;
-        }
-
-        /* States & Animations */
-        .empty-state {
-          padding: 80px;
-          text-align: center;
-          background: rgba(255,255,255,0.5);
-          border: 2px dashed #cbd5e1;
-          border-radius: 30px;
-        }
-
-        .icon-circle {
-          width: 80px;
-          height: 80px;
-          background: white;
-          border-radius: 50%;
           display: flex;
+          justify-content: space-between;
           align-items: center;
-          justify-content: center;
-          margin: 0 auto 20px;
-          color: var(--primary-color);
-          box-shadow: 0 10px 15px rgba(0,0,0,0.05);
         }
-
-        .animate-slide-up { animation: slideUp 0.5s ease-out; }
-        .animate-fade-in { animation: fadeIn 0.6s ease-in; }
-
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+        .year-card-dark.active {
+          border-color: #14b8a6;
+          background: #1e293b;
         }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .modern-alert {
-          background: white;
-          padding: 20px;
-          border-radius: 12px;
-          border-left: 4px solid var(--primary-color);
+        .year-card-dark .year-label {
+          display: block;
+          font-size: 10px;
           color: #64748b;
+          text-transform: uppercase;
+          font-weight: 700;
         }
+        .year-card-dark .year-value {
+          display: block;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #f1f5f9;
+        }
+        .year-card-dark.active .year-value { color: #14b8a6; }
+        .arrow-icon { color: #64748b; opacity: 0.3; transition: 0.3s; }
+        .year-card-dark.active .arrow-icon { opacity: 1; color: #14b8a6; transform: translateX(5px); }
+
+        /* Course Cards */
+        .course-card-dark {
+          background: #0f172a;
+          border-radius: 16px;
+          border: 1px solid #1e293b;
+          height: 100%;
+          transition: 0.3s;
+        }
+        .course-card-dark:hover {
+          transform: translateY(-5px);
+          border-color: #334155;
+          background: #1e293b;
+        }
+        .credit-tag-dark {
+          background: rgba(20, 184, 166, 0.1);
+          color: #14b8a6;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 700;
+          border: 1px solid rgba(20, 184, 166, 0.2);
+        }
+        .course-title-dark {
+          font-weight: 700;
+          color: #f1f5f9;
+          font-size: 1rem;
+          margin-bottom: 1rem;
+        }
+        .course-footer-dark code {
+          color: #475569;
+          font-size: 10px;
+        }
+
+        /* Empty State */
+        .empty-state-dark {
+          padding: 60px;
+          text-align: center;
+          background: #0f172a;
+          border: 2px dashed #1e293b;
+          border-radius: 24px;
+        }
+        .icon-circle-dark {
+          width: 64px; height: 64px;
+          background: #1e293b;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 15px;
+          color: #14b8a6;
+        }
+
+        .modern-alert-dark {
+          background: #0f172a;
+          padding: 15px 20px;
+          border-radius: 12px;
+          border-left: 3px solid #14b8a6;
+          color: #94a3b8;
+          font-size: 14px;
+        }
+
+        .animate-slide-up { animation: slideUp 0.4s ease-out; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
     </div>
   );
