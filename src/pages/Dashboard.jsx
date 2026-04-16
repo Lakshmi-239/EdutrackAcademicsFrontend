@@ -64,10 +64,30 @@ const Dashboard = () => {
         <div className="container-fluid d-flex justify-content-between align-items-center">
           
           {/* Logo Section */}
-          <Link to="/" className="text-decoration-none d-flex align-items-center">
-            <span className="bg-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm me-2" style={{ backgroundColor: "#3b82f6 !important" }}>Edu</span>
-            <span className="fs-4 fw-bold text-white">Track</span>
-          </Link>
+       <Link to="/" className="text-decoration-none d-flex align-items-center p-4 mb-2" style={{ cursor: 'pointer' }}>
+  {/* Icon Container with Gradient */}
+  <div className="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm" 
+       style={{ 
+         background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)", 
+         width: "44px", 
+         height: "44px", 
+         minWidth: "44px" 
+       }}>
+    {/* Using the mortarboard icon to match the GraduationCap */}
+    <i className="bi bi-mortarboard-fill text-white fs-5"></i>
+  </div>
+
+  {/* Text Section */}
+  <div className="overflow-hidden">
+    <h5 className="text-white fw-bold mb-0 italic tracking-tight" style={{ fontSize: '1.25rem' }}>
+      Edu<span style={{ color: "#14b8a6", fontStyle: "normal" }}>Track</span>
+    </h5>
+    <span className="text-slate-500 uppercase fw-black d-block" 
+          style={{ fontSize: '10px', letterSpacing: '2px', fontWeight: '800', color: '#64748b' }}>
+      Coordinator
+    </span>
+  </div>
+</Link>
 
           {/* Right Action Cluster */}
           <div className="d-flex align-items-center gap-3">
@@ -164,7 +184,7 @@ const Dashboard = () => {
         <div className="mb-4 d-flex justify-content-between align-items-end">
           <div>
             <h2 className="fw-bold text-white mb-1">Management Insights</h2>
-            <p className="text-slate-400 mb-0">Welcome back! Here is what's happening today.</p>
+            <p className="text-slate-400 mb-0">Welcome back!</p>
           </div>
           <div className="text-end d-none d-md-block">
             <span className="badge border border-slate-700 text-slate-300 px-3 py-2 rounded-pill bg-slate-900 shadow-sm">
@@ -212,15 +232,22 @@ const Dashboard = () => {
                 <h6 className="fw-bold m-0 text-white">Recent Alerts</h6>
               </div>
               <div className="card-body p-0" style={{ maxHeight: "450px", overflowY: "auto" }}>
-                {notifications.map((note, index) => (
-                  <div key={index} className="p-3 border-bottom border-slate-800 hover-dark-bg transition-all">
-                    <div className="d-flex justify-content-between">
-                      <span className="fw-bold small text-info">{note.title}</span>
-                      <span className="text-muted extra-small">{note.time}</span>
-                    </div>
-                    <p className="mb-0 text-slate-400 small mt-1">{note.message}</p>
-                  </div>
-                ))}
+                {notifications.slice(0, 3).map((note, index) => (
+        <div key={index} className="p-3 border-bottom border-slate-800 hover-dark-bg transition-all">
+          <div className="d-flex justify-content-between">
+            <span className="fw-bold small text-info">{note.title}</span>
+            <span className="text-muted extra-small">{note.time}</span>
+          </div>
+          <p className="mb-0 text-slate-400 small mt-1">{note.message}</p>
+        </div>
+      ))}
+      
+      {/* If there are no alerts, show a placeholder */}
+      {notifications.length === 0 && (
+        <div className="p-4 text-center text-slate-500 small">
+          No recent alerts.
+        </div>
+      )}
               </div>
             </div>
           </div>
@@ -262,10 +289,11 @@ const Dashboard = () => {
                           <div className="text-muted extra-small">{stu.studentEmail}</div>
                         </td>
                         <td className="small text-slate-400">{stu.courseId}</td>
-                        <td className="pe-4 text-end">
-                          <span className={`badge rounded-pill ${stu.batchName ? "bg-success bg-opacity-20 text-success border border-success border-opacity-25" : "bg-secondary bg-opacity-20 text-secondary border border-secondary border-opacity-25"}`}>
-                            {stu.batchName ? "Assigned" : "Pending"}
-                          </span>
+                       <td className="pe-4 text-end">
+  <span className={`badge rounded-pill ${stu.batchName ? "bg-success bg-opacity-20 border border-success border-opacity-25" : "bg-secondary bg-opacity-20 border border-secondary border-opacity-25"} text-white`}>
+    {stu.batchName ? "Assigned" : "Pending"}
+  </span>
+
                         </td>
                       </tr>
                     ))}
