@@ -1,50 +1,118 @@
 import React from 'react';
 import { Nav } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { 
+    FiGrid, 
+    FiAward, 
+    FiBookOpen, 
+    FiCalendar, 
+    FiFileText, 
+    FiBell, 
+    FiShield 
+} from 'react-icons/fi';
 
 const AdminSidebar = ({ onSelect, activeView }) => {
+    const navigate = useNavigate();
+
     const sidebarStyle = {
         width: '260px',
         height: '100vh',
-        background: '#1a1d20',
-        color: 'white',
-        padding: '20px',
+        background: '#020617', // Match your dashboard/qualification dark background
+        color: '#94a3b8',
+        padding: '24px 16px',
         position: 'sticky',
-        top: 0
+        top: 0,
+        borderRight: '1px solid #1e293b',
+        display: 'flex',
+        flexDirection: 'column'
     };
 
     const linkStyle = (name) => ({
-        padding: '12px 15px',
+        padding: '12px 16px',
         cursor: 'pointer',
-        borderRadius: '6px',
-        marginBottom: '8px',
-        // Highlight active button
-        background: activeView === name ? '#0d6efd' : 'transparent',
-        color: 'white',
-        display: 'block',
-        transition: '0.3s'
+        borderRadius: '12px',
+        marginBottom: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        transition: 'all 0.3s ease',
+        textDecoration: 'none',
+        fontSize: '0.95rem',
+        fontWeight: '500',
+        background: activeView === name ? 'rgba(20, 184, 166, 0.1)' : 'transparent',
+        color: activeView === name ? '#14b8a6' : '#94a3b8',
     });
 
+    const handleNav = (view, path) => {
+        if(path) navigate(path);
+        onSelect(view);
+    };
+
     return (
-        <div style={sidebarStyle}>
-            <h4 className="text-info mb-4 text-center">Admin Panel</h4>
-            <hr />
-            <Nav className="flex-column mt-3">
-                <div style={linkStyle('qualifications')} onClick={() => onSelect('qualifications')}>
-                    🎓 Qualifications
+        <div style={sidebarStyle} className="admin-sidebar">
+            <div className="d-flex align-items-center gap-2 px-3 mb-4">
+                <div style={{ 
+                    background: '#14b8a6', 
+                    padding: '8px', 
+                    borderRadius: '8px',
+                    color: 'white'
+                }}>
+                    <FiShield size={20} />
                 </div>
-                <div style={linkStyle('programs')} onClick={() => onSelect('programs')}>
-                    📚 Programs
+                <h5 className="mb-0 fw-bold text-white tracking-tight">Admin <span className="text-teal">Portal</span></h5>
+            </div>
+
+            <hr style={{ borderColor: '#1e293b', opacity: 1, margin: '0 0 20px 0' }} />
+
+            <Nav className="flex-column">
+                <div style={linkStyle('dashboard')} onClick={() => handleNav('dashboard', '/admin/dashboard')}>
+                    <FiGrid size={18} /> Dashboard
                 </div>
-                {/* Academic Year kosam */}
-               <div style={linkStyle('academicYears')} onClick={() => onSelect('academicYears')}>
-               📅 Academic Years
-               </div>
- 
-                {/* Rules kosam */}
-                <div style={linkStyle('academicRules')} onClick={() => onSelect('academicRules')}>
-                📜 Academic Rules
-                 </div>
+
+                <div style={linkStyle('qualifications')} onClick={() => handleNav('qualifications')}>
+                    <FiAward size={18} /> Qualifications
+                </div>
+
+                <div style={linkStyle('programs')} onClick={() => handleNav('programs')}>
+                    <FiBookOpen size={18} /> Programs
+                </div>
+
+                <div style={linkStyle('academicYears')} onClick={() => handleNav('academicYears')}>
+                    <FiCalendar size={18} /> Academic Years
+                </div>
+
+                <div style={linkStyle('academicRules')} onClick={() => handleNav('academicRules')}>
+                    <FiShield size={18} /> Academic Rules
+                </div>
+
+                {/* --- NEW SECTIONS --- */}
+                <div className="mt-4 mb-2 px-3">
+                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        Insights & Alerts
+                    </span>
+                </div>
+
+                <div style={linkStyle('reports')} onClick={() => handleNav('reports')}>
+                    <FiFileText size={18} /> Reports
+                </div>
+
+                <div style={linkStyle('notifications')} onClick={() => handleNav('notifications')}>
+                    <div className="position-relative">
+                        <FiBell size={18} />
+                        {/* Example Notification Dot */}
+                        <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style={{ width: '8px', height: '8px' }}></span>
+                    </div>
+                    Notifications
+                </div>
             </Nav>
+
+            <style>{`
+                .admin-sidebar div:hover {
+                    color: #14b8a6 !important;
+                    background: rgba(20, 184, 166, 0.05) !important;
+                }
+                .text-teal { color: #14b8a6; }
+            `}</style>
         </div>
     );
 };

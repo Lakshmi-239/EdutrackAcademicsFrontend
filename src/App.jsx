@@ -22,6 +22,9 @@ import QualificationManager from "./components/Admin/QualificationManager.jsx";
 import ProgramManager from "./components/Admin/ProgramManager.jsx";
 import AcademicYearManager from "./components/Admin/AcademicYearManager.jsx";
 import AcademicRulesManager from './components/Admin/AcademicRulesManager.jsx';
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import NotificationAdmin from './components/Admin/NotificationAdmin.jsx';
+
 
 // Student Imports
 import Layout from "./components/Student/Layout";
@@ -70,10 +73,13 @@ const AdminPanel = () => {
     <div className="App" style={{ display: 'flex' }}>
       <AdminSidebar onSelect={setView} activeView={view} />
       <div style={{ flex: 1, padding: '20px' }}>
+        {view === 'dashboard' && <AdminDashboard />}
         {view === 'qualifications' && <QualificationManager />}
         {view === 'programs' && <ProgramManager />}
         {view === 'academicYears' && <AcademicYearManager />}
         {view === 'academicRules' && <AcademicRulesManager />}
+        {view === 'reports' && <AdminReportPage />}
+        {view === 'notifications' && <NotificationAdmin />}
       </div>
     </div>
   );
