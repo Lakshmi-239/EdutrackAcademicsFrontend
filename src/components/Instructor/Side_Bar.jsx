@@ -28,7 +28,7 @@ function Side_Bar({ collapsed, setCollapsed }) {
         <MenuLink to="/Imodules" icon={<FaFileAlt />} label="Modules" collapsed={collapsed} />
         <MenuLink to="/Iassessments" icon={<FaClipboardList />} label="Assessments" collapsed={collapsed} />
         <MenuLink to="/Iattendances" icon={<FaGraduationCap />} label="Attendance" collapsed={collapsed} />
-        <MenuLink to="/Iperformance" icon={<FaChartBar />} label="Performance" collapsed={collapsed} />
+        <MenuLink to="/instructor-performance" icon={<FaChartBar />} label="Performance" collapsed={collapsed} />
       </div>
     </div>
   );

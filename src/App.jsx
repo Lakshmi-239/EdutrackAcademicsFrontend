@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; 
 import { Toaster } from "react-hot-toast";
+import { VerifyEmail } from './pages/VerifyEmail';
 
 // Page Imports
 import { Home } from './pages/Home';
@@ -62,6 +63,7 @@ import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
 import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
 import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
 import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
+import {Footer} from './components/Footer';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -94,31 +96,32 @@ function App() {
           {/* <Route path="/instructor-dashboard" element={<Dashboard/>}/> */}
          {/* <Route path="/batch/:id" element={<BatchDetails/>}/> */}
           <Route path="/" element={<Home />} />
+          <Route path="/register" element={<RoleSelection />} />
+          <Route path="/register/student" element={<StudentRegistration />} />
+          <Route path="/register/instructor" element={<InstructorRegistration />} />
+          <Route path="/admin/register-coordinator" element={<CoordinatorRegistration />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
                       <Route path="/instructor-performance" element={<InstructorReportPage />} />
                                   <Route path="/admin/performance" element={<AdminReportPage />} />
-
-
+ 
+ 
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
-
+ 
           {/* Redirect base URL to the dashboard */}
           {/* <Route path="/" element={<Navigate to="/studentdashboard" />} /> */}
-
-          {/* Admin Dashboard (Internal state handling) */}
-          <Route path="/admin/*" element={<AdminPanel />} />
-
-          {/* Student Routes (With Sidebar/Layout) */}
+ 
+          {/* Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
             <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
-
-
+ 
+ 
             {/* PERFORMANCE */}
             {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
@@ -145,8 +148,8 @@ function App() {
               </AuthGuard>
               }
             />
-
-
+ 
+ 
           <Route path="/" element={<Navigate to="/instructordashboard" />} />
           <Route element={<Lay_Out />}>
             <Route path="/instructordashboard" element={<InstructorDashboard />} />
@@ -161,10 +164,11 @@ function App() {
             <Route path="/assessment/:id/add-question" element={<AddQuestionPage />} />
             <Route path="/view-batch-students/:id" element={<BatchStudentsPage />} />
           </Route>
-
+ 
           {/* Route WITHOUT Sidebar/Navbar */}
-          
+         <Route path="/admin/*" element={<AdminPanel />} />
         </Routes>
+        
       </div>
       <Footer />
     </AuthProvider>
