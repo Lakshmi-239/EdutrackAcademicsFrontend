@@ -1,38 +1,54 @@
-import { FaBars, FaHome, FaFileAlt, FaUsers, FaBook, FaClipboardList, FaGraduationCap } from "react-icons/fa";
+import { FaBars, FaHome, FaBook, FaClipboardList, FaGraduationCap, FaFileAlt, FaChartBar } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
-
-function SideBar({ collapsed, setCollapsed }) {
+ 
+function Side_Bar({ collapsed, setCollapsed }) {
   return (
-    <div 
-      className={`bg-body-tertiary border-end vh-100 p-2 transition-all ${collapsed ? "col-1" : "col-2"}`} 
-      style={{ width: collapsed ? "70px" : "240px", transition: "0.3s" }}
+    <div
+      className="h-full p-4 flex flex-col transition-all duration-300 bg-transparent"
+      style={{ width: collapsed ? "80px" : "260px" }}
     >
-      <div className="d-flex align-items-center p-2 mb-4">
-        <button className="btn btn-outline-secondary border-0" onClick={() => setCollapsed(!collapsed)}>
-          <FaBars /> 
+      <div className={`flex items-center mb-10 ${collapsed ? "justify-center" : "px-2"}`}>
+        <button
+          className="p-2 rounded-xl transition-all bg-transparent border-0 shadow-none flex items-center justify-center group"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          <FaBars size={22} className="text-slate-400 group-hover:text-teal-400 transition-colors" />
         </button>
-        {!collapsed && <span className="fw-bold ms-2 text-body text-nowrap">Instructor Portal</span>}
+        {!collapsed && (
+          <span className="font-black ms-3 text-white tracking-widest uppercase text-[11px] opacity-60">
+            EduTrack Portal
+          </span>
+        )}
       </div>
-
-      <div className="nav flex-column nav-pills">
-        <NavLink to="/instructordashboard" className="nav-link text-body mb-2 d-flex align-items-center">
-          <FaHome /> {!collapsed && <span className="ms-2">Home</span>}
-        </NavLink>
-        <NavLink to="/Icourses" className="nav-link text-body mb-2 d-flex align-items-center">
-          <FaBook /> {!collapsed && <span className="ms-2">Courses</span>}
-        </NavLink>
-        <NavLink to="/Iattendances" className="nav-link text-body mb-2 d-flex align-items-center">
-          <FaGraduationCap /> {!collapsed && <span className="ms-2">Attendance</span>}
-        </NavLink>
-        <NavLink to="/Imodules" className="nav-link text-body mb-2 d-flex align-items-center">
-          <FaFileAlt /> {!collapsed && <span className="ms-2">Modules</span>}
-        </NavLink>
-        <NavLink to="/Iassessments" className="nav-link text-body mb-2 d-flex align-items-center">
-          <FaClipboardList /> {!collapsed && <span className="ms-2">Assessments</span>}
-        </NavLink>
+ 
+      {/* Navigation Links */}
+      <div className="flex flex-col gap-3">
+        <MenuLink to="/instructordashboard" icon={<FaHome />} label="Home" collapsed={collapsed} />
+        <MenuLink to="/Icourses" icon={<FaBook />} label="Courses" collapsed={collapsed} />
+        <MenuLink to="/Imodules" icon={<FaFileAlt />} label="Modules" collapsed={collapsed} />
+        <MenuLink to="/Iassessments" icon={<FaClipboardList />} label="Assessments" collapsed={collapsed} />
+        <MenuLink to="/Iattendances" icon={<FaGraduationCap />} label="Attendance" collapsed={collapsed} />
+        <MenuLink to="/Iperformance" icon={<FaChartBar />} label="Performance" collapsed={collapsed} />
       </div>
     </div>
   );
 }
-
-export default SideBar;
+ 
+const MenuLink = ({ to, icon, label, collapsed }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) => `
+      flex items-center transition-all duration-300 rounded-xl py-3 !no-underline
+      ${collapsed ? "justify-center px-0" : "px-4"}
+      ${isActive
+        ? "bg-emerald-500/10 !text-teal-400 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)] font-bold"
+        : "!text-slate-400 hover:!text-slate-100 hover:bg-slate-800/40"}
+    `}
+  >
+    <span className="text-xl">{icon}</span>
+    {!collapsed && <span className="ml-3 text-sm tracking-wide">{label}</span>}
+  </NavLink>
+);
+ 
+export default Side_Bar;
+ 

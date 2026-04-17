@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, User, Phone, Eye, EyeOff, Calendar, ArrowRight } from 'lucide-react';
-import { api } from "../../services/api";
+import { api } from "../../services/Api";
 import toast from 'react-hot-toast';
 
 export const StudentRegistration = () => {
@@ -76,8 +76,14 @@ export const StudentRegistration = () => {
     try {
       const { confirmPassword, ...submitData } = formData;
       await api.registerStudent(submitData);
-      toast.success('Registration successful!');
-      navigate('/login');
+      
+      await api.generateOtp({ email: formData.StudentEmail });
+
+      toast.success('Registration successful! Please verify your email.');
+      
+      navigate('/verify-email', { 
+        state: { email: formData.StudentEmail } 
+      });
     } catch (err) {
       const msg = err.response?.data?.errors 
         ? Object.values(err.response.data.errors).flat()[0] 

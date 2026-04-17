@@ -2,147 +2,154 @@ import React from 'react';
 import { BookOpen, Users, ArrowRight, Calendar, Trash2, RotateCcw } from 'lucide-react';
 
 export default function AttendanceCard({ item, onClick, onDelete, onRestore }) {
-  // Check if this specific card is deleted
   const isDeleted = item.isDeleted || item.IsDeleted;
+  const watermarkText = isDeleted ? (item.presentCount === 0 ? "EMPTY" : "VOID") : null;
 
   const percentage = item.totalStudents > 0 
     ? Math.round((item.presentCount / item.totalStudents) * 100) 
     : 0;
 
+  // PREMIUM THEME SELECTOR: Enhanced color palette
   const getTheme = (pct) => {
-    if (isDeleted) return { color: 'secondary', bg: 'bg-secondary-subtle' }; // Gray theme for deleted
-    if (pct >= 80) return { color: 'success', bg: 'bg-success-subtle' };
-    if (pct >= 50) return { color: 'warning', bg: 'bg-warning-subtle' };
-    return { color: 'danger', bg: 'bg-danger-subtle' };
+    if (isDeleted) return { color: '#64748b', bg: 'rgba(100, 116, 139, 0.1)', glow: 'transparent', border: 'border-slate-800' };
+    if (pct >= 80) return { color: '#2dd4bf', bg: 'rgba(45, 212, 191, 0.15)', glow: 'rgba(45, 212, 191, 0.3)', border: 'border-teal-500/40' };
+    if (pct >= 50) return { color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)', glow: 'rgba(251, 191, 36, 0.3)', border: 'border-amber-400/40' };
+    return { color: '#f87171', bg: 'rgba(248, 113, 113, 0.15)', glow: 'rgba(248, 113, 113, 0.3)', border: 'border-red-500/40' };
   };
 
   const theme = getTheme(percentage);
 
   return (
     <div 
-  className={`card h-100 shadow-sm rounded-4 border border-2 border-bottom border-4 
-    ${isDeleted ? 'border-secondary opacity-75' : `border-bottom-${theme.color} shadow-hover-card`} 
-    overflow-hidden transition-all`}
-  style={{ 
-    filter: isDeleted ? 'grayscale(0.8)' : 'none',
-    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out', // Added transition here
-    cursor: isDeleted ? 'default' : 'pointer'
-  }}
-  // Simple "Lifting" logic on the same line
-  onMouseEnter={(e) => !isDeleted && (e.currentTarget.style.transform = 'translateY(-5px)', e.currentTarget.classList.replace('shadow-sm', 'shadow-lg'))}
-  onMouseLeave={(e) => !isDeleted && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.classList.replace('shadow-lg', 'shadow-sm'))}
->
-      {/* 🔴 "DELETED" Watermark Overlay */}
+      className={`group relative h-full rounded-[2rem] border transition-all duration-500 overflow-hidden bg-slate-900/60 backdrop-blur-xl ${theme.border} ${isDeleted ? 'opacity-60 shadow-none' : 'hover:-translate-y-1 shadow-2xl'}`}
+      style={{ 
+        filter: isDeleted ? 'grayscale(0.6)' : 'none',
+        cursor: isDeleted ? 'default' : 'pointer',
+        boxShadow: isDeleted ? 'none' : `0 10px 30px -15px ${theme.glow}`
+      }}
+      onClick={() => !isDeleted && onClick()}
+    >
+      {/* 🔴 "VOID/EMPTY" WATERMARK OVERLAY */}
       {isDeleted && (
         <div 
-          className="position-absolute top-50 start-50 translate-middle fw-bold text-secondary opacity-25"
-          style={{ fontSize: '2rem', zIndex: 0, transform: 'translate(-50%, -50%) rotate(-15deg)' }}
+          className="position-absolute top-50 start-50 translate-middle font-black text-slate-800/20 select-none pointer-events-none"
+          style={{ fontSize: '4.5rem', zIndex: 0, transform: 'translate(-50%, -50%) rotate(-12deg)', letterSpacing: '0.2em' }}
         >
-          DELETED
+          {watermarkText}
         </div>
       )}
 
-      <div className="card-body p-4" style={{ zIndex: 1 }}>
-        {/* TOP SECTION */}
-        <div className="d-flex justify-content-between align-items-start mb-4">
+      <div className="p-6 flex flex-col h-full position-relative" style={{ zIndex: 1 }}>
+        
+        {/* HEADER: Batch & Percentage */}
+        <div className="d-flex justify-content-between align-items-center mb-5">
           <div className="d-flex align-items-center gap-3">
-            <div className={`bg-${theme.color} text-white p-2 rounded-3 shadow-sm`}>
+            <div 
+              className="w-12 h-12 rounded-xl d-flex align-items-center justify-center shadow-lg border"
+              style={{ backgroundColor: theme.bg, color: theme.color, borderColor: `${theme.color}33` }}
+            >
               <Users size={22} />
             </div>
             
             <div className="d-flex flex-column">
-              <span className="fw-bold text-dark fs-5 mb-0">{item.batchId}</span>
-              <div className="d-flex align-items-center gap-1 text-muted" style={{ fontSize: '0.75rem' }}>
-                <Calendar size={12} />
-                <span>{new Date(item.sessionDate).toLocaleDateString()}</span>
+              <span className="font-black text-white text-base tracking-tight leading-tight">{item.batchId}</span>
+              <div className="d-flex align-items-center gap-1.5 text-slate-500 font-bold uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.05em' }}>
+                <Calendar size={11} className="text-teal-500" />
+                <span>{new Date(item.sessionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
               </div>
             </div>
           </div>
 
-          <span className={`badge ${theme.bg} text-${theme.color} border border-${theme.color} rounded-pill px-3 py-2 fw-bold`}>
-            {isDeleted ? 'Inactive' : `${percentage}%`}
-          </span>
-        </div>
-
-        {/* MIDDLE SECTION */}
-        <div className={`mb-4 p-3 rounded-3 ${theme.bg} border-start border-3 border-${theme.color}`}>
-          <div className="d-flex align-items-center gap-2 text-truncate">
-            <BookOpen size={16} className={`text-${theme.color}`} />
-            <span className={`fw-bold small text-uppercase text-${theme.color}`}>{item.courseId}</span>
-            <span className="text-muted">|</span>
-            <span className="fw-bold text-dark text-truncate">{item.courseName}</span>
+          <div 
+            className="px-3 py-1 rounded-full font-black text-[10px] tracking-widest border"
+            style={{ backgroundColor: theme.bg, color: theme.color, borderColor: `${theme.color}44` }}
+          >
+            {isDeleted ? 'ARCHIVED' : `${percentage}%`}
           </div>
         </div>
 
-        {/* STATS SECTION (Disabled view if deleted) */}
-        {/* STATS SECTION */}
-<div className="row g-2 text-center mb-3">
-  {/* TOTAL CARD */}
-  <div className="col-4">
-    <div className={`p-2 rounded-3 border bg-white border-primary border-opacity-25 ${isDeleted ? 'opacity-50' : ''}`}>
-      <div className="fw-bold text-primary fs-5">{item.totalStudents}</div>
-      <div className="text-uppercase fw-bold text-muted" style={{ fontSize: '0.6rem' }}>Total</div>
-    </div>
-  </div>
+        {/* COURSE DETAILS PILL */}
+        <div className="mb-4 p-3 rounded-2xl bg-slate-950/40 border border-slate-800/60 transition-colors group-hover:bg-slate-800/40">
+          <div className="d-flex align-items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 d-flex align-items-center justify-center">
+               <BookOpen size={14} className="text-teal-400" />
+            </div>
+            <div className="d-flex flex-column overflow-hidden">
+               <span className="text-[9px] font-black text-teal-500 tracking-widest uppercase opacity-80">{item.courseId}</span>
+               <span className="text-slate-200 font-bold text-xs text-truncate">{item.courseName}</span>
+            </div>
+          </div>
+        </div>
 
-  {/* PRESENT CARD */}
-  <div className="col-4">
-    <div className={`p-2 rounded-3 border bg-white border-success border-opacity-25 ${isDeleted ? 'opacity-50' : ''}`}>
-      <div className="fw-bold text-success fs-5">{item.presentCount}</div>
-      <div className="text-uppercase fw-bold text-muted" style={{ fontSize: '0.6rem' }}>Present</div>
-    </div>
-  </div>
+        {/* STATS GRID: Balanced Layout */}
+        <div className="row g-2 text-center mb-6">
+          <div className="col-4">
+            <div className="py-3 rounded-xl bg-slate-950/30 border border-slate-800/50">
+              <div className="font-black text-white text-lg">{item.totalStudents}</div>
+              <div className="text-[8px] font-black text-slate-500 uppercase tracking-tighter mt-0.5">Total</div>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="py-3 rounded-xl bg-slate-950/30 border border-slate-800/50">
+              <div className="font-black text-emerald-400 text-lg">{item.presentCount}</div>
+              <div className="text-[8px] font-black text-slate-500 uppercase tracking-tighter mt-0.5">Present</div>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="py-3 rounded-xl bg-slate-950/30 border border-slate-800/50">
+              <div className="font-black text-red-400 text-lg">{item.absentCount}</div>
+              <div className="text-[8px] font-black text-slate-500 uppercase tracking-tighter mt-0.5">Absent</div>
+            </div>
+          </div>
+        </div>
 
-  {/* ABSENT CARD */}
-  <div className="col-4">
-    <div className={`p-2 rounded-3 border bg-white border-danger border-opacity-25 ${isDeleted ? 'opacity-50' : ''}`}>
-      <div className="fw-bold text-danger fs-5">{item.absentCount}</div>
-      <div className="text-uppercase fw-bold text-muted" style={{ fontSize: '0.6rem' }}>Absent</div>
-    </div>
-  </div>
-</div>
-
-        {/* ACTION FOOTER */}
-        <div className="d-flex align-items-center justify-content-between pt-3 border-top mt-3">
+        {/* FOOTER: Integrated Actions */}
+        <div className="mt-auto d-flex justify-content-between align-items-center pt-4 border-t border-slate-800/40">
           <div className="d-flex gap-2">
-            {/* Delete Button (Disabled if already deleted) */}
             <button 
-              className={`btn btn-light text-danger btn-sm rounded-circle p-2 shadow-none border ${isDeleted ? 'disabled opacity-25' : ''}`}
-              title="Delete Batch Attendance"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isDeleted) onDelete(item);
-              }}
-              disabled={isDeleted}
+              className={`w-9 h-9 rounded-pill d-flex align-items-center justify-center transition-all border border-slate-700/50 text-slate-500 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 ${isDeleted ? 'd-none' : ''}`}
+              title="Void Record"
+              onClick={(e) => { e.stopPropagation(); onDelete(item); }}
             >
               <Trash2 size={16} />
             </button>
 
-            {/* Restore Button (Always available if deleted) */}
             <button 
-              className={`btn ${isDeleted ? 'btn-success text-white' : 'btn-light text-success'} btn-sm rounded-circle p-2 shadow-none border`}
-              title="Restore Attendance"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRestore(item);
-              }}
+              className={`w-9 h-9 rounded-pill d-flex align-items-center justify-center transition-all border ${isDeleted ? 'bg-teal-500 border-teal-500 text-slate-950' : 'border-slate-700/50 text-slate-500 hover:bg-teal-500/10 hover:text-teal-400 hover:border-teal-500/30'}`}
+              title="Restore Data"
+              onClick={(e) => { e.stopPropagation(); onRestore(item); }}
             >
-              <RotateCcw size={16} />
+              <RotateCcw size={16} className={isDeleted ? 'animate-spin-slow' : ''} />
             </button>
           </div>
 
-          {/* View Details (Disabled if deleted) */}
-          <div 
-            className={`fw-bold small d-flex align-items-center gap-1 ${isDeleted ? 'text-muted cursor-not-allowed' : 'text-primary pointer'}`} 
-            onClick={(e) => {
-              if (isDeleted) return;
-              onClick();
-            }}
-          >
-            View Details <ArrowRight size={14} />
-          </div>
+          {/* View Details Pill - Dynamic Theme Applied */}
+<button 
+  className={`font-black text-[10px] uppercase tracking-widest d-flex align-items-center gap-2 px-5 py-2 rounded-pill transition-all duration-300 shadow-xl border ${
+    isDeleted 
+      ? 'text-slate-600 bg-slate-800/50 border-slate-700 cursor-not-allowed' 
+      : 'text-slate-950 hover:scale-105 active:scale-95 hover:brightness-110'
+  }`} 
+  style={{ 
+    // This dynamically sets the color based on the attendance percentage
+    backgroundColor: !isDeleted ? theme.color : '', 
+    borderColor: !isDeleted ? theme.color : '' 
+  }}
+  onClick={(e) => {
+    e.stopPropagation();
+    if (!isDeleted) onClick();
+  }}
+>
+  Details <ArrowRight size={12} strokeWidth={3} />
+</button>
         </div>
       </div>
+
+      <style>{`
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      `}</style>
     </div>
   );
 }

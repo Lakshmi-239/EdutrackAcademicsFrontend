@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/Api';
-import { CheckCircle, XCircle, X, Edit2, Save, Loader2, Fingerprint, User, CreditCard, Hash } from 'lucide-react';
+import { CheckCircle, XCircle, X, Edit2, Save, Loader2, User, Fingerprint } from 'lucide-react';
 
-// Ensure 'onUpdate' is included in the props here:
 export default function AttendanceDetailsModal({ batchId, date, isOpen, onClose, onUpdate }) {
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,33 +35,20 @@ export default function AttendanceDetailsModal({ batchId, date, isOpen, onClose,
     });
   };
 
-  const handleUpdateStatus = async (attendanceId) => {
-    const newStatus = tempStatuses[attendanceId];
+  const handleUpdateStatus = async (student) => {
+    const newStatus = tempStatuses[student.attendanceId];
+    if (!newStatus) return;
+
     try {
       setUpdating(true);
-      
-      // 1. Call the backend API
-      await api.updateStudentStatus(attendanceId, newStatus);
-
-      // 2. Update the local state instantly in the modal table
-      setDetails(prevDetails => 
-        prevDetails.map(item => 
-          item.attendanceId === attendanceId 
-            ? { ...item, status: newStatus } 
-            : item
-        )
-      );
-
-      // 3. Close the editing mode for this row
+      await api.updateStudentStatus(student.attendanceId, student.enrollmentID, newStatus);
+      setDetails(prev => prev.map(item => 
+        item.attendanceId === student.attendanceId ? { ...item, status: newStatus } : item
+      ));
       setEditingId(null);
-
-      // 4. Update the parent page counts (background refresh)
-      if (onUpdate) {
-        onUpdate();
-      }
-
+      if (onUpdate) onUpdate();
     } catch (err) {
-      alert(err.response?.data || "Failed to update status");
+      alert("Update failed");
     } finally {
       setUpdating(false);
     }
@@ -71,87 +57,133 @@ export default function AttendanceDetailsModal({ batchId, date, isOpen, onClose,
   if (!isOpen) return null;
 
   return (
-    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 1060 }}>
-      {/* ... rest of your modal JSX remains exactly the same ... */}
-      <div className="modal-dialog modal-xl modal-dialog-centered">
-        <div className="modal-content border-0 rounded-4 shadow-lg">
-          <div className="modal-header border-0 bg-white p-4">
-            <div>
-              <h5 className="fw-bold mb-0">Attendance Detailed Logs: {batchId}</h5>
-              <p className="text-muted small mb-0">Session Date: {new Date(date).toLocaleDateString()}</p>
+    <div className="fixed inset-0 z-[1060] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+      {/* Reduced max-w-6xl to max-w-4xl to remove empty right-side space */}
+      <div className="w-full max-w-4xl max-h-[85vh] bg-slate-900 border border-slate-800 rounded-[1.5rem] shadow-2xl overflow-hidden flex flex-col transform animate-in zoom-in-95 duration-300">
+        
+        {/* HEADER */}
+        <div className="flex-shrink-0 p-5 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-500/10 border border-teal-500/20 rounded-lg flex items-center justify-center text-teal-400">
+              <Fingerprint size={20} />
             </div>
-            <button className="btn-close shadow-none" onClick={onClose}></button>
+            <div>
+              <h5 className="text-white font-black text-base mb-0">Logs: <span className="text-teal-400">{batchId}</span></h5>
+              <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest mb-0">Session: {new Date(date).toLocaleDateString()}</p>
+            </div>
           </div>
-          <div className="modal-body p-0" style={{ maxHeight: '500px', overflowY: 'auto' }}>
-            {loading ? (
-              <div className="p-5 text-center"><Loader2 className="spinner text-success" /></div>
-            ) : (
-              <table className="table table-hover align-middle mb-0">
-                <thead className="table-light sticky-top">
-                  <tr className="small text-uppercase text-muted">
-                    <th className="ps-4 py-3">Student Name</th>
-                    <th className="py-3 text-center">Student ID</th>
-                    <th className="py-3 text-center">Enrollment ID</th>
-                    <th className="py-3 text-center">Attendance ID</th>
-                    <th className="text-end pe-4 py-3">Status / Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {details.map((s) => {
-                    const isEditing = editingId === s.attendanceId;
-                    const currentStatusValue = tempStatuses[s.attendanceId] || s.status;
-                    return (
-                      <tr key={s.attendanceId}>
-                        <td className="ps-4 py-3">
-                          <div className="d-flex align-items-center gap-2">
-                            <User size={16} className="text-primary" />
-                            <span className="fw-bold text-dark">{s.studentName}</span>
+          <button 
+            className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition-colors" 
+            onClick={onClose}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {loading ? (
+            <div className="p-16 text-center flex flex-col items-center">
+              <Loader2 className="animate-spin text-teal-400 mb-3" size={32} />
+              <span className="text-slate-500 font-bold tracking-widest text-[10px] uppercase">Syncing...</span>
+            </div>
+          ) : (
+            <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+              <thead className="sticky top-0 z-20 shadow-sm">
+                <tr className="text-[10px] font-black uppercase tracking-wider text-teal-500/80 bg-slate-800">
+                  <th className="ps-6 py-3 text-left" style={{ width: '30%' }}>Student Name</th>
+                  <th className="py-3 text-center" style={{ width: '15%' }}>ID</th>
+                  <th className="py-3 text-center" style={{ width: '15%' }}>Enroll</th>
+                  <th className="py-3 text-center" style={{ width: '15%' }}>Log ID</th>
+                  <th className="ps-4 py-3 text-left" style={{ width: '25%' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {details.map((s) => {
+                  const isEditing = editingId === s.attendanceId;
+                  const currentStatusValue = tempStatuses[s.attendanceId] || s.status;
+                  return (
+                    <tr key={s.attendanceId} className="group hover:bg-slate-800/40 transition-colors">
+                      <td className="ps-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-teal-400">
+                            <User size={12} />
                           </div>
-                        </td>
-                        <td className="text-center small text-muted">{s.studentId}</td>
-                        <td className="text-center small text-muted">{s.enrollmentID}</td>
-                        <td className="text-center"><span className="badge bg-light text-dark border">{s.attendanceId}</span></td>
-                        <td className="text-end pe-4 py-3">
-                          <div className="d-flex align-items-center justify-content-end gap-2">
-                            {isEditing ? (
-                              <>
-                                <select 
-                                  className="form-select form-select-sm" 
-                                  value={currentStatusValue}
-                                  onChange={(e) => setTempStatuses({...tempStatuses, [s.attendanceId]: e.target.value})}
-                                >
-                                  <option value="Present">Present</option>
-                                  <option value="Absent">Absent</option>
-                                </select>
-                                <button className="btn btn-sm btn-success" onClick={() => handleUpdateStatus(s.attendanceId)} disabled={updating}>
-                                  {updating ? <Loader2 size={14} className="spinner" /> : <Save size={14}/>}
-                                </button>
-                                <button className="btn btn-sm btn-light border" onClick={() => setEditingId(null)}><X size={14}/></button>
-                              </>
-                            ) : (
-                              <>
-                                <span className={`badge rounded-pill px-3 py-2 ${s.status === 'Present' ? 'bg-success' : 'bg-danger'}`}>
-                                  {s.status === 'Present' ? <CheckCircle size={14} /> : <XCircle size={14} />} {s.status}
-                                </span>
-                                <button className="btn btn-outline-primary btn-sm rounded-circle p-2" onClick={() => handleEditClick(s)}>
-                                  <Edit2 size={14}/>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-          <div className="modal-footer border-0 p-3 bg-light rounded-bottom-4">
-             <button className="btn btn-secondary px-4 rounded-pill fw-bold" onClick={onClose}>Close</button>
-          </div>
+                          <span className="font-bold text-slate-200 text-sm truncate">{s.studentName}</span>
+                        </div>
+                      </td>
+                      <td className="text-center font-mono text-[11px] text-slate-500 uppercase">{s.studentId}</td>
+                      <td className="text-center font-mono text-[11px] text-slate-500 uppercase">{s.enrollmentID}</td>
+                      <td className="text-center">
+                        <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-500 font-mono text-[9px]">
+                          {s.attendanceId}
+                        </span>
+                      </td>
+                      <td className="ps-4 py-3 text-left">
+                        <div className="flex items-center gap-2">
+                          {isEditing ? (
+                            <div className="flex items-center gap-2">
+                              <select 
+                                className="bg-slate-950 border border-slate-700 text-slate-200 text-[10px] font-bold rounded-md px-1 py-1 outline-none" 
+                                value={currentStatusValue}
+                                onChange={(e) => setTempStatuses({...tempStatuses, [s.attendanceId]: e.target.value})}
+                              >
+                                <option value="Present">Present</option>
+                                <option value="Absent">Absent</option>
+                              </select>
+                              <button 
+                                className="w-7 h-7 rounded bg-teal-500 text-slate-950 flex items-center justify-center hover:bg-teal-400" 
+                                onClick={() => handleUpdateStatus(s)} 
+                                disabled={updating}
+                              >
+                                {updating ? <Loader2 size={12} className="animate-spin" /> : <Save size={12}/>}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex items-center justify-center gap-1 min-w-[85px] px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
+                                s.status === 'Present' 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                  : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                              }`}>
+                                {s.status === 'Present' ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                                {s.status}
+                              </span>
+                              <button 
+                                className="w-7 h-7 rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-teal-400 transition-all flex items-center justify-center" 
+                                onClick={() => handleEditClick(s)}
+                              >
+                                <Edit2 size={12}/>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* FOOTER */}
+        <div className="flex-shrink-0 p-4 bg-slate-800/30 border-t border-slate-800 flex justify-end">
+           <button 
+             className="px-6 py-2 bg-slate-800 hover:bg-white text-slate-300 hover:text-slate-950 font-black text-[10px] uppercase tracking-widest rounded-lg border border-slate-700 hover:border-white transition-all duration-300 shadow-lg" 
+             onClick={onClose}
+           >
+             Close Logs
+           </button>
         </div>
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #14b8a6; }
+      `}</style>
     </div>
   );
 }

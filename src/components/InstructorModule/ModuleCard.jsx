@@ -7,7 +7,7 @@ import {
   Edit3, Trash2, ChevronDown, ChevronUp, 
   Video, FileText, ExternalLink,
   PlayCircle, PlusCircle, Target, 
-  BookOpen, Layers, Box, CheckCircle2
+  Layers, Box, CheckCircle2
 } from 'lucide-react';
 
 export default function ModuleCard({ module, onRefresh }) {
@@ -16,7 +16,6 @@ export default function ModuleCard({ module, onRefresh }) {
   const [showManager, setShowManager] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   
-  // State to track what we are editing
   const [editingContentId, setEditingContentId] = useState(null);
   const [editFormData, setEditFormData] = useState(null);
 
@@ -42,20 +41,18 @@ export default function ModuleCard({ module, onRefresh }) {
 
   const handleEditContent = (content) => {
     setEditingContentId(content.contentID);
-    setEditFormData(content); // Pass the whole object
+    setEditFormData(content);
     setIsOpen(true);
     setShowManager(true);
   };
 
   const handlePublish = async (contentId) => {
     try {
-      // Show a loading toast or just proceed with the call
       await api.publishContent(contentId); 
       toast.success("Content is now LIVE!");
-      fetchContent(); // This refreshes the list to show the 'LIVE' status
+      fetchContent(); 
     } catch (error) {
       toast.error("Failed to publish content");
-      console.error("Publish error:", error);
     }
   };
 
@@ -73,104 +70,124 @@ export default function ModuleCard({ module, onRefresh }) {
 
       <div 
         onClick={() => !isOpen && setIsOpen(true)} 
-        className={`mb-4 rounded-4 transition-all overflow-hidden border ${isOpen ? 'shadow-lg border-primary border-2 ring-1 ring-primary ring-opacity-10' : 'shadow-sm border-light'}`} 
-        style={{ backgroundColor: '#fff', cursor: isOpen ? 'default' : 'pointer' }}
+        className={`mb-6 rounded-[2rem] transition-all duration-500 overflow-hidden border ${
+          isOpen 
+          ? 'shadow-2xl border-teal-500/50 bg-slate-900/80' 
+          : 'shadow-lg border-slate-800 bg-slate-900/40 hover:border-slate-700'
+        }`} 
+        style={{ cursor: isOpen ? 'default' : 'pointer', backdropFilter: 'blur(12px)' }}
       >
-        {/* TOP BAR */}
-        <div className="px-4 py-2 d-flex justify-content-between align-items-center border-bottom border-light">
-          <div className="d-flex align-items-center gap-3">
-            <div className="d-flex align-items-center gap-2">
-              <div className={`p-1 rounded ${isOpen ? 'bg-primary text-white' : 'bg-primary bg-opacity-10 text-primary'}`}><Box size={14} /></div>
-              <span className="text-muted fw-bold" style={{ fontSize: '0.65rem' }}>MOD-{module.moduleID}</span>
+        {/* TOP BAR - Meta Data */}
+        <div className="px-8 py-4 d-flex justify-content-between align-items-center border-bottom border-white/5 bg-black/20">
+          <div className="d-flex align-items-center gap-4">
+            <div className="d-flex align-items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
+              <span className="text-indigo-400 font-black uppercase tracking-tighter" style={{fontSize: '10px'}}>
+                Course: {module.courseId || "N/A"}
+              </span>
+            </div>
+
+            <div className="d-flex align-items-center gap-2 text-slate-500 font-mono" style={{fontSize: '10px'}}>
+              <Box size={12} />
+              <span className="tracking-widest uppercase">MOD-{module.moduleID}</span>
             </div>
           </div>
-          <div className={`d-flex align-items-center gap-2 px-3 py-1 rounded-pill border shadow-sm ${isOpen ? 'bg-primary text-white border-primary' : 'bg-white text-primary'}`}>
+
+          <div className={`d-flex align-items-center gap-2 px-4 py-1.5 rounded-full border shadow-inner transition-all ${
+            isOpen ? 'bg-teal-500/10 text-teal-400 border-teal-500/30' : 'bg-slate-900 text-slate-400 border-slate-700'
+          }`}>
             <Layers size={13} />
-            <span className="fw-bolder text-uppercase" style={{ fontSize: '0.6rem' }}>Sequence {module.sequenceOrder}</span>
+            <span className="font-black text-uppercase tracking-tighter" style={{ fontSize: '0.65rem' }}>
+              Sequence {module.sequenceOrder}
+            </span>
           </div>
         </div>
 
-        {/* BODY */}
-        {/* <div className="row g-0 align-items-center bg-white">
-          <div className="col-md-5 py-4 px-4">
-            <h5 className={`mb-1 fw-bolder ${isOpen ? 'text-primary' : 'text-dark'}`}>{module.name}</h5>
-            <div className="mt-2">
-              <div className="d-flex align-items-center gap-2 bg-primary bg-opacity-10 px-3 py-1 rounded-pill" style={{width:'fit-content'}}>
-                <PlayCircle size={14} className="text-primary"/><span className="small fw-bold text-primary">{contents.length} Resources</span>
-              </div>
+        {/* MAIN BODY SECTION - 3 Pane Grid */}
+        <div className="p-8 row g-0 align-items-center">
+          
+          {/* Left: Title & Resource Count */}
+          <div className="col-lg-4">
+            <h3 className="text-white font-bold mb-4 tracking-tight" style={{fontSize: '1.85rem'}}>
+              {module.name}
+            </h3>
+            <div className="d-inline-flex align-items-center gap-2 bg-teal-500/10 border border-teal-500/30 px-4 py-2 rounded-full">
+              <PlayCircle size={14} className="text-teal-400" />
+              <span className="text-teal-400 font-black uppercase tracking-widest" style={{fontSize: '10px'}}>
+                {contents.length} Resources
+              </span>
             </div>
-          </div> */}
-
-           {/* MIDDLE INTERFACE - Alignment Adjusted */}
-
-        <div className="row g-0 align-items-center bg-white">
-
-          {/* Module Identity */}
-
-          <div className="col-md-5 py-4 px-4">
-
-            <div className="d-flex flex-column align-items-start">
-
-              <h5 className={`mb-1 fw-bolder transition-colors ${isOpen ? 'text-primary' : 'text-dark'}`}
-
-                  style={{ fontSize: '1.25rem', letterSpacing: '-0.2px', lineHeight: '1.2' }}>
-
-                {module.name}
-
-              </h5>
-
-              <div className="mt-2">
-
-                <div className="d-flex align-items-center gap-2 bg-primary bg-opacity-10 px-3 py-1 rounded-pill">
-
-                  <PlayCircle size={14} className="text-primary"/>
-
-                  <span className="small fw-bold text-primary" style={{ fontSize: '0.72rem' }}>
-
-                    {contents.length} Resources
-
-                  </span>
-
-                </div>
-
-              </div>
-
-            </div>
-
           </div>
 
-          <div className="col-md-5 px-4 py-3 border-start border-light d-none d-md-flex align-items-center">
-            <div className="d-flex gap-3 align-items-start">
-              <div className={`p-2 rounded-circle shadow-sm ${isOpen ? 'bg-primary text-white' : 'bg-light text-primary'}`}><Target size={18} /></div>
+          {/* Center: Learning Objectives */}
+          <div className="col-lg-5 d-flex align-items-center border-start border-slate-700/50 ps-lg-5">
+            <div className="d-flex gap-4 align-items-center">
+              <div className="p-3 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+                <Target size={24} className="text-teal-400" />
+              </div>
               <div>
-                <span className="text-uppercase fw-bold text-muted d-block mb-1" style={{ fontSize: '0.55rem' }}>Objectives</span>
-                <p className="mb-0 text-secondary lh-sm small opacity-75">{module.learningObjectives || "No objectives defined."}</p>
+                <span className="d-block text-slate-500 font-black uppercase tracking-[0.2em] mb-1" style={{fontSize: '10px'}}>
+                  Learning Objectives
+                </span>
+                <p className="text-slate-300 font-semibold mb-0" style={{fontSize: '1rem'}}>
+                  {module.learningObjectives || "No objectives defined."}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="col-md-2 py-3 pe-5 d-flex justify-content-end align-items-center">
-            <div className="d-inline-flex gap-2 p-1 bg-light rounded-pill border shadow-sm">
-              <button onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }} className="btn btn-white shadow-sm rounded-circle p-2 border-0 bg-white"><Edit3 size={16} className="text-primary" /></button>
-              <button onClick={(e) => { e.stopPropagation(); handleAddResource(); }} className="btn btn-primary shadow-sm rounded-circle p-2 border-0"><PlusCircle size={16} /></button>
-              <button onClick={(e) => { e.stopPropagation(); window.confirm("Delete module?") && api.deleteModule(module.moduleID).then(onRefresh); }} className="btn btn-white shadow-sm rounded-circle p-2 border-0 bg-white"><Trash2 size={16} className="text-danger" /></button>
+          {/* Right: Action Buttons */}
+          <div className="col-lg-3 d-flex justify-content-end align-items-center">
+            <div className="d-inline-flex gap-3 p-2 bg-slate-950/50 rounded-full border border-slate-800 shadow-xl">
+              <button 
+                onClick={(e) => { e.stopPropagation(); setShowEditModal(true); }} 
+                className="btn btn-dark rounded-circle p-2 border-slate-700 hover:text-teal-400 transition-all shadow-sm"
+              >
+                <Edit3 size={16} />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleAddResource(); }} 
+                className="btn btn-teal rounded-circle p-2 border-0 bg-teal-500 text-slate-950 hover:bg-teal-400 shadow-lg shadow-teal-500/20"
+              >
+                <PlusCircle size={16} />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); window.confirm("Delete module?") && api.deleteModule(module.moduleID).then(onRefresh); }} 
+                className="btn btn-dark rounded-circle p-2 border-slate-700 hover:text-red-400 transition-all shadow-sm"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* TOGGLE */}
-        <div className="px-4 pb-3">
-          <button onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} className={`btn w-100 rounded-3 d-flex justify-content-between align-items-center px-4 py-2 ${isOpen ? 'bg-primary text-white shadow-md' : 'bg-light text-primary fw-bold'}`}>
-            <span>{isOpen ? 'Close Content Panel' : 'Manage Content & Resources'}</span>
-            {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-        </div>
+        {/* DRAWER TOGGLE */}
+<div className="px-8 pb-6">
+  <button 
+    onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} 
+    className={`btn w-100 rounded-2xl d-flex justify-content-between align-items-center px-6 py-3 transition-all font-black text-[11px] uppercase tracking-widest shadow-lg ${
+      isOpen 
+        ? 'bg-teal-500 text-slate-950 hover:bg-teal-400 shadow-teal-500/20' 
+        : 'bg-slate-700 text-white border border-slate-600 hover:bg-slate-600 hover:text-teal-400'
+    }`}
+  >
+    <div className="d-flex align-items-center gap-3">
+      <div className={`p-1 rounded-md ${isOpen ? 'bg-slate-950/20' : 'bg-white/10'}`}>
+        {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </div>
+      <span>{isOpen ? 'Collapse Resource Deck' : 'Expand Module Contents'}</span>
+    </div>
+    
+    <span className={`px-2 py-0.5 rounded-md text-[9px] ${isOpen ? 'bg-slate-950/20' : 'bg-black/30 text-slate-400'}`}>
+      {contents.length} ITEMS
+    </span>
+  </button>
+</div>
 
-        {/* DRAWER */}
+        {/* CONTENT DRAWER */}
         {isOpen && (
-          <div className="p-4 bg-light bg-opacity-25 border-top border-light">
+          <div className="p-6 bg-slate-950/40 border-top border-slate-800/50 animate-slide-down">
             {showManager && (
-              <div className="mb-4">
+              <div className="mb-8 p-6 rounded-[2rem] bg-slate-900 border border-teal-500/20 shadow-2xl">
                 <ManageContent 
                   moduleId={module.moduleID} 
                   moduleName={module.name}
@@ -182,56 +199,70 @@ export default function ModuleCard({ module, onRefresh }) {
               </div>
             )}
 
-            <div className="vstack gap-2">
-              {contents.map((item) => (
-                <div key={item.contentID} className="p-3 bg-white border border-light shadow-sm rounded-3 hover-shadow transition-all border-start border-4 border-primary border-opacity-25">
+            <div className="vstack gap-3">
+              {contents.length > 0 ? contents.map((item) => (
+                <div key={item.contentID} className="p-4 bg-slate-900/60 border border-slate-800/80 rounded-[1.5rem] hover:border-teal-500/30 transition-all group border-start border-4 border-teal-500/20 shadow-sm">
                   <div className="d-flex align-items-center justify-content-between">
-                    <div className="d-flex align-items-center gap-3">
-                      <div className="p-2 rounded-3" style={{ backgroundColor: item.contentType === 'Video' ? '#EEF2FF' : '#ECFDF5' }}>
-                        {item.contentType === 'Video' ? <Video size={18} className="text-primary" /> : <FileText size={18} className="text-success" />}
+                    <div className="d-flex align-items-center gap-4">
+                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                        {item.contentType === 'Video' 
+                          ? <Video size={20} className="text-teal-400" /> 
+                          : <FileText size={20} className="text-emerald-400" />}
                       </div>
                       <div>
-                        <span className="fw-bold text-dark d-block">{item.title}</span>
-                        <div className="text-muted d-flex align-items-center gap-1 mt-1" style={{ cursor: 'pointer' }} onClick={() => handleLinkClick(item.contentURI)}>
-                          <ExternalLink size={11} className="text-primary" /><small className="text-truncate opacity-75 d-inline-block" style={{maxWidth: '200px'}}>{item.contentURI}</small>
+                        <span className="font-black text-slate-100 d-block text-lg tracking-tight mb-1">{item.title}</span>
+                        <div className="d-flex align-items-center gap-2" style={{ cursor: 'pointer' }} onClick={() => handleLinkClick(item.contentURI)}>
+                          <ExternalLink size={12} className="text-teal-500" />
+                          <small className="text-slate-500 font-bold text-truncate d-inline-block" style={{maxWidth: '250px'}}>{item.contentURI}</small>
                         </div>
                       </div>
                     </div>
 
-                    <div className="d-flex align-items-center gap-3">
-                      {/* Change this part in your map function */}
-{item.status === 'Draft' ? (
-  <div className="d-flex align-items-center gap-1 p-1 pe-2 bg-warning bg-opacity-10 border border-warning rounded-pill">
-    <span className="badge bg-warning text-dark rounded-pill fw-bolder px-2" style={{fontSize: '0.6rem'}}>DRAFT</span>
-    <button 
-      onClick={(e) => { 
-        e.stopPropagation(); 
-        handlePublish(item.contentID); // ADD THIS CALL
-      }} 
-      className="btn btn-sm btn-success py-0 px-2 rounded-pill fw-bold" 
-      style={{fontSize: '0.65rem'}}
-    >
-      Go Live
-    </button>
-  </div>
-) : (
-  <div className="d-flex align-items-center gap-2 px-3 py-1 bg-success bg-opacity-10 border border-success rounded-pill text-success">
-    <CheckCircle2 size={12} /><span className="fw-bolder" style={{ fontSize: '0.65rem' }}>LIVE</span>
-  </div>
-)}
+                    <div className="d-flex align-items-center gap-4">
+                      {item.status === 'Draft' ? (
+                        <div className="d-flex align-items-center gap-3 p-1 pe-3 bg-amber-500/5 border border-amber-500/20 rounded-full">
+                          <span className="badge bg-amber-500 text-slate-950 rounded-full font-black px-3 py-1" style={{fontSize: '0.6rem'}}>DRAFT</span>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handlePublish(item.contentID); }} 
+                            className="btn btn-sm btn-teal py-1 px-4 rounded-full font-black uppercase tracking-tighter hover:bg-teal-400" 
+                            style={{fontSize: '0.65rem'}}
+                          >
+                            Go Live
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="d-flex align-items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400">
+                          <CheckCircle2 size={12} />
+                          <span className="font-black uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>Live</span>
+                        </div>
+                      )}
                       
-                      <div className="d-flex gap-1 border-start ps-3 border-light">
-                        <button className="btn btn-sm btn-light p-1" onClick={(e) => { e.stopPropagation(); handleEditContent(item); }}><Edit3 size={14} className="text-primary"/></button>
-                        <button className="btn btn-sm btn-light p-1 text-danger" onClick={(e) => { e.stopPropagation(); window.confirm("Remove?") && api.deleteContent(item.contentID).then(fetchContent); }}><Trash2 size={14} /></button>
+                      <div className="d-flex gap-2 border-start ps-4 border-slate-800">
+                        <button className="btn btn-dark p-2 rounded-circle border-slate-700 hover:text-teal-400" onClick={(e) => { e.stopPropagation(); handleEditContent(item); }}><Edit3 size={14} /></button>
+                        <button className="btn btn-dark p-2 rounded-circle border-slate-700 hover:text-red-400" onClick={(e) => { e.stopPropagation(); window.confirm("Remove?") && api.deleteContent(item.contentID).then(fetchContent); }}><Trash2 size={14} /></button>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-10 rounded-[2rem] bg-slate-900/30 border border-dashed border-slate-800">
+                   <p className="text-slate-600 font-bold uppercase tracking-widest text-[10px]">No resources uploaded yet.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      <style>{`
+        .btn-teal { background-color: #2dd4bf; color: #020617; }
+        .btn-teal:hover { background-color: #14b8a6; color: #020617; transform: scale(1.05); }
+        .animate-slide-down { animation: slideDown 0.4s ease-out; }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
 }

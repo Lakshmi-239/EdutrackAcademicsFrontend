@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, BookOpen, Award, ChevronRight, Check } from 'lucide-react';
-
+import { Unauthorized } from '../components/Unauthorized';
 export const RoleSelection = () => {
   const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ export const RoleSelection = () => {
       title: 'Instructor',
       description: 'Create content, manage students, and build your brand.',
       icon: BookOpen,
-      path: '/register/instructor',
+      path: '/unauthorized',
       features: ['Course Builder', 'Analytics', 'Student Management']
     },
     {
@@ -27,7 +27,7 @@ export const RoleSelection = () => {
       title: 'Coordinator',
       description: 'Oversee programs and manage academic excellence.',
       icon: Award,
-      path: '/login',
+      path: '/unauthorized',
       features: ['Program Management', 'Reports', 'Performance']
     },
   ];
