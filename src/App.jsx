@@ -120,6 +120,7 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
             <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
             <Route path="/Iattendances" element={<InstructorAttendancePage />} />
             <Route path="/Inotifications" element={<InstructorNotificationPage />} />
+            <Route path="/instructor-performance" element={<InstructorReportPage />} /> 
             <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionsPage />} />
             <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />
