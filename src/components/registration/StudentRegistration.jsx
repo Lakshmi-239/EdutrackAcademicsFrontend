@@ -76,8 +76,14 @@ export const StudentRegistration = () => {
     try {
       const { confirmPassword, ...submitData } = formData;
       await api.registerStudent(submitData);
-      toast.success('Registration successful!');
-      navigate('/login');
+      
+      await api.generateOtp({ email: formData.StudentEmail });
+
+      toast.success('Registration successful! Please verify your email.');
+      
+      navigate('/verify-email', { 
+        state: { email: formData.StudentEmail } 
+      });
     } catch (err) {
       const msg = err.response?.data?.errors 
         ? Object.values(err.response.data.errors).flat()[0] 

@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { toast } from "react-hot-toast";
+import Swal from 'sweetalert2';
 
 export const RoleGuard = ({ children, allowedRoles }) => {
   const { hasRole, isAuthenticated, loading } = useAuth();
 
-  // Wait for the AuthContext to finish loading the token from localStorage
+  // 1. Calculate access early to use in logic
+  const hasAccess = allowedRoles.some((role) => hasRole(role));
+
+  // 2. Use useEffect for side effects (Alerts) 
+  // This prevents the alert from firing multiple times during re-renders
+  useEffect(() => {
+    if (!loading && isAuthenticated && !hasAccess) {
+      Swal.fire({
+        title: 'Access Denied',
+        text: 'You do not have permission to view this page.',
+        icon: 'error',
+        confirmButtonColor: '#8aefbdff', // Matches your violet-600
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
+  }, [loading, isAuthenticated, hasAccess]);
+
+  // Handle Loading State
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -15,21 +33,14 @@ export const RoleGuard = ({ children, allowedRoles }) => {
     );
   }
 
-  if (!hasAccess) {
-  toast.error("You are not allowed to view this page");
-  return <Navigate to="/unauthorized" replace />;
-  }
   // If not logged in, send to login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if the user has at least one of the required roles
-  const hasAccess = allowedRoles.some((role) => hasRole(role));
-
-  // If logged in but doesn't have the right role, send to home (or an unauthorized page)
+  // If logged in but doesn't have the right role, redirect
   if (!hasAccess) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/Unauthorized" replace />;
   }
 
   return <>{children}</>;
