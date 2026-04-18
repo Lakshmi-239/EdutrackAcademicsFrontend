@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaBell, FaSignOutAlt } from "react-icons/fa";
 import { GraduationCap } from 'lucide-react';
@@ -6,6 +6,22 @@ import { GraduationCap } from 'lucide-react';
 function Top_Bar() {
   const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
+  const [Initial, setInitial] = useState("?");
+
+   const updateInitial = () => {
+    const name = localStorage.getItem("instructorName");
+    if (name && name.length > 0) {
+      setInitial(name.charAt(0).toUpperCase());
+    }
+  };
+ 
+  useEffect(() => {
+    updateInitial();
+    window.addEventListener("instructorNameUpdated", updateInitial);
+    return () => {
+      window.removeEventListener("instructorNameUpdated", updateInitial);
+    };
+  }, []);
 
   return (
     <div className="flex justify-between items-center w-full h-full px-6 bg-transparent">
@@ -35,7 +51,7 @@ function Top_Bar() {
             className="rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] w-9 h-9 cursor-pointer text-xs hover:scale-105 transition-transform"
             onClick={() => setShowProfile(!showProfile)}
           >
-            JS
+            {Initial}
           </div>
 
           {showProfile && (

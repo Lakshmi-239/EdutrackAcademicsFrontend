@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../../services/Api';
 import { Save, Edit3, X, Layers, Hash, Book, Target, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast'; // <--- ADD THIS IMPORT
+import { toast } from 'react-hot-toast'; 
 
 export default function EditModuleModal({ module, onClose, onRefresh }) {
   const [formData, setFormData] = useState({

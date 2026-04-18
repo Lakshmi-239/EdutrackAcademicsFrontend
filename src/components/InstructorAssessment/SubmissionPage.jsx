@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // useCallback added for optimization
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, User, Search, Clock, 
-  CheckCircle, Filter, Fingerprint, Award 
+  CheckCircle, Filter, Fingerprint, Award, Loader2
 } from 'lucide-react';
 import { api } from '../../services/Api';
 
@@ -13,22 +13,27 @@ const SubmissionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const response = await api.getSubmissionsByAssessment(assessmentId);
-        if (response && response.data) {
-          setSubmissions(response.data);
-        }
-      } catch (err) {
-        console.error("Load error:", err);
-      } finally {
-        setLoading(false);
+  // 1. Function ni extract chesi ikkada define cheyali
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await api.getSubmissionsByAssessment(assessmentId);
+      if (response && response.data) {
+        setSubmissions(response.data);
       }
-    };
-    if (assessmentId) loadData();
+    } catch (err) {
+      console.error("Load error:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [assessmentId]);
+
+  // 2. Initial load ki loadData function ni vaadali
+  useEffect(() => {
+    if (assessmentId) {
+      loadData();
+    }
+  }, [assessmentId, loadData]);
 
   const filtered = submissions.filter(s => {
     const term = searchTerm.toLowerCase();
@@ -46,167 +51,138 @@ const SubmissionsPage = () => {
   });
 
   return (
-    <div className="container-fluid py-4 px-4 bg-light/30 min-vh-100">
+    <div className="min-h-screen bg-[#060b13] text-white pt-24 pb-12 px-6 lg:px-10 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-500/20 blur-[120px] rounded-full"></div>
+      </div>
+
       {/* --- HEADER SECTION --- */}
-      <div className="d-flex align-items-center justify-content-between mb-4 bg-white p-3 rounded-4 shadow-sm border border-slate-200">
-        <div className="d-flex align-items-center gap-3">
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div className="flex items-center gap-5">
           <button 
             onClick={() => navigate(-1)} 
-            className="btn btn-white rounded-circle p-2 border shadow-sm hover-scale"
-            style={{ transition: 'all 0.2s' }}
+            className="p-3 bg-slate-800/50 border border-slate-700 rounded-2xl hover:bg-slate-700 transition-all duration-300 group"
           >
-            <ArrowLeft size={20} className="text-slate-600" />
+            <ArrowLeft size={20} className="text-teal-400 group-hover:-translate-x-1 transition-transform" />
           </button>
           <div>
-            <h4 className="fw-black mb-0 text-slate-900 tracking-tight">Assessment Results</h4>
-            <div className="mt-1 d-flex align-items-center gap-2">
-               <span className="badge bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded-2 fw-bold" style={{ fontSize: '0.7rem' }}>
-                 REFERENCE: {assessmentId}
-               </span>
-               <span className="text-slate-400 small fw-medium">| &nbsp; Management Portal</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white mb-1 italic text-nowrap">
+              Assessment <span className="text-teal-400 not-italic">Results</span>
+            </h2>
+            <div className="px-3 py-1 w-fit bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-lg text-[10px] font-black tracking-widest uppercase">
+              Assessment ID: {assessmentId}
             </div>
           </div>
         </div>
 
-        {/* --- SEARCH BOX --- */}
-        <div className="d-flex align-items-center gap-3 w-50">
-          <div className="input-group shadow-sm rounded-pill overflow-hidden border-slate-200 border bg-white transition-all focus-within-ring">
-            <span className="input-group-text bg-white border-0 ps-3">
-              <Search size={18} className="text-slate-400"/>
-            </span>
+        {/* --- BIG SEARCH BAR --- */}
+        <div className="flex items-center gap-3 w-full md:max-w-[700px]"> 
+          <div className="relative flex-grow group">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search size={18} className="text-slate-500 group-focus-within:text-teal-400 transition-colors" />
+            </div>
             <input 
               type="text" 
-              className="form-control border-0 ps-2 shadow-none text-slate-700" 
-              style={{ fontSize: '0.9rem' }}
-              placeholder="Search by student, ID, or date..." 
+              className="w-full bg-slate-900/50 border border-slate-800 focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 rounded-2xl py-3.5 pl-12 pr-32 text-sm text-slate-200 placeholder:text-slate-600 transition-all outline-none backdrop-blur-md" 
+              placeholder="Search student, ID, or date..." 
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <div className="d-flex align-items-center pe-2">
-              <span className="badge rounded-pill bg-slate-900 text-white fw-bold px-3 py-2" style={{ fontSize: '0.7rem' }}>
-                {filtered.length} RECORDS
-              </span>
+            
+            <div className="absolute inset-y-1.5 right-1.5 flex items-center gap-2">
+              <div className="h-full flex items-center px-3 border-l border-slate-800 text-slate-500">
+                <span className="text-[10px] font-black uppercase tracking-tighter">
+                  <span className="text-teal-400 mr-1">{filtered.length}</span> Found
+                </span>
+              </div>
+              <button 
+                onClick={loadData} 
+                disabled={loading}
+                className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-teal-400 rounded-xl transition-all active:scale-90 disabled:opacity-50"
+              >
+                <Loader2 size={16} className={loading ? "animate-spin text-teal-400" : "hidden"} />
+                {!loading && (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
-          <button className="btn btn-light rounded-circle border p-2 text-slate-600">
-            <Filter size={18} />
-          </button>
         </div>
       </div>
 
-      {/* --- TABLE CARD --- */}
-      <div className="card border-0 shadow-sm rounded-4 overflow-hidden border border-slate-200">
-        <div className="table-responsive">
-          <table className="table table-hover align-middle mb-0">
-            <thead className="bg-slate-50 border-bottom">
-              <tr>
-                <th className="ps-4 py-3 text-slate-500 small fw-black uppercase tracking-wider" style={{ width: '25%' }}>STUDENT DETAILS</th>
-                <th className="py-3 text-slate-500 small fw-black uppercase tracking-wider text-center" style={{ width: '15%' }}>SUBMISSION ID</th>
-                <th className="py-3 text-slate-500 small fw-black uppercase tracking-wider text-center" style={{ width: '15%' }}>PERFORMANCE</th>
-                <th className="py-3 text-slate-500 small fw-black uppercase tracking-wider" style={{ width: '30%' }}>FEEDBACK & REMARKS</th>
-                <th className="pe-4 py-3 text-slate-500 small fw-black uppercase tracking-wider text-center" style={{ width: '50%' }}>TIMESTAMP</th>
+      {/* --- TABLE CONTAINER --- */}
+      <div className="relative z-10 bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-[2rem] overflow-hidden shadow-2xl">
+        <div className="overflow-x-auto">
+          <table className="w-full border-separate border-spacing-0">
+            <thead>
+              <tr className="bg-slate-800/30">
+                <th className="px-8 py-5 text-left text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Student Details</th>
+                <th className="px-6 py-5 text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Fingerprint</th>
+                <th className="px-6 py-5 text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Performance</th>
+                <th className="px-6 py-5 text-left text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Feedback</th>
+                <th className="px-8 py-5 text-right text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Timestamp</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
-              {loading ? (
+            <tbody className="divide-y divide-slate-800/50">
+              {loading && submissions.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-5">
-                    <div className="spinner-border spinner-border-sm text-indigo-600 me-3"></div>
-                    <span className="text-slate-500 fw-medium">Accessing Database...</span>
+                  <td colSpan="5" className="py-24 text-center">
+                    <Loader2 className="w-10 h-10 text-teal-400 animate-spin mx-auto mb-4" />
+                    <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Syncing Database...</span>
                   </td>
                 </tr>
-              ) : filtered.length > 0 ? (
-                filtered.map((sub) => (
-                  <tr key={sub.submissionId} className="transition-all hover-bg-indigo-50">
-                    <td className="ps-4 py-3">
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="bg-gradient-indigo text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: '42px', height: '42px', flexShrink: 0, background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}>
-                          <User size={20} />
-                        </div>
-                        <div>
-                          <div className="fw-black text-slate-900 mb-0" style={{ fontSize: '0.95rem' }}>{sub.studentName}</div>
-                          <div className="text-slate-500 small fw-bold uppercase tracking-tighter" style={{ fontSize: '0.75rem' }}>ID: {sub.studentId}</div>
-                        </div>
+              ) : filtered.map((sub) => (
+                <tr key={sub.submissionId} className="group hover:bg-slate-800/30 transition-all duration-300">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center">
+                        <User size={20} className="text-teal-400" />
                       </div>
-                    </td>
-                    <td className="text-center">
-                      <div className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-3 bg-slate-100 text-slate-700 border border-slate-200 fw-bold" style={{ fontSize: '0.8rem' }}>
-                        <Fingerprint size={14} className="text-slate-400" />
-                        {sub.submissionId}
+                      <div>
+                        <div className="text-sm font-bold text-slate-100">{sub.studentName}</div>
+                        <div className="text-[10px] font-black text-slate-500 uppercase">ID: {sub.studentId}</div>
                       </div>
-                    </td>
-                    <td className="text-center">
-                      <div className="d-inline-block">
-                        <div className="fw-black text-indigo-600 mb-0 fs-5 d-flex align-items-center justify-content-center gap-1">
-                          <Award size={18} />
-                          {sub.score}
-                        </div>
-                        <div className="text-slate-400 small fw-bold tracking-widest uppercase" style={{ fontSize: '0.6rem' }}>Grade: {sub.percentage}%</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-center">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-950/50 border border-slate-800 rounded-xl text-[11px] font-mono text-slate-400">
+                      <Fingerprint size={12} className="text-teal-500/50" />
+                      {sub.submissionId}
+                    </div>
+                  </td>
+                  <td className="px-6 py-5 text-center">
+                    <div className="text-teal-400 font-black text-lg flex items-center justify-center gap-1">
+                      <Award size={18} /> {sub.score}
+                    </div>
+                    <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.1em]">{sub.percentage}%</div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span className="text-xs text-slate-400 font-medium italic">"{sub.feedback || 'Evaluation Complete'}"</span>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2 text-slate-200 font-black text-sm">
+                        <Clock size={14} className="text-teal-500" />
+                        {new Date(sub.submissionDateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                       </div>
-                    </td>
-                    <td>
-                      <div className="d-flex align-items-center gap-2">
-                        <div className="p-1.5 rounded-circle bg-emerald-50 border border-emerald-100">
-                          <CheckCircle size={14} className="text-emerald-500" />
-                        </div>
-                        <span className="text-slate-600 fw-medium italic" style={{ fontSize: '0.85rem' }}>
-                          "{sub.feedback || 'Final evaluation complete'}"
-                        </span>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase">
+                        {new Date(sub.submissionDateTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                       </div>
-                    </td>
-                    <td className="pe-4 text-end">
-                      <div className="d-flex flex-column align-items-end gap-1">
-                        <div className="d-flex align-items-center gap-2 text-slate-900 fw-black" style={{ fontSize: '0.85rem' }}>
-                          <Clock size={14} className="text-indigo-500" />
-                          <span>
-                            {new Date(sub.submissionDateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                          </span>
-                        </div>
-                        <div className="text-slate-400 fw-bold uppercase" style={{ fontSize: '0.65rem' }}>
-                          {new Date(sub.submissionDateTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center py-5">
-                    <div className="text-slate-300 mb-2"><Search size={40} /></div>
-                    <div className="text-slate-500 fw-bold">No results matching your query</div>
-                    <div className="text-slate-400 small">Try searching by student name or exact ID</div>
+                    </div>
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        
-        .container-fluid { font-family: 'Inter', sans-serif; }
-        .fw-black { font-weight: 900; }
-        
-        .hover-scale:hover { transform: scale(1.1); }
-        
-        .hover-bg-indigo-50:hover {
-          background-color: #f5f7ff !important;
-          transition: background-color 0.2s ease;
-        }
-
-        .focus-within-ring:focus-within {
-          border-color: #6366f1 !important;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
-        }
-
-        .bg-indigo-50 { background-color: #eef2ff; }
-        .text-indigo-600 { color: #4f46e5; }
-        .text-indigo-500 { color: #6366f1; }
-        .bg-slate-50 { background-color: #f8fafc; }
-        .text-slate-500 { color: #64748b; }
-        .text-slate-400 { color: #94a3b8; }
-        .border-slate-200 { border-color: #e2e8f0 !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        .min-h-screen { font-family: 'Inter', sans-serif; }
       `}</style>
     </div>
   );

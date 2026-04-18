@@ -47,8 +47,17 @@ getInstructorBatches: (instructorId) =>
 
 getStudentsByBatchId : (batchId) =>    // **
     axios.get(`${BASE_URL}/coordinator/batch/${batchId}/students`),
-getStudentPersonalInfo: (id) => axios.get(`${BASE_URL}/profile/personal-info/${id}`),   // **
-getStudentProgramDetails: (id) => axios.get(`${BASE_URL}/profile/program-details/${id}`),  // **
+getStudentPersonalInfo: (id) => axios.get(`${BASE_URL}/profile/Personal-Information/${id}`),   // **
+getStudentProgramDetails: async (studentId) => {
+    try {
+      const id = studentId || localStorage.getItem("studentId");
+      const response = await axios.get(`${BASE_URL}/profile/Program-Details/${id}`);
+      return response.data?.details || response.data;
+    } catch (error) {
+      console.error("Error in getProgramDetails:", error);
+      throw error;
+    }
+  },
 
 
 //
@@ -72,7 +81,6 @@ getStudentProgramDetails: (id) => axios.get(`${BASE_URL}/profile/program-details
         const response = await axios.post(`${BASE_URL}/instructorModuleContent/module`, dto);
         return response.data;
     } catch (error) {
-        // Log the exact error from the server to the console
         console.error("Module Creation Error:", error.response?.data);
         throw error;
     }
@@ -106,8 +114,8 @@ getInstructorBatches: (instructorId) =>
 updateStudentStatus: (attendanceId, enrollmentId, newStatus) => 
   axios.patch(`${BASE_URL}/instructorAttendance/status/${attendanceId}`, 
     { 
-      EnrollmentID: enrollmentId, // Required by your C# DTO
-      Status: newStatus           // Required by your C# DTO
+      EnrollmentID: enrollmentId, 
+      Status: newStatus         
     }, 
     {
       headers: { 'Content-Type': 'application/json' }
@@ -132,7 +140,6 @@ getCoursesByInstructor: async (instructorId) => {
     return await response.json();
 },
 createAssessment: async (assessmentData) => {
-    // FIX: Changed single quotes to backticks below
     const response = await fetch(`${BASE_URL}/instructorAssessmentQuestion/assessment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -166,7 +173,6 @@ getInstructorCurriculumData: async (instructorId) => {
 },
 getAssessmentsByDate: (date) => axios.get(`${BASE_URL}/instructorAssessmentQuestion/assessments/date/${date}`),
 getAllModules: async () => {
-    // This matches the URL in your Swagger screenshot
     return await axios.get(`${BASE_URL}/instructorModuleContent/modules`);
   },
   updateContent: (id, data) => axios.put(`${BASE_URL}/instructorModuleContent/content/${id}`, data),  //** 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/Api';
+import { toast } from 'react-hot-toast';
 import ModuleCard from '../components/InstructorModule/ModuleCard';
 import CreateModuleModal from '../components/InstructorModule/CreateModuleModal';
 import { Search, Plus, RefreshCcw, Layers, Loader2, SearchX, BookOpen } from 'lucide-react';
@@ -24,7 +25,7 @@ export default function InstructorModulePage() {
       
       const enhancedData = rawData.map(item => ({
         ...item,
-        moduleID: String(item.moduleID || 'N/A'),
+        moduleID: String(item.moduleID ||item.moduleId || 'N/A'),
         courseId: String(item.courseId || 'N/A')
       }));
 
@@ -36,6 +37,7 @@ export default function InstructorModulePage() {
       setFilteredData(sortedData);
     } catch (error) {
       console.error("Fetch error:", error);
+      toast.error("Failed to load modules from server.");
     } finally {
       setLoading(false);
     }
@@ -49,6 +51,7 @@ export default function InstructorModulePage() {
       return (
         item.name.toLowerCase().includes(searchLower) ||
         item.courseId.toLowerCase().includes(searchLower) ||
+        item.moduleID.toLowerCase().includes(searchLower) ||
         (item.learningObjectives && item.learningObjectives.toLowerCase().includes(searchLower))
       );
     });
@@ -133,7 +136,7 @@ export default function InstructorModulePage() {
           {filteredData.length > 0 ? (
             filteredData.map((module, index) => (
               <div className="col-12" key={module.moduleID || index}>
-                <ModuleCard module={module} />
+                <ModuleCard module={module} onRefresh={fetchData}/>
               </div>
             ))
           ) : (
