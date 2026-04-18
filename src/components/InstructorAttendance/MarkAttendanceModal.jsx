@@ -14,12 +14,23 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
   const instructorId = localStorage.getItem("instructorId");
 
   useEffect(() => {
-    if (isOpen) {
-      api.getInstructorBatches(instructorId)
-        .then(res => setBatches(res.data || []))
-        .catch(err => console.error("Batch load error:", err));
-    }
-  }, [isOpen]);
+    if (!isOpen || !instructorId) return;
+
+    api.getInstructorBatches(instructorId)
+      .then(data => {
+        console.log("Instructor batches:", data);
+
+        if (Array.isArray(data)) {
+          setBatches(data);
+        } else {
+          setBatches([]);
+        }
+      })
+      .catch(err => {
+        console.error("Batch load error:", err);
+        setBatches([]);
+      });
+  }, [isOpen, instructorId]);
 
   useEffect(() => {
     if (!selectedBatch) {
@@ -46,7 +57,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
   }, [selectedBatch]);
 
   const toggleStatus = (id) => {
-    setStudents(prev => prev.map(s => 
+    setStudents(prev => prev.map(s =>
       s.enrollmentId === id ? { ...s, status: s.status === 'Present' ? 'Absent' : 'Present' } : s
     ));
   };
@@ -68,7 +79,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
     try {
       setSubmitting(true);
       const res = await api.markBatchAttendance(payload);
-      onRefresh(); 
+      onRefresh();
       onClose();
     } catch (err) {
       alert(err.response?.data || "Submission failed");
@@ -82,7 +93,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
   return (
     <div className="modal-overlay">
       <div className="modal-container animate-slide-up flex flex-column" style={{ maxHeight: '85vh', maxWidth: '750px' }}>
-        
+
         {/* Fixed Enterprise Header */}
         <div className="modal-header-enterprise shrink-0">
           <div className="d-flex align-items-center gap-3">
@@ -105,17 +116,28 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
               <label className="form-label-enterprise">Target Batch</label>
               <div className="input-group-enterprise">
                 <span className="input-icon"><Users size={18} /></span>
-                <select 
-                  className="form-control-enterprise" 
-                  value={selectedBatch} 
+                <select
+                  className="form-control-enterprise"
+                  value={selectedBatch}
                   onChange={(e) => setSelectedBatch(e.target.value)}
                 >
                   <option value="" className="bg-slate-800">Choose batch...</option>
-                  {batches.map(b => (
-                    <option key={b.batchId} value={b.batchId} disabled={!b.isActive} className="bg-slate-800">
-                      {b.batchId} - {b.courseName}
+                  {Array.isArray(batches) && batches.length > 0 ? (
+                    batches.map(b => (
+                      <option
+                        key={b.batchId}
+                        value={b.batchId}
+                        disabled={b.isActive === false}
+                        className="bg-slate-800"
+                      >
+                        {b.batchId} – {b.courseName}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled className="bg-slate-800">
+                      No batches available
                     </option>
-                  ))}
+                  )}
                 </select>
               </div>
             </div>
@@ -125,11 +147,11 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
               <label className="form-label-enterprise">Session Date</label>
               <div className="input-group-enterprise">
                 <span className="input-icon"><Calendar size={18} /></span>
-                <input 
-                  type="date" 
-                  className="form-control-enterprise" 
-                  value={sessionDate} 
-                  onChange={(e) => setSessionDate(e.target.value)} 
+                <input
+                  type="date"
+                  className="form-control-enterprise"
+                  value={sessionDate}
+                  onChange={(e) => setSessionDate(e.target.value)}
                 />
               </div>
             </div>
@@ -139,9 +161,9 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
               <label className="form-label-enterprise">Mode</label>
               <div className="input-group-enterprise">
                 <span className="input-icon"><Globe size={18} /></span>
-                <select 
-                  className="form-control-enterprise" 
-                  value={mode} 
+                <select
+                  className="form-control-enterprise"
+                  value={mode}
                   onChange={(e) => setMode(e.target.value)}
                 >
                   <option value="Online" className="bg-slate-800">Online</option>
@@ -187,7 +209,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
                     </td>
                     <td className="px-4 py-3 text-center text-slate-500 font-mono small">{s.enrollmentId}</td>
                     <td className="px-4 py-3 text-end">
-                      <button 
+                      <button
                         disabled={mode === 'Offline'}
                         onClick={() => toggleStatus(s.enrollmentId)}
                         className={`btn-attendance-toggle ${s.status === 'Present' ? 'present' : 'absent'}`}
@@ -209,7 +231,7 @@ export default function MarkAttendanceModal({ isOpen, onClose, onRefresh }) {
             <button type="button" onClick={onClose} className="btn-enterprise-secondary">
               Discard
             </button>
-            <button 
+            <button
               onClick={handleSubmit}
               disabled={submitting || students.length === 0 || mode === 'Offline'}
               className="btn-enterprise-primary"

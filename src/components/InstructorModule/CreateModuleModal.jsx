@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { api } from '../../services/Api';
 import { X, Save, BookOpen, Layers, Target, PlusCircle, CheckCircle, Loader2 } from 'lucide-react';
 
@@ -26,13 +27,14 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
           setFormData(prev => ({ ...prev, courseId: activeCourses[0].courseId }));
         }
       } catch (err) {
+        toast.error("Could not load courses. Please try again.");
         console.error("Failed to load courses", err);
       } finally {
         setFetchingCourses(false);
       }
     };
     loadCourses();
-  }, []);
+  }, [instructorId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,10 +48,14 @@ export default function CreateModuleModal({ onClose, onRefresh, existingModules 
     setLoading(true);
     try {
       await api.createModule(formData);
+      toast.success("Module created successfully!");
       onRefresh(); 
       onClose();   
     } catch (error) {
-      alert("Error: " + (error.response?.data || error.message));
+      const errorMessage = error.response?.data || error.message || "Failed to create module";
+      toast.error("Error: " + errorMessage);
+      console.error("Create module error:", error);
+      // alert("Error: " + (error.response?.data || error.message));
     } finally {
       setLoading(false);
     }

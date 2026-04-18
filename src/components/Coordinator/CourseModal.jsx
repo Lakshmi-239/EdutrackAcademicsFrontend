@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { FiSave, FiX, FiInfo, FiHash, FiClock, FiFileText } from "react-icons/fi";
+import { FiSave, FiX, FiInfo, FiHash, FiClock, FiFileText, FiUsers } from "react-icons/fi";
 
 const CourseModal = ({ onSave, editingCourse }) => {
   const [course, setCourse] = useState({
     courseName: "",
     credits: "",
     durationInWeeks: "",
+    batchSize: "" // ✅ Added batchSize state
   });
 
   useEffect(() => {
     if (editingCourse) {
       setCourse(editingCourse);
     } else {
-      setCourse({ courseName: "", credits: "", durationInWeeks: "" });
+      setCourse({ courseName: "", credits: "", durationInWeeks: "", batchSize: "" });
     }
   }, [editingCourse]);
 
@@ -21,7 +22,8 @@ const CourseModal = ({ onSave, editingCourse }) => {
   };
 
   const handleSave = () => {
-    if (!course.courseName || !course.credits || !course.durationInWeeks) return;
+    // ✅ Added batchSize to validation check
+    if (!course.courseName || !course.credits || !course.durationInWeeks || !course.batchSize) return;
     onSave(course);
   };
 
@@ -56,7 +58,7 @@ const CourseModal = ({ onSave, editingCourse }) => {
                 <input
                   type="text"
                   name="courseName"
-                  placeholder="e.g. Advanced Neural Networks"
+                  placeholder="e.g. Advanced Java"
                   className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
                   value={course.courseName}
                   onChange={handleChange}
@@ -65,7 +67,7 @@ const CourseModal = ({ onSave, editingCourse }) => {
 
               <div className="row">
                 {/* CREDITS */}
-                <div className="col-md-6 mb-4 mb-md-0">
+                <div className="col-md-6 mb-4">
                   <label className="small fw-bold text-muted mb-2 d-flex align-items-center gap-2">
                     <FiHash /> CREDIT WEIGHT
                   </label>
@@ -80,28 +82,41 @@ const CourseModal = ({ onSave, editingCourse }) => {
                 </div>
 
                 {/* DURATION */}
-                <div className="col-md-6">
+                <div className="col-md-6 mb-4">
                   <label className="small fw-bold text-muted mb-2 d-flex align-items-center gap-2">
                     <FiClock /> DURATION
                   </label>
-                  <div className="input-group">
-                    <input
-                      type="number"
-                      name="durationInWeeks"
-                      placeholder="Weeks"
-                      className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
-                      value={course.durationInWeeks}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    name="durationInWeeks"
+                    placeholder="Weeks"
+                    className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
+                    value={course.durationInWeeks}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* ✅ BATCH SIZE */}
+                <div className="col-md-12 mb-4">
+                  <label className="small fw-bold text-muted mb-2 d-flex align-items-center gap-2">
+                    <FiUsers /> BATCH SIZE
+                  </label>
+                  <input
+                    type="number"
+                    name="batchSize"
+                    placeholder="Maximum students per batch"
+                    className="form-control form-control-lg rounded-3 border-light-subtle shadow-none"
+                    value={course.batchSize}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               {/* INFO BOX */}
-              <div className="mt-4 p-3 bg-light rounded-3 d-flex gap-2">
+              <div className="mt-2 p-3 bg-light rounded-3 d-flex gap-2">
                 <FiInfo className="text-primary mt-1 flex-shrink-0" />
                 <p className="small text-muted mb-0">
-                  Ensure the module name and credits match the standard university guidelines before saving.
+                  Ensure the module name, credits, and batch size match the university guidelines.
                 </p>
               </div>
             </form>
@@ -126,7 +141,6 @@ const CourseModal = ({ onSave, editingCourse }) => {
       <style>{`
         .input-group-custom input:focus { border-color: #4361ee; background-color: #f8faff; }
         .form-control-lg { font-size: 1rem; padding: 0.75rem 1rem; }
-        .modal-content { transition: transform 0.3s ease; }
       `}</style>
     </div>
   );

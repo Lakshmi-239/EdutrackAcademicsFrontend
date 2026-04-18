@@ -3,12 +3,29 @@ import { useNavigate, Link } from "react-router-dom";
 import { FaBell, FaMoon, FaSun, FaUser, FaSignOutAlt, FaCog } from "react-icons/fa";
 import { GraduationCap } from 'lucide-react';
 import {StudentProfile} from '../../pages/StudentProfile';
+import { useEffect } from "react";
 
 function Topbar() {
   const navigate = useNavigate();
   const [dark, setDark] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
+  const [initial, setInitial] = useState("?");
 
+  const updateInitial = () => {
+    const name = localStorage.getItem("studentName");
+    if (name && name.length > 0) {
+      setInitial(name.charAt(0).toUpperCase());
+    }
+  };
+
+  useEffect(() => {
+    updateInitial();
+    window.addEventListener("studentNameUpdated", updateInitial);
+    return () => {
+      window.removeEventListener("studentNameUpdated", updateInitial);
+    };
+  }, []);
+ 
   const toggleDark = () => {
     const newDark = !dark;
     setDark(newDark);
@@ -28,18 +45,7 @@ function Topbar() {
       </Link>
 
       <div className="flex items-center gap-6">
-        {/* Settings Icon - Updated to Theme Color on Hover */}
-        <button className="text-slate-400 hover:text-teal-400 transition-all bg-transparent border-0 p-0 shadow-none outline-none">
-          <FaCog size={18} />
-        </button>
 
-        {/* Theme Toggle - Updated to Theme Color on Hover */}
-        <button 
-          className="text-slate-400 hover:text-teal-400 transition-all bg-transparent border-0 p-0 shadow-none outline-none" 
-          onClick={toggleDark}
-        >
-          {dark ? <FaSun size={18} /> : <FaMoon size={18} />}
-        </button>
 
         {/* Notifications Icon - Updated with Emerald Glow */}
         <button 
@@ -57,7 +63,7 @@ function Topbar() {
             className="rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] w-9 h-9 cursor-pointer text-xs hover:scale-105 transition-transform"
             onClick={() => setShowProfile(!showProfile)}
           >
-            JS
+            {initial}
           </div>
 
           {showProfile && (

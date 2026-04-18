@@ -46,8 +46,6 @@ const InstructorDashboard = () => {
       try {
         const instRes = await axios.get('https://localhost:7157/api/coordinator/instructors/all');
         const allInstructors = instRes.data || [];
-        
-        // LocalStorage lo unna ID tho match ayye instructor ni vethukutunnam
         const currentInstructor = allInstructors.find(i => i.instructorId === instructorId);
         
         if (currentInstructor) {
@@ -55,6 +53,10 @@ const InstructorDashboard = () => {
         } else {
           setinstructorName("Instructor"); // Fallback
         }
+        localStorage.setItem(
+          "instructorName", currentInstructor.instructorName || currentInstructor.name
+        );
+        window.dispatchEvent(new Event("instructorNameUpdated"));
         const data = await api.getInstructorCurriculumData(instructorId);
         const safeData = Array.isArray(data) ? data : [];
         setCurriculumData(safeData);

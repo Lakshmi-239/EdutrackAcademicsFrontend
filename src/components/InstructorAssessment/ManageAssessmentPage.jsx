@@ -8,6 +8,7 @@ import {
   CheckCircle2, Loader2, X, HelpCircle, 
   Target, Layers, AlertCircle, Info
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ManageAssessmentPage = () => {
   const { id: assessmentId } = useParams();
@@ -29,6 +30,7 @@ const ManageAssessmentPage = () => {
       setQuestions(data || []);
     } catch (err) {
       setError("Synchronisation with the EduTrack database failed.");
+      toast.error("Database sync failed. Please check your connection.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -45,15 +47,24 @@ const ManageAssessmentPage = () => {
   };
 
   const confirmAndExecuteDelete = async (questionId) => {
+    // 1. Initialize the loading toast
+    const t = toast.loading("Purging question record...");
+    
     try {
       await api.deleteQuestion(questionId);
+      
+      // 2. Success toast
+      toast.success("Question deleted successfully.", { id: t });
+      
       setDeleteConfirm(null);
       setQuestions(prev => prev.filter(q => q.questionId !== questionId));
-      setDeleteSuccess(questionId);
+      
+      // Optional: No longer need setDeleteSuccess(questionId) as toast replaces that UI
     } catch (err) {
+      // 3. Error toast with specific detail
+      toast.error("Removal failed. Question may be referenced in student logs.", { id: t });
       console.error("Delete failed:", err);
       setDeleteConfirm(null);
-      alert("Removal failed. Question may be referenced in student logs.");
     }
   };
 
@@ -229,26 +240,13 @@ const ManageAssessmentPage = () => {
               </div>
               <h4 className="text-white fw-black mb-2">Confirm Removal</h4>
               <p className="text-slate-400 small mb-4 px-3">
-                Deleted data cannot be recovered. Ensure this question isn't active in a live batch.
+                You are about to delete <strong>Question #{deleteConfirm}</strong>. 
+                This action is irreversible and may affect existing assessment data.
               </p>
               <div className="d-flex gap-3 px-2">
                 <button className="btn-slate-outline w-100 border-slate" onClick={() => setDeleteConfirm(null)}>Keep</button>
                 <button className="btn-danger-solid w-100 shadow-danger" onClick={() => confirmAndExecuteDelete(deleteConfirm)}>Delete</button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Success Modal */}
-        {deleteSuccess && (
-          <div className="premium-overlay-dark">
-            <div className="confirm-modal border-teal animate-zoom">
-              <div className="success-icon-ring border-teal mb-3">
-                <CheckCircle2 size={32} />
-              </div>
-              <h4 className="text-white fw-black mb-2">Success</h4>
-              <p className="text-slate-400 small mb-4">Record #{deleteSuccess} has been purged.</p>
-              <button className="btn-teal-solid w-75 mx-auto mb-2 shadow-teal" onClick={() => setDeleteSuccess(null)}>Continue</button>
             </div>
           </div>
         )}
