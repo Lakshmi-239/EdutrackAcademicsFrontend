@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { api } from '../services/Api'; 
+import { GraduationCap, Video, Calendar as CalendarIcon, FileText, CheckCircle, Users, Layout } from 'lucide-react';
+import axios from 'axios';
 
 const InstructorDashboard = () => {
   const navigate = useNavigate(); 
@@ -8,6 +10,7 @@ const InstructorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [todaysDeadlines, setTodaysDeadlines] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date()); 
+  const [instructorName, setinstructorName] = useState('');
   
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -16,13 +19,12 @@ const InstructorDashboard = () => {
     totalModules: 0
   });
 
-  const instructorId = "I003";
+  const instructorId = localStorage.getItem("instructorId");
   const today = new Date();
   const currentMonth = today.toLocaleString('default', { month: 'long' });
   const currentYear = today.getFullYear();
   const daysInMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
   const fetchDeadlinesByDate = async (date) => {
     try {
       const yyyy = date.getFullYear();
@@ -42,6 +44,17 @@ const InstructorDashboard = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        const instRes = await axios.get('https://localhost:7157/api/coordinator/instructors/all');
+        const allInstructors = instRes.data || [];
+        
+        // LocalStorage lo unna ID tho match ayye instructor ni vethukutunnam
+        const currentInstructor = allInstructors.find(i => i.instructorId === instructorId);
+        
+        if (currentInstructor) {
+          setinstructorName(currentInstructor.instructorName || currentInstructor.name);
+        } else {
+          setinstructorName("Instructor"); // Fallback
+        }
         const data = await api.getInstructorCurriculumData(instructorId);
         const safeData = Array.isArray(data) ? data : [];
         setCurriculumData(safeData);
@@ -78,61 +91,79 @@ const InstructorDashboard = () => {
   };
 
   if (loading) return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="spinner-border text-primary"></div>
+    <div className="flex justify-center items-center h-screen bg-slate-950">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-400"></div>
     </div>
   );
 
   return (
-    <div className="container-fluid py-5 px-4" style={{ backgroundColor: '#F4F7FE', minHeight: '100vh' }}>
-      <h2 className="fw-bold mb-4" style={{ color: '#2B3674' }}>Hi Jyothirmyee,</h2>
+    <div className="min-h-screen bg-[#060b13] text-white pt-8 pb-12 px-6 lg:px-10">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h2 className="text-3xl font-extrabold tracking-tight">
+          Hi <span className="text-teal-400">{instructorName}</span>
+        </h2>
+      </div>
 
-      {/* CURRICULUM OVERVIEW */}
-      <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: '20px' }}>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h5 className="fw-bold m-0" style={{ color: '#2B3674' }}>Curriculum Overview</h5>
+      {/* CURRICULUM OVERVIEW CARD */}
+      <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-[1.5rem] p-6 mb-10 shadow-2xl">
+        <div className="flex justify-between items-center mb-10">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20">
+              <GraduationCap className="text-teal-400 w-6 h-6" />
+            </div>
+            <h5 className="text-xl font-bold tracking-tight text-slate-100">Curriculum Overview</h5>
+          </div>
           
-          {/* Live Session Button */}
           <button 
-  className="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm"
-  onClick={() => window.open('https://teams.microsoft.com/l/meetup-join/YOUR_TEAMS_LINK', '_blank')}
-  style={{ 
-    fontSize: '0.9rem', 
-    fontWeight: '600', 
-    backgroundColor: '#464EB8', // Official Teams Purple
-    border: 'none' 
-  }}
->
-  {/* Pulsing indicator to show it's "Live" */}
-  <span 
-    className="spinner-grow spinner-grow-sm" 
-    style={{ width: '10px', height: '10px' }} 
-    role="status" 
-    aria-hidden="true"
-  ></span>
-  Go Live Session
-</button>
+            className="group flex items-center round-pill gap-2.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-pill transition-all duration-300 shadow-lg shadow-indigo-600/20 active:scale-95"
+            onClick={() => window.open('https://teams.microsoft.com/l/meetup-join/YOUR_TEAMS_LINK', '_blank')}
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-300 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-400"></span>
+            </span>
+            Go Live Session
+            <Video className="w-4 h-4 ml-0.5" />
+          </button>
         </div>
 
-        <div className="table-responsive">
-          <table className="table table-hover align-middle">
-            <thead className="text-secondary small">
-              <tr>
-                <th className="border-0">COURSE NAME</th>
-                <th className="border-0">BATCH</th>
-                <th className="border-0">MODULES</th>
-                <th className="border-0">ASSESSMENTS</th>
-                <th className="border-0">STUDENTS</th>
+        <div className="overflow-x-auto">
+          <table className="w-full border-separate border-spacing-y-2 table-fixed">
+            <thead>
+              <tr className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black">
+                <th className="px-4 pb-2 text-left w-1/4">Course Name</th>
+                <th className="px-4 pb-2 text-center w-1/6">Batch</th>
+                <th className="px-4 pb-2 text-center w-1/6">Modules</th>
+                <th className="px-4 pb-2 text-center w-1/6">Assessments</th>
+                <th className="px-4 pb-2 text-center w-1/6">Students</th>
               </tr>
             </thead>
-            <tbody style={{ color: '#2B3674', fontWeight: '600' }}>
+            <tbody className="text-slate-200 font-semibold text-sm">
               {curriculumData.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.courseName}</td>
-                  <td><span className="badge rounded-pill bg-light text-dark px-3">{item.batchId}</span></td>
-                  <td>{item.totalModules} Units</td>
-                  <td><span className="text-primary">{item.totalAssessments} Active</span></td>
-                  <td>{item.currentStudents} / {item.batchSize}</td>
+                <tr key={index} className="group">
+                  <td className="bg-slate-800/40 border-y border-l border-slate-800/50 py-4 px-6 rounded-l-xl">
+                    {item.courseName}
+                  </td>
+                  <td className="bg-slate-800/40 border-y border-slate-800/50 py-4 px-4 text-center">
+                    <span className="px-3 py-1 bg-slate-900 border border-slate-700 text-slate-400 rounded-full text-[10px] font-bold">
+                      {item.batchId}
+                    </span>
+                  </td>
+                  <td className="bg-slate-800/40 border-y border-slate-800/50 py-4 px-4 text-center text-slate-300">
+                    {item.totalModules} Units
+                  </td>
+                  <td className="bg-slate-800/40 border-y border-slate-800/50 py-4 px-4 text-center">
+                    <span className="text-teal-400 inline-flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_8px_#2dd4bf]"></span>
+                      {item.totalAssessments} Active
+                    </span>
+                  </td>
+                  <td className="bg-slate-800/40 border-y border-r border-slate-800/50 py-4 px-6 rounded-r-xl text-center">
+                    <span className="text-slate-100">{item.currentStudents}</span>
+                    <span className="text-slate-500 mx-1">/</span>
+                    <span className="text-slate-500">{item.batchSize}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -140,44 +171,37 @@ const InstructorDashboard = () => {
         </div>
       </div>
 
-      <div className="row g-4 align-items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* CALENDAR SECTION */}
-        <div className="col-md-4">
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '20px' }}>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h6 className="fw-bold m-0" style={{ color: '#2B3674' }}>{currentMonth} {currentYear}</h6>
-              <i className="bi bi-calendar3 text-primary"></i>
+        <div className="lg:col-span-4">
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-[1.5rem] p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h6 className="text-lg font-bold text-slate-100 tracking-tight">{currentMonth} {currentYear}</h6>
+              <CalendarIcon className="w-5 h-5 text-teal-400" />
             </div>
             
-            <div className="row g-0 text-center mb-2">
-              {['S','M','T','W','T','F','S'].map(d => (
-                <div key={d} className="col fw-bold small text-secondary" style={{ fontSize: '0.7rem' }}>{d}</div>
-              ))}
+            <div className="grid grid-cols-7 text-center mb-4 text-slate-500 font-black text-[0.6rem] uppercase tracking-widest">
+              {['S','M','T','W','T','F','S'].map(d => <div key={d}>{d}</div>)}
             </div>
 
-            <div className="row g-0 text-center">
+            <div className="grid grid-cols-7 gap-1.5">
               {calendarDays.map(day => {
                 const isSelected = day === selectedDate.getDate();
                 const isToday = day === today.getDate() && selectedDate.getMonth() === today.getMonth();
                 
                 return (
-                  <div key={day} className="col-auto" style={{ width: '14.28%' }}>
-                    <div 
-                      className="p-1 small fw-bold" 
-                      onClick={() => handleDateClick(day)}
-                      style={{ 
-                        borderRadius: '8px',
-                        backgroundColor: isSelected ? '#4318FF' : 'transparent',
-                        color: isSelected ? '#FFF' : (isToday ? '#4318FF' : '#2B3674'),
-                        border: isToday && !isSelected ? '1px solid #4318FF' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      {day}
-                    </div>
-                  </div>
+                  <button 
+                    key={day}
+                    onClick={() => handleDateClick(day)}
+                    className={`aspect-square flex items-center justify-center rounded-pill text-xs font-bold transition-all duration-300
+                      ${isSelected 
+                        ? 'bg-teal-500 text-slate-950 shadow-md scale-105' 
+                        : isToday 
+                          ? 'border border-teal-500/50 text-teal-400 bg-teal-500/5' 
+                          : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                  >
+                    {day}
+                  </button>
                 );
               })}
             </div>
@@ -185,63 +209,61 @@ const InstructorDashboard = () => {
         </div>
         
         {/* DEADLINES LIST SECTION */}
-        <div className="col-md-8">
-          {/* Changed minHeight to height: 'fit-content' for automatic resizing */}
-          <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '20px', height: 'fit-content', minHeight: '300px' }}>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h5 className="fw-bold m-0" style={{ color: '#2B3674' }}>Assessments Ending</h5>
-              <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: '#eef0ff', color: '#4318FF' }}>
+        <div className="lg:col-span-8">
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-[1.5rem] p-6 min-h-[300px] shadow-xl">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <Layout className="w-5 h-5 text-indigo-400" />
+                <h5 className="text-lg font-bold text-slate-100 tracking-tight">Assessments Ending</h5>
+              </div>
+              <div className="px-3 py-1 bg-slate-800 border border-slate-700 text-teal-400 text-[9px] font-black uppercase tracking-widest rounded-full">
                 {selectedDate.getDate()} {currentMonth}
-              </span>
+              </div>
             </div>
 
             {todaysDeadlines.length > 0 ? (
-              <div className="list-group list-group-flush">
+              <div className="space-y-3">
                 {todaysDeadlines.map((item, idx) => (
-                  <div key={idx} className="list-group-item border-0 d-flex align-items-center p-3 mb-3 shadow-sm" 
-                       style={{ borderRadius: '16px', backgroundColor: '#fff', border: '1px solid #f0f2f8' }}>
-                    
-                    <div className="rounded-3 d-flex align-items-center justify-content-center me-3" 
-                         style={{ width: '45px', height: '45px', backgroundColor: '#F4F7FE', flexShrink: 0 }}>
-                      <i className="bi bi-file-text-fill text-primary" style={{ fontSize: '1.2rem' }}></i>
+                  <div key={idx} className="group flex flex-wrap items-center p-4 bg-slate-800/20 border border-slate-800/50 rounded-xl hover:border-teal-500/40 transition-all duration-300">
+                    <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center mr-4 group-hover:scale-105 transition-all">
+                      <FileText className="text-teal-400 w-5 h-5" />
                     </div>
                     
-                    <div className="flex-grow-1 text-start">
-                      <div className="d-flex align-items-center gap-2 mb-1">
-                        <span className="badge" style={{ backgroundColor: '#E9EDF7', color: '#4318FF', fontSize: '0.7rem' }}>
+                    <div className="flex-grow min-w-[150px]">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 rounded border border-indigo-500/20">
                           {item.assessmentID}
                         </span>
-                        <span className="text-secondary fw-bold" style={{ fontSize: '0.8rem' }}>
-                          CID: {item.courseId}
-                        </span>
+                        <span className="text-slate-500 text-[10px] font-bold">CID: {item.courseId}</span>
                       </div>
                       
-                      <h6 className="fw-bold mb-1" style={{ color: '#2B3674', margin: 0 }}>
-                        {item.courseName} <span className="text-muted fw-normal mx-1">|</span> {item.type}
+                      <h6 className="text-sm font-bold text-slate-100 mb-0.5">
+                        {item.courseName} <span className="text-slate-600 font-normal mx-1.5">|</span> <span className="text-slate-400 font-medium">{item.type}</span>
                       </h6>
                       
-                      <div className="d-flex align-items-center text-muted small">
-                         <i className="bi bi-bookmark-check me-1 text-success"></i>
-                         Max Marks: <strong className="ms-1 text-dark">{item.maxMarks}</strong>
+                      <div className="flex items-center text-slate-500 text-[10px] gap-3">
+                         <span className="flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3 text-emerald-500" />
+                            Score: <strong className="text-slate-300">{item.maxMarks}</strong>
+                         </span>
                       </div>
                     </div>
 
-                    <div className="ms-3">
+                    <div className="mt-3 sm:mt-0 w-full sm:w-auto">
                       <button 
-                        className="btn btn-primary rounded-pill btn-sm px-4"
                         onClick={() => navigate(`/submissions/${item.assessmentID}`)}
-                        style={{ backgroundColor: '#4318FF', border: 'none', fontWeight: '600' }}
+                        className="w-full sm:w-auto px-5 py-1.5 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-black rounded-pill transition-all active:scale-95"
                       >
-                        View Submissions
+                        Submissions
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-5">
-                <i className="bi bi-calendar-x text-secondary" style={{ fontSize: '3rem', opacity: 0.3 }}></i>
-                <p className="text-secondary mt-3 fw-medium">No deadlines for this date.</p>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-600">
+                <CalendarIcon className="w-8 h-8 opacity-20 mb-3" />
+                <p className="text-sm font-bold tracking-tight">No deadlines for this date.</p>
               </div>
             )}
           </div>

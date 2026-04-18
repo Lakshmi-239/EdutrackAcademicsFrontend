@@ -9,13 +9,14 @@ import {
   StudentsByProgramChart,
   GenderDistributionChart,
 } from "../components/Coordinator/Charts.jsx";
-import { FiHome, FiUser, FiLogOut, FiRefreshCw } from "react-icons/fi";
+import { FiHome, FiUser, FiLogOut, FiRefreshCw, FiAward } from "react-icons/fi";
 
 const Dashboard = () => {
   const { user, logout } = useAuth(); // Access user info and logout function
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   
   const [stats, setStats] = useState([]);
+  const [qualificationCount, setQualificationCount] = useState(0); // New State
   const [enrollmentData, setEnrollmentData] = useState([]);
   const [performanceData, setPerformanceData] = useState([]);
   const [studentsByProgramData, setStudentsByProgramData] = useState([]);
@@ -27,24 +28,39 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // API logic
+    // 1. Fetch Stats for Programs, Courses, Batches, Students
     axios.get("https://localhost:7157/api/coordinator/dashboard/stats").then(res => setStats(res.data));
+
+    // 2. Fetch Qualifications Count from AdminDash Controller
+    axios.get("https://localhost:7157/api/admindash/qualifications")
+      .then(res => {
+        // Assuming the backend returns an array of objects
+        setQualificationCount(res.data.length);
+      })
+      .catch(err => console.error("Error fetching qualifications:", err));
+
+    // 3. Fetch Chart Data
     axios.get("https://localhost:7157/api/coordinator/dashboard/enrollment-trends").then(res => {
       const formatted = res.data.map(item => ({ course: `Month ${item.month}`, students: item.count }));
       setEnrollmentData(formatted);
     });
+
     axios.get("https://localhost:7157/api/coordinator/dashboard/performance").then(res => {
       const formatted = res.data.map(item => ({ batch: item.batchId, performance: item.progress }));
       setPerformanceData(formatted);
     });
+
     axios.get("https://localhost:7157/api/coordinator/dashboard/students-by-program").then(res => {
       const formatted = res.data.map(item => ({ program: item.program, students: item.count }));
       setStudentsByProgramData(formatted);
     });
+
     axios.get("https://localhost:7157/api/coordinator/dashboard/gender-distribution").then(res => {
       const formatted = res.data.map(item => ({ gender: item.gender, value: item.count }));
       setGenderDistributionData(formatted);
     });
+
+    // 4. Fetch Lists
     axios.get("https://localhost:7157/api/coordinator/dashboard/notifications").then(res => setNotifications(res.data));
     axios.get("https://localhost:7157/api/coordinator/instructors/all").then(res => setInstructors(res.data));
     axios.get("https://localhost:7157/api/coordinator/details").then(res => setStudents(res.data));
@@ -59,35 +75,15 @@ const Dashboard = () => {
   return (
     <div className="dashboard-wrapper" style={{ backgroundColor: "#020617", minHeight: "100vh", color: "#f8fafc" }}>
       
-     {/* --- TOP NAVIGATION BAR --- A STICKY NAVIGATION BAR USED FOR STICK EVEN IF WE SCROLL */}
+      {/* --- TOP NAVIGATION BAR --- */}
       <nav className="navbar navbar-expand-lg border-bottom border-slate-800 sticky-top" style={{ backgroundColor: "rgba(15, 23, 42, 1)", padding: "0.75rem 2rem", zIndex: 1050 }}>
         <div className="container-fluid d-flex justify-content-between align-items-center">
           
           {/* Logo Section */}
-       <Link to="/" className="text-decoration-none d-flex align-items-center p-4 mb-2" style={{ cursor: 'pointer' }}>
-  {/* Icon Container with Gradient */}
-  <div className="p-2 rounded-3 me-3 d-flex align-items-center justify-content-center shadow-sm" 
-       style={{ 
-         background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)", 
-         width: "44px", 
-         height: "44px", 
-         minWidth: "44px" 
-       }}>
-    {/* Using the mortarboard icon to match the GraduationCap */}
-    <i className="bi bi-mortarboard-fill text-white fs-5"></i>
-  </div>
-
-  {/* Text Section */}
-  <div className="overflow-hidden">
-    <h5 className="text-white fw-bold mb-0 italic tracking-tight" style={{ fontSize: '1.25rem' }}>
-      Edu<span style={{ color: "#14b8a6", fontStyle: "normal" }}>Track</span>
-    </h5>
-    <span className="text-slate-500 uppercase fw-black d-block" 
-          style={{ fontSize: '10px', letterSpacing: '2px', fontWeight: '800', color: '#64748b' }}>
-      Coordinator
-    </span>
-  </div>
-</Link>
+          <Link to="/" className="text-decoration-none d-flex align-items-center">
+            <span className="bg-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm me-2" style={{ backgroundColor: "#3b82f6 !important" }}>Edu</span>
+            <span className="fs-4 fw-bold text-white">Track</span>
+          </Link>
 
           {/* Right Action Cluster */}
           <div className="d-flex align-items-center gap-3">
@@ -107,7 +103,7 @@ const Dashboard = () => {
               <FiRefreshCw size={16} /> <span className="d-none d-md-inline">Refresh</span>
             </button>
 
-            {/* --- UPDATED PROFILE SECTION WITH DROPDOWN --- */}
+            {/* Profile Dropdown */}
             <div className="position-relative">
               <div 
                 className="d-flex align-items-center gap-2 bg-slate-800 border border-slate-700 rounded-pill p-1 pe-3"
@@ -128,50 +124,30 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Profile Dropdown Menu */}
-             {/* Profile Dropdown Menu */}
-{showProfileMenu && (
-  <div 
-    className="position-absolute end-0 mt-3 shadow-lg rounded-4 border border-slate-700 p-3" 
-    style={{ backgroundColor: "#0f172a", minWidth: "260px", zIndex: 1100 }}
-    onClick={(e) => e.stopPropagation()}
-  >
-    <div className="text-center mb-3">
-      <div className="bg-info bg-opacity-10 text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style={{ width: '50px', height: '50px' }}>
-        <FiUser size={24} />
-      </div>
-      {/* Displaying the Role Name here */}
-      <h6 className="text-white mb-0">
-        {user?.roles?.length > 0 ? user.roles[0] : "Coordinator"}
-      </h6>
-      <small className="text-slate-500">{user?.email}</small>
-    </div>
-    
-    <div className="border-top border-slate-800 pt-3 mt-2">
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <span className="text-slate-400 small">Role:</span>
-        {/* This dynamically gets the role from your token */}
-        <span className="text-info small fw-bold">
-          {user?.roles?.includes("Coordinator") ? "Coordinator" : user?.roles?.[0] || "User"}
-        </span>
-      </div>
-      
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <span className="text-slate-400 small">Status:</span>
-        <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 small">
-          Active
-        </span>
-      </div>
-
-      <button 
-        className="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2 rounded-pill mt-2"
-        onClick={handleLogout}
-      >
-        <FiLogOut size={14} /> Log Out
-      </button>
-    </div>
-  </div>
-)}
+              {showProfileMenu && (
+                <div 
+                  className="position-absolute end-0 mt-3 shadow-lg rounded-4 border border-slate-700 p-3" 
+                  style={{ backgroundColor: "#0f172a", minWidth: "260px", zIndex: 1100 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="text-center mb-3">
+                    <div className="bg-info bg-opacity-10 text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style={{ width: '50px', height: '50px' }}>
+                      <FiUser size={24} />
+                    </div>
+                    <h6 className="text-white mb-0">{user?.roles?.[0] || "Coordinator"}</h6>
+                    <small className="text-slate-500">{user?.email}</small>
+                  </div>
+                  <div className="border-top border-slate-800 pt-3 mt-2">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-slate-400 small">Role:</span>
+                      <span className="text-info small fw-bold">Coordinator</span>
+                    </div>
+                    <button className="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2 rounded-pill mt-2" onClick={handleLogout}>
+                      <FiLogOut size={14} /> Log Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -184,7 +160,7 @@ const Dashboard = () => {
         <div className="mb-4 d-flex justify-content-between align-items-end">
           <div>
             <h2 className="fw-bold text-white mb-1">Management Insights</h2>
-            <p className="text-slate-400 mb-0">Welcome back!</p>
+            <p className="text-slate-400 mb-0">Welcome back! Here is what's happening today.</p>
           </div>
           <div className="text-end d-none d-md-block">
             <span className="badge border border-slate-700 text-slate-300 px-3 py-2 rounded-pill bg-slate-900 shadow-sm">
@@ -193,8 +169,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* TOP STATS */}
-        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        {/* TOP STATS - Updated row-cols to 5 */}
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-4 mb-5">
           {stats.map((item, index) => (
             <div className="col" key={index}>
               <div className="card border-slate-800 bg-slate-900 shadow-lg h-100 rounded-4 overflow-hidden">
@@ -202,6 +178,12 @@ const Dashboard = () => {
               </div>
             </div>
           ))}
+          {/* NEW QUALIFICATION CARD */}
+          <div className="col">
+            <div className="card border-slate-800 bg-slate-900 shadow-lg h-100 rounded-4 overflow-hidden">
+              <DashboardCard title="Qualifications" value={qualificationCount} icon={<FiAward className="text-warning" />} />
+            </div>
+          </div>
         </div>
 
         {/* CHARTS GRID */}
@@ -225,6 +207,7 @@ const Dashboard = () => {
           ))}
         </div>
 
+        {/* ALERTS AND FEED */}
         <div className="row g-4">
           <div className="col-lg-4">
             <div className="card border-slate-800 bg-slate-900 shadow-sm rounded-4 h-100">
@@ -232,22 +215,15 @@ const Dashboard = () => {
                 <h6 className="fw-bold m-0 text-white">Recent Alerts</h6>
               </div>
               <div className="card-body p-0" style={{ maxHeight: "450px", overflowY: "auto" }}>
-                {notifications.slice(0, 3).map((note, index) => (
-        <div key={index} className="p-3 border-bottom border-slate-800 hover-dark-bg transition-all">
-          <div className="d-flex justify-content-between">
-            <span className="fw-bold small text-info">{note.title}</span>
-            <span className="text-muted extra-small">{note.time}</span>
-          </div>
-          <p className="mb-0 text-slate-400 small mt-1">{note.message}</p>
-        </div>
-      ))}
-      
-      {/* If there are no alerts, show a placeholder */}
-      {notifications.length === 0 && (
-        <div className="p-4 text-center text-slate-500 small">
-          No recent alerts.
-        </div>
-      )}
+                {notifications.map((note, index) => (
+                  <div key={index} className="p-3 border-bottom border-slate-800 hover-dark-bg transition-all">
+                    <div className="d-flex justify-content-between">
+                      <span className="fw-bold small text-info">{note.title}</span>
+                      <span className="text-muted extra-small">{note.time}</span>
+                    </div>
+                    <p className="mb-0 text-slate-400 small mt-1">{note.message}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -289,11 +265,10 @@ const Dashboard = () => {
                           <div className="text-muted extra-small">{stu.studentEmail}</div>
                         </td>
                         <td className="small text-slate-400">{stu.courseId}</td>
-                       <td className="pe-4 text-end">
-  <span className={`badge rounded-pill ${stu.batchName ? "bg-success bg-opacity-20 border border-success border-opacity-25" : "bg-secondary bg-opacity-20 border border-secondary border-opacity-25"} text-white`}>
-    {stu.batchName ? "Assigned" : "Pending"}
-  </span>
-
+                        <td className="pe-4 text-end">
+                          <span className={`badge rounded-pill ${stu.batchName ? "bg-success bg-opacity-20 text-success border border-success border-opacity-25" : "bg-secondary bg-opacity-20 text-secondary border border-secondary border-opacity-25"}`}>
+                            {stu.batchName ? "Assigned" : "Pending"}
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -308,7 +283,6 @@ const Dashboard = () => {
       <style>{`
         .hover-dark-bg:hover { background-color: #1e293b; cursor: pointer; }
         .hover-bg-slate:hover { background-color: #1e293b !important; }
-        .hover-text-danger:hover { color: #f43f5e !important; }
         .extra-small { font-size: 11px; }
         .border-slate-700 { border-color: #334155 !important; }
         .border-slate-800 { border-color: #1e293b !important; }

@@ -4,7 +4,6 @@ import {Hero} from '../components/Hero';
 import { About } from '../components/About';
 import { Programs } from '../components/Programs';
 import { Courses } from '../components/Courses';
-import { Footer } from '../components/Footer';
 import { ArrowRight, Sparkles, ShieldCheck, GraduationCap, Users, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,7 +18,6 @@ export const Home = () => {
       <About />
       <Programs />
       <Courses />
-      <Footer />
     </div>
   );
 };

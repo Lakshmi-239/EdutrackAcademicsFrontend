@@ -22,9 +22,9 @@ const Notifications = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const studentNotes = res.data.filter(
-        (n) => n.targetRole === "Student" || n.targetRole === "All"
-      );
+    const studentNotes = res.data.filter(
+  (n) => n.targetRole === "Student" || n.targetRole === "All" || n.targetRole === "Batch"
+);
 
       setNotifications(studentNotes);
       setErrorMsg("");

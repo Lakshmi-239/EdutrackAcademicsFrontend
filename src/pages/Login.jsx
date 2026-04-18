@@ -21,40 +21,49 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      // 1. Authenticate with Backend
       const data = await api.login(email, password);
-      console.log("LOGIN RESPONSE:", data);
 
-      // 2. Extract the token string safely
       const token = data?.token?.accessToken || data?.accessToken || data?.token;
 
       if (!token || typeof token !== 'string') {
-        toast.error("No valid token received");
+        Swal.fire({
+          icon: 'error',
+          title: 'Authentication Failed',
+          text: 'No valid token received from the server.',
+          confirmButtonColor: '#8aefbdff', 
+        });
         setLoading(false);
         return;
       }
 
-      // 3. Update AuthContext (Saves 'authToken' to localStorage)
       login(token);
 
-      // 4. Decode JWT for Routing and ID Storage
+      Swal.fire({
+        icon: 'success',
+        title: 'Welcome Back!',
+        text: 'Login successful.',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      
       let role = "";
      try {
   const decoded = jwtDecode(token);
 
-  // ✅ Role extraction (AS-IS)
+ 
   const dotNetRoleClaim =
     "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
   const rawRoles = decoded[dotNetRoleClaim] || decoded.role || "";
   role = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
 
-  // ✅ Store UserId ONLY (no guessing)
+  
   const userId = decoded.id;
   if (userId) {
     localStorage.setItem("userId", userId);
   }
 
-  // ✅ NEW: Fetch role-based domain ID from backend
+  
   const domainRes = await fetch(
     `https://localhost:7157/api/profile/domain-id/${userId}`,
     {
@@ -70,7 +79,7 @@ export const Login = () => {
 
   const domainData = await domainRes.json();
 
-  // ✅ Store correct IDs based on role
+  
   if (domainData.studentId) {
     localStorage.setItem("studentId", domainData.studentId);
   }
@@ -215,7 +224,7 @@ export const Login = () => {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-[0.98] transition-all"
             >
-              {loading ? "Verifying..." : "Sign In"}
+              {loading ? "Verifying..." : "Login"}
               {!loading && <ChevronRight className="w-4 h-4" />}
             </button>
           </form>

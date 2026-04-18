@@ -4,14 +4,9 @@ import { api } from '../../services/Api';
 import EditQuestionPage from './EditQuestionPage';
 import AddQuestionPage from './AddQuestionPage';
 import { 
-  ChevronLeft, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  CheckCircle2, 
-  Loader2,
-  Save,
-  X
+  ChevronLeft, Plus, Pencil, Trash2, 
+  CheckCircle2, Loader2, X, HelpCircle, 
+  Target, Layers, AlertCircle, Info
 } from 'lucide-react';
 
 const ManageAssessmentPage = () => {
@@ -23,19 +18,17 @@ const ManageAssessmentPage = () => {
   const [error, setError] = useState(null);
 
   const [editingQuestion, setEditingQuestion] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // Stores the questionId to delete
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  // Unified function to load data
   const loadData = async () => {
     try {
       setLoading(true);
       const data = await api.getQuestionsByAssessment(assessmentId);
       setQuestions(data || []);
     } catch (err) {
-      setError("Failed to connect to the server.");
+      setError("Synchronisation with the EduTrack database failed.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -46,346 +39,333 @@ const ManageAssessmentPage = () => {
     if (assessmentId) loadData();
   }, [assessmentId]);
 
-// 1. Function called by the Delete Button in your list
-const handleDeleteClick = (questionId) => {
-  setDeleteConfirm(questionId); // This opens the attractive popup
-};
+  const handleDeleteClick = (e, questionId) => {
+    e.stopPropagation(); 
+    setDeleteConfirm(questionId);
+  };
 
-// 2. Function called when "Yes, Delete" is clicked in the popup
-const confirmAndExecuteDelete = async (questionId) => {
-  try {
-    await api.deleteQuestion(questionId);
-    
-    // 1. Close the confirmation popup
-    setDeleteConfirm(null);
-
-    // 2. Remove from local state
-    setQuestions(questions.filter(q => q.questionId !== questionId));
-
-    // 3. Trigger the attractive success popup
-    setDeleteSuccess(questionId);
-
-  } catch (err) {
-    console.error("Delete failed:", err);
-    setDeleteConfirm(null);
-    alert("Delete failed. This question might be linked to student responses.");
-  }
-};
-
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
+  const confirmAndExecuteDelete = async (questionId) => {
     try {
-      await api.updateQuestion(editingQuestion.questionId, editingQuestion);
-      setQuestions(questions.map(q => 
-        q.questionId === editingQuestion.questionId ? editingQuestion : q
-      ));
-      setEditingQuestion(null);
-      alert("Question updated successfully!");
+      await api.deleteQuestion(questionId);
+      setDeleteConfirm(null);
+      setQuestions(prev => prev.filter(q => q.questionId !== questionId));
+      setDeleteSuccess(questionId);
     } catch (err) {
-      alert("Update failed. Please check your connection.");
-    } finally {
-      setIsSaving(false);
+      console.error("Delete failed:", err);
+      setDeleteConfirm(null);
+      alert("Removal failed. Question may be referenced in student logs.");
     }
   };
 
   if (loading && questions.length === 0) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-        <div className="text-center">
-          <Loader2 className="text-primary animate-spin mb-2" size={40} />
-          <p className="text-muted fw-medium">Fetching Records...</p>
+      <div className="d-flex justify-content-center align-items-center vh-100 manage-assessment-root">
+        <div className="text-center p-5 glass-card border-indigo animate-pulse">
+          <Loader2 className="text-teal mb-3 rotate-icon" size={48} />
+          <p className="text-slate-300 fw-bold tracking-widest small">SECURE DATA SYNC...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid py-4 bg-light min-vh-100">
+    <div className="manage-assessment-root min-vh-100 py-5">
       <div className="container">
         
-        {/* Page Header */}
-        <div className="d-flex align-items-center justify-content-between mb-4 bg-white px-3 py-2 rounded-3 shadow-sm border">
-          <div className="d-flex align-items-center gap-2">
-            <button className="btn btn-light rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" 
-                    onClick={() => navigate(-1)} 
-                    style={{ width: '40px', height: '40px' }}>
-              <ChevronLeft size={20} />
+        {/* --- DYNAMIC HEADER --- */}
+        <div className="glass-header d-flex align-items-center justify-content-between mb-5 p-4 border-slate shadow-lg">
+          <div className="d-flex align-items-center gap-4">
+            <button className="premium-icon-btn border-slate" onClick={() => navigate(-1)}>
+              <ChevronLeft size={22} />
             </button>
-            <div className="d-flex flex-column align-items-start ms-2">
-              <h5 className="fw-bold mb-0 text-dark">Manage Assessment</h5>
-              <small className="text-muted fw-semibold" style={{ fontSize: '0.75rem' }}>
-                Assessment ID: <span className="text-primary">{assessmentId}</span>
-              </small>
+            <div>
+              <h4 className="fw-black text-white mb-1 tracking-tight">Assessment Manager</h4>
+              <div className="d-flex align-items-center gap-2">
+                <span className="badge-premium border-indigo">Assessment ID: {assessmentId}</span>
+                <span className="text-slate-500 small fw-bold uppercase tracking-wider">EduTrack Academics</span>
+              </div>
             </div>
           </div>
 
-          {/* FIXED: Open popup instead of navigating to blank page */}
-          <button 
-            className="btn btn-primary px-4 py-2 fw-bold rounded-pill d-flex align-items-center gap-2 shadow-sm"
-            onClick={() => setShowAddPopup(true)}
-          >
-            <Plus size={18} /> <span>New Question</span>
+          <button className="btn-premium-teal border-teal" onClick={() => setShowAddPopup(true)}>
+            <Plus size={20} /> <span>Add Question</span>
           </button>
         </div>
 
-        {error && <div className="alert alert-danger rounded-3 shadow-sm">{error}</div>}
+        {error && (
+          <div className="alert-premium-danger d-flex align-items-center gap-3 mb-4 border-danger">
+            <AlertCircle size={20} /> {error}
+          </div>
+        )}
 
-        {/* Questions List */}
-        <div className="row">
-          {questions.map((q, idx) => (
-            <div key={q.questionId || idx} className="col-12 mb-4">
-              <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div className="row g-0">
-                  <div className="col-md-9 p-4 bg-white d-flex flex-column">
-                    <div className="d-flex align-items-center mb-4">
+        {/* --- QUESTIONS LIST --- */}
+        <div className="d-flex flex-column gap-4">
+          {questions.length > 0 ? (
+            questions.map((q, idx) => (
+              <div key={q.questionId || idx} className="premium-card-outer border-slate">
+                <div className="row g-0 h-100">
+                  {/* Main Content Area */}
+                  <div className="col-lg-9 p-4 bg-slate-950 border-end-slate">
+                    <div className="d-flex justify-content-between align-items-start mb-4">
                       <div className="d-flex align-items-center gap-3">
-                        <span className="badge bg-dark rounded-pill px-3 py-2 fw-bold" style={{ fontSize: '0.8rem' }}>
-                          Question {idx + 1}
-                        </span>
-                        <div className="text-muted border-start ps-3" style={{ fontSize: '0.7rem' }}>
-                          <span className="fw-medium">ID: </span>
-                          <span className="fw-bold text-primary">{q.questionId}</span>
+                        <div className="index-box border-indigo">Q{idx + 1}</div>
+                        <div className="meta-stack">
+                          <span className="label-xs">Question ID</span>
+                          <span className="value-sm text-indigo-400">{q.questionId}</span>
                         </div>
                       </div>
-                      <div className="ms-auto bg-success-subtle px-3 py-2 rounded-3 d-flex align-items-center gap-2 border border-success-subtle shadow-sm">
-                        <CheckCircle2 size={16} className="text-success" />
-                        <span className="badge bg-success px-2 py-1 rounded-pill">{q.correctOption}</span>
+                      <div className="correct-badge border-teal">
+                        <CheckCircle2 size={14} className="text-teal" />
+                        <span className="text-teal fw-black">KEY: {q.correctOption || 'N/A'}</span>
                       </div>
                     </div>
-                    <h5 className="fw-bold mb-4 text-start text-dark pe-5" style={{ lineHeight: '1.6' }}>{q.questionText}</h5>
+
+                    <div className="d-flex gap-3 mb-4">
+                      <HelpCircle className="text-slate-600 flex-shrink-0" size={24} />
+                      <h5 className="text-white fw-bold lh-base">{q.questionText}</h5>
+                    </div>
+
+                    {/* --- OPTIONS AREA --- */}
                     <div className="row g-3">
-                      {['A', 'B', 'C', 'D'].map((letter) => {
-                        const optionKey = `option${letter}`;
-                        const isCorrect = q.correctOption === letter;
-                        if (!q[optionKey]) return null;
-                        return (
-                          <div key={letter} className="col-md-6 text-start">
-                            <div className={`p-3 rounded-3 border d-flex align-items-center gap-3 h-100 ${isCorrect ? 'border-success bg-success-subtle shadow-sm' : 'bg-light border-light-subtle'}`}>
-                              <span className={`badge ${isCorrect ? 'bg-success' : 'bg-secondary text-white'} rounded-circle`} style={{width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem'}}>{letter}</span>
-                              <span className={`${isCorrect ? 'fw-bold text-success' : 'text-secondary'}`}>{q[optionKey]}</span>
+                      {q.questionType === 'Subjective' ? (
+                        <div className="col-12">
+                          <div className="subjective-notice-box border-indigo animate-pulse-subtle">
+                            <Info size={18} className="text-indigo-400" />
+                            <span className="text-slate-400 fw-medium">
+                              Descriptive response required. No fixed options available.
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        ['A', 'B', 'C', 'D'].map((l) => {
+                          const text = q[`option${l}`];
+                          if (!text) return null;
+                          const isCorrect = q.correctOption === l;
+                          return (
+                            <div key={l} className="col-md-6">
+                              <div className={`option-item border-slate ${isCorrect ? 'is-correct border-teal' : ''}`}>
+                                <div className="option-letter">{l}</div>
+                                <div className="option-text text-slate-300">{text}</div>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   </div>
-                  <div className="col-md-3 bg-light border-start p-4 d-flex flex-column justify-content-center text-center">
-                    <div className="mb-3">
-                      <span className="badge px-3 py-1 rounded-pill fw-bold text-uppercase shadow-sm" 
-                        style={{ fontSize: '0.7rem', backgroundColor: '#f3e5f5', color: '#7b1fa2', border: '1px solid #e1bee7' }}>
-                        {q.questionType}
-                      </span>
+
+                  {/* Sidebar Actions */}
+                  <div className="col-lg-3 sidebar-glass p-4 d-flex flex-column bg-slate-900">
+                    <div className="mb-auto">
+                      <div className="sidebar-meta-row border-slate-bottom pb-3 mb-3">
+                        <Layers size={18} className="text-indigo-400 flex-shrink-0" />
+                        <div className="meta-stack">
+                          <p className="label-xs mb-0">TYPE</p>
+                          <p className="value-sm text-white fw-bold uppercase">{q.questionType}</p>
+                        </div>
+                      </div>
+                      <div className="sidebar-meta-row">
+                        <Target size={16} className="text-teal-400" />
+                        <div>
+                          <p className="label-xs">WEIGHTAGE</p>
+                          <p className="value-lg text-white">{q.marks} <span className="small text-slate-500">Pts</span></p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mb-4">
-                      <small className="text-muted d-block text-uppercase fw-bold mb-1" style={{fontSize: '0.8rem'}}>Score</small>
-                      <h3 className="fw-bold text-primary mb-0">{q.marks} <span className="fs-6 text-muted fw-normal">Marks</span></h3>
-                    </div>
-                    <div className="d-grid gap-2">
-                      <button className="btn btn-outline-primary btn-sm py-2 d-flex align-items-center justify-content-center gap-2 fw-medium rounded-3" onClick={() => setEditingQuestion(q)}>
-                        <Pencil size={14} /> Edit
+
+                    <div className="d-grid gap-2 mt-4">
+                      <button className="action-btn-edit border-slate" onClick={() => setEditingQuestion(q)}>
+                        <Pencil size={15} /> <span>Modify</span>
                       </button>
-                      {/* Inside questions.map((q, idx) => ... ) */}
-<button 
-  className="btn btn-outline-danger btn-sm py-2 d-flex align-items-center justify-content-center gap-2 fw-medium rounded-3" 
-  onClick={() => handleDeleteClick(q.questionId)} // Trigger the custom popup
->
-  <Trash2 size={14} /> 
-  <span>Delete</span>
-</button>
-
-
-                      {/* <button className="btn btn-outline-danger btn-sm py-2 d-flex align-items-center justify-content-center gap-2 fw-medium rounded-3" onClick={() => handleDelete(q.questionId)}>
-                        <Trash2 size={14} /> Delete
-                      </button> */}
+                      <button className="action-btn-delete border-danger" onClick={(e) => handleDeleteClick(e, q.questionId)}>
+                        <Trash2 size={15} /> <span>Remove</span>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center p-5 glass-card border-slate opacity-75">
+               <HelpCircle size={48} className="text-slate-700 mb-3" />
+               <h5 className="text-slate-400 fw-bold">No Questions Found</h5>
+               <p className="text-slate-600 small">Start by adding a new question to this assessment.</p>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* --- ADD QUESTION MODAL --- */}
-        {showAddPopup && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)' }}>
-            <div className="modal-dialog modal-md modal-dialog-centered">
-              <div className="modal-content border-0 shadow-lg rounded-5 overflow-hidden animate-slide-up">
-                <div className="bg-dark p-4 d-flex align-items-center justify-content-between text-white">
-                  <div>
-                    <h5 className="fw-bold mb-0">New Question</h5>
-                    <small className="text-white-50">Drafting for Assessment {assessmentId}</small>
+        {/* --- MODALS --- */}
+        {(showAddPopup || editingQuestion) && (
+          <div className="premium-overlay">
+            <div className="modal-container-premium border-slate animate-in shadow-2xl">
+              <div className="modal-header-premium border-slate-bottom p-4 d-flex justify-content-between align-items-center bg-slate-900">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="modal-icon-glow bg-indigo border-indigo">
+                    {showAddPopup ? <Plus /> : <Pencil />}
                   </div>
-                  <button className="btn btn-link text-white p-0 shadow-none" onClick={() => setShowAddPopup(false)}>
-                    <X size={24} />
-                  </button>
+                  <h5 className="text-white fw-black mb-0 tracking-tight">{showAddPopup ? "CREATE QUESTION" : "UPDATE QUESTION"}</h5>
                 </div>
-                <div className="modal-body p-0">
-                  <AddQuestionPage 
-                    assessmentId={assessmentId} 
-                    onClose={() => setShowAddPopup(false)} 
-                    onRefresh={loadData} 
-                  />
-                </div>
+                <button className="close-circle-btn" onClick={() => { setShowAddPopup(false); setEditingQuestion(null); }}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="modal-body-premium p-0 max-vh-75 overflow-auto">
+                {showAddPopup ? (
+                  <AddQuestionPage assessmentId={assessmentId} onClose={() => setShowAddPopup(false)} onRefresh={loadData} />
+                ) : (
+                  <EditQuestionPage questionData={editingQuestion} onClose={() => setEditingQuestion(null)} onRefresh={loadData} />
+                )}
               </div>
             </div>
           </div>
         )}
 
-{/* --- EDIT QUESTION MODAL --- */}
-{editingQuestion && (
-  <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)' }}>
-    <div className="modal-dialog modal-md modal-dialog-centered">
-      <div className="modal-content border-0 shadow-lg rounded-5 overflow-hidden animate-slide-up">
-        {/* Dark Header */}
-        <div className="bg-dark p-4 d-flex align-items-center justify-content-between text-white">
-          <div className="text-start">
-            <h5 className="fw-bold mb-0">Update Question</h5>
-            <small className="text-white-50">Editing ID: {editingQuestion.questionId}</small>
-          </div>
-          <button className="btn btn-link text-white p-0 shadow-none" onClick={() => setEditingQuestion(null)}>
-            <X size={24} />
-          </button>
-        </div>
-        <div className="modal-body p-0">
-          <EditQuestionPage 
-            questionData={editingQuestion} 
-            onClose={() => setEditingQuestion(null)} 
-            onRefresh={loadData} 
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-        {/* --- EDIT MODAL --- */}
-        {/* {editingQuestion && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(3px)' }}>
-            <div className="modal-dialog modal-md modal-dialog-centered">
-              <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div className="modal-header border-0 pb-0 pt-3 px-3 bg-white">
-                  <h6 className="fw-bold mb-0">Edit Question <span className="text-primary">{editingQuestion.questionId}</span></h6>
-                  <button type="button" className="btn-close ms-auto" onClick={() => setEditingQuestion(null)}></button>
-                </div>
-                <div className="modal-body p-3 bg-white">
-                  <form onSubmit={handleUpdateSubmit} className="d-flex flex-column gap-3">
-                    <div className="border-start border-4 border-primary ps-3 pt-1">
-                      <label className="form-label fw-bold small text-uppercase text-primary mb-1">Description</label>
-                      <textarea className="form-control rounded-3 border-light-subtle shadow-none p-2" rows="2" style={{ fontSize: '0.9rem' }} value={editingQuestion.questionText} onChange={(e) => setEditingQuestion({...editingQuestion, questionText: e.target.value})} required />
-                    </div>
-                    <div className="row g-2 bg-light rounded-3 p-2 border">
-                        {['A', 'B', 'C', 'D'].map(l => (
-                          <div key={l} className="col-6 mb-1">
-                            <label className="form-label fw-semibold mb-0" style={{ fontSize: '0.8rem', color: '#555' }}>Opt {l}</label>
-                            <input type="text" className="form-control form-control-sm rounded-2 shadow-none" value={editingQuestion[`option${l}`]} onChange={(e) => setEditingQuestion({...editingQuestion, [`option${l}`]: e.target.value})} required />
-                          </div>
-                        ))}
-                    </div>
-                    <div className="row g-3">
-                      <div className="col-6">
-                        <label className="form-label fw-bold small text-muted text-uppercase mb-1">Correct</label>
-                        <select className="form-select form-select-sm rounded-3 fw-medium" value={editingQuestion.correctOption} onChange={(e) => setEditingQuestion({...editingQuestion, correctOption: e.target.value})}>
-                          {['A', 'B', 'C', 'D'].map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
-                      </div>
-                      <div className="col-6">
-                        <label className="form-label fw-bold small text-muted text-uppercase mb-1">Marks</label>
-                        <input type="number" className="form-control form-control-sm rounded-3 text-center" value={editingQuestion.marks} onChange={(e) => setEditingQuestion({...editingQuestion, marks: parseInt(e.target.value)})} required />
-                      </div>
-                    </div>
-                    <div className="d-flex justify-content-end gap-2 mt-2 pt-2 border-top">
-                      <button type="button" className="btn btn-sm btn-light px-3 rounded-pill border" onClick={() => setEditingQuestion(null)}>Cancel</button>
-                      <button type="submit" className="btn btn-sm btn-primary px-4 rounded-pill fw-bold d-flex align-items-center gap-2" disabled={isSaving}>
-                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> Save Changes</>}
-                      </button>
-                    </div>
-                  </form>
-                </div>
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div className="premium-overlay-dark">
+            <div className="confirm-modal border-danger animate-zoom">
+              <div className="trash-icon-ring border-danger mb-3">
+                <Trash2 size={32} />
+              </div>
+              <h4 className="text-white fw-black mb-2">Confirm Removal</h4>
+              <p className="text-slate-400 small mb-4 px-3">
+                Deleted data cannot be recovered. Ensure this question isn't active in a live batch.
+              </p>
+              <div className="d-flex gap-3 px-2">
+                <button className="btn-slate-outline w-100 border-slate" onClick={() => setDeleteConfirm(null)}>Keep</button>
+                <button className="btn-danger-solid w-100 shadow-danger" onClick={() => confirmAndExecuteDelete(deleteConfirm)}>Delete</button>
               </div>
             </div>
           </div>
-        )} */}
+        )}
 
-        {/* --- IMPROVED ATTRACTIVE DELETE CONFIRMATION POPUP --- */}
-{deleteConfirm && (
-  <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(10px)' }}>
-    {/* Increased width to modal-md for better spacing */}
-    <div className="modal-dialog modal-md modal-dialog-centered" style={{ maxWidth: '400px' }}>
-      <div className="modal-content border-0 shadow-lg rounded-5 overflow-hidden animate-zoom-in">
-        <div className="p-3 text-center bg-white">
-          {/* Circular Trash Icon */}
-          <div className="bg-danger-subtle text-danger rounded-circle d-inline-flex p-2 mb-2">
-            <Trash2 size={20} />
-          </div>
-
-          <h3 className="fw-bold text-dark mb-1">Are you sure?</h3>
-          
-          <p className="text-muted mb-2 px-3" style={{ fontSize: '0.75rem', lineHeight: '1.5' }}>
-            Do you really want to delete question <span className="fw-bold text-dark">{deleteConfirm}</span>? 
-            You won't be able to get this question back again.
-          </p>
-
-          {/* Buttons with extended width and proper spacing */}
-          <div className="d-flex gap-3 justify-content-center">
-            <button 
-              className="btn btn-light rounded-pill fw-bold border-0 py-2 shadow-sm" 
-              style={{ width: '100px', fontSize: '0.9rem', backgroundColor: '#dfe2e6ff' }}
-              onClick={() => setDeleteConfirm(null)}
-            >
-              No, Keep it
-            </button>
-            <button 
-              className="btn btn-danger rounded-pill fw-bold py-2 shadow-lg" 
-              style={{ width: '100px', fontSize: '0.9rem',backgroundColor: '#dc3545' }}
-              onClick={() => confirmAndExecuteDelete(deleteConfirm)}
-            >
-              Yes, Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-{/* --- ATTRACTIVE DELETE SUCCESS POPUP --- */}
-{deleteSuccess && (
-  <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(10px)' }}>
-    <div className="modal-dialog modal-md modal-dialog-centered" style={{ maxWidth: '300px' }}>
-      <div className="modal-content border-0 shadow-lg rounded-5 overflow-hidden animate-zoom-in">
-        <div className="p-3 text-center bg-white">
-          
-          {/* Animated Success Icon */}
-          <div className="bg-success-subtle text-success rounded-circle d-inline-flex p-2 mb-2 shadow-sm">
-            <CheckCircle2 size={20} />
-          </div>
-
-          <h3 className="fw-bold text-dark mb-1">Deleted!</h3>
-          
-          <p className="text-muted mb-2" style={{ fontSize: '0.75rem' }}>
-            Question with ID: <span className="fw-bold text-success">{deleteSuccess}</span> 
-            <br /> has been deleted successfully.
-          </p>
-
-          <button 
-            className="btn btn-dark w-50 rounded-pill fw-bold py-2 shadow-lg transition-all"
-            style={{ fontSize: '0.9rem', letterSpacing: '0.5px' }}
-            onClick={() => setDeleteSuccess(null)}
-          >
-            Continue
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-        {!loading && questions.length === 0 && (
-          <div className="text-center py-5 bg-white rounded-4 shadow-sm">
-            <p className="text-muted mb-0 fw-medium">No questions found.</p>
+        {/* Success Modal */}
+        {deleteSuccess && (
+          <div className="premium-overlay-dark">
+            <div className="confirm-modal border-teal animate-zoom">
+              <div className="success-icon-ring border-teal mb-3">
+                <CheckCircle2 size={32} />
+              </div>
+              <h4 className="text-white fw-black mb-2">Success</h4>
+              <p className="text-slate-400 small mb-4">Record #{deleteSuccess} has been purged.</p>
+              <button className="btn-teal-solid w-75 mx-auto mb-2 shadow-teal" onClick={() => setDeleteSuccess(null)}>Continue</button>
+            </div>
           </div>
         )}
       </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap');
+        
+        .manage-assessment-root {
+          background-color: #020617;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          color: #94a3b8;
+        }
+
+        .border-slate { border: 1px solid #1e293b !important; }
+        .border-slate-bottom { border-bottom: 1px solid #1e293b !important; }
+        .border-end-slate { border-right: 1px solid #1e293b !important; }
+        .border-indigo { border: 1px solid #6366f1 !important; }
+        .border-teal { border: 1px solid #14b8a6 !important; }
+        .border-danger { border: 1px solid #f43f5e !important; }
+
+        .glass-header { 
+          background: rgba(15, 23, 42, 0.6); 
+          backdrop-filter: blur(16px); 
+          border-radius: 28px; 
+        }
+
+        .premium-icon-btn { 
+          background: #0f172a; 
+          color: white; 
+          width: 48px; 
+          height: 48px; 
+          border-radius: 14px; 
+          transition: 0.3s; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center;
+          border: 1px solid #1e293b;
+        }
+        .premium-icon-btn:hover { background: #6366f1; transform: translateX(-3px); border-color: #818cf8; }
+
+        .badge-premium { background: rgba(99, 102, 241, 0.1); color: #818cf8; padding: 6px 14px; border-radius: 12px; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.5px; }
+        
+        .btn-premium-teal { 
+          background: #14b8a6; 
+          color: #020617; 
+          padding: 12px 28px; 
+          border-radius: 16px; 
+          font-weight: 900; 
+          display: flex; 
+          align-items: center; 
+          gap: 10px; 
+          transition: 0.3s; 
+          cursor: pointer; 
+          border: none; 
+          font-size: 0.9rem;
+        }
+        .btn-premium-teal:hover { background: #2dd4bf; box-shadow: 0 0 30px rgba(20, 184, 166, 0.4); transform: translateY(-2px); }
+
+        .premium-card-outer {
+          border-radius: 30px;
+          background: #0f172a;
+          transition: 0.3s ease;
+        }
+        .premium-card-outer:hover { transform: translateY(-5px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+
+        .index-box { background: #020617; color: #818cf8; font-weight: 900; padding: 10px 18px; border-radius: 14px; font-size: 0.95rem; }
+        .label-xs { display: block; font-size: 0.6rem; font-weight: 800; color: #475569; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 2px; }
+        .value-sm { font-weight: 800; font-size: 0.85rem; }
+        .value-lg { font-weight: 900; font-size: 1.6rem; line-height: 1; }
+
+        .correct-badge { background: rgba(20, 184, 166, 0.08); padding: 8px 16px; border-radius: 12px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; }
+
+        .option-item { background: #020617; padding: 16px; border-radius: 18px; display: flex; align-items: center; gap: 16px; height: 100%; }
+        .option-letter { background: #1e293b; color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; }
+        .is-correct { background: rgba(20, 184, 166, 0.06); }
+        .is-correct .option-letter { background: #14b8a6; color: #020617; }
+        .option-text { font-weight: 600; font-size: 0.9rem; line-height: 1.4; }
+
+        .sidebar-meta-row { display: flex; align-items: center; gap: 14px; }
+
+        .action-btn-edit { background: #020617; color: white; padding: 12px; border-radius: 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; cursor: pointer; border: 1px solid #1e293b; width: 100%; }
+        .action-btn-edit:hover { background: #6366f1; border-color: #6366f1; transform: translateY(-2px); }
+        
+        .action-btn-delete { background: rgba(244, 63, 94, 0.05); color: #f43f5e; padding: 12px; border-radius: 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; cursor: pointer; border: 1px solid rgba(244, 63, 94, 0.2); width: 100%; }
+        .action-btn-delete:hover { background: #f43f5e; color: white; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(244, 63, 94, 0.2); }
+
+        .premium-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .modal-container-premium { background: #0f172a; width: 95%; max-width: 850px; border-radius: 36px; overflow: hidden; }
+        .modal-icon-glow { width: 50px; height: 50px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
+        .bg-indigo { background: #6366f1; box-shadow: 0 0 25px rgba(99, 102, 241, 0.5); }
+        
+        .close-circle-btn { background: #1e293b; color: #94a3b8; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .close-circle-btn:hover { background: #f43f5e; color: white; transform: rotate(90deg); }
+
+        .premium-overlay-dark { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .confirm-modal { background: #0f172a; width: 90%; max-width: 420px; border-radius: 36px; text-align: center; padding: 45px 35px; border: 1px solid rgba(244, 63, 94, 0.2); }
+        .trash-icon-ring { width: 85px; height: 85px; border-radius: 50%; color: #f43f5e; background: rgba(244, 63, 94, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid rgba(244, 63, 94, 0.2); }
+        .success-icon-ring { width: 85px; height: 85px; border-radius: 50%; color: #14b8a6; background: rgba(20, 184, 166, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 1px solid rgba(20, 184, 166, 0.2); }
+
+        .btn-slate-outline { background: #1e293b; color: white; border-radius: 16px; padding: 14px; font-weight: 800; transition: 0.3s; border: 1px solid #334155; }
+        .btn-slate-outline:hover { background: #334155; }
+        .btn-danger-solid { background: #f43f5e; color: white; border: none; border-radius: 16px; padding: 14px; font-weight: 800; transition: 0.3s; }
+        .btn-danger-solid:hover { background: #fb7185; transform: scale(1.02); }
+        .btn-teal-solid { background: #14b8a6; color: #020617; border: none; border-radius: 16px; padding: 14px; font-weight: 900; transition: 0.3s; }
+        .btn-teal-solid:hover { background: #2dd4bf; transform: scale(1.02); }
+
+        .subjective-notice-box { background: rgba(99, 102, 241, 0.05); border: 1px dashed rgba(99, 102, 241, 0.4); padding: 18px 24px; border-radius: 20px; display: flex; align-items: center; gap: 14px; }
+
+        .animate-in { animation: modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .animate-zoom { animation: zoomInPopup 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        @keyframes modalIn { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes zoomInPopup { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .animate-pulse-subtle { animation: pulse-subtle 3s infinite ease-in-out; }
+      `}</style>
     </div>
   );
 };
