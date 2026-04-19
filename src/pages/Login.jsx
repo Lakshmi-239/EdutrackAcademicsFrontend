@@ -1,36 +1,48 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, GraduationCap, ChevronRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { api } from '../services/Api';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  ChevronRight,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../services/Api";
+import toast from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (emailError) {
+      return;
+    }
     setLoading(true);
 
     try {
       const data = await api.login(email, password);
+      const token =
+        data?.token?.accessToken || data?.accessToken || data?.token;
 
-      const token = data?.token?.accessToken || data?.accessToken || data?.token;
-
-      if (!token || typeof token !== 'string') {
+      if (!token || typeof token !== "string") {
         Swal.fire({
-          icon: 'error',
-          title: 'Authentication Failed',
-          text: 'No valid token received from the server.',
-          confirmButtonColor: '#8aefbdff', 
+          icon: "error",
+          title: "Authentication Failed",
+          text: "No valid token received from the server.",
+          confirmButtonColor: "#83f7bdff",
         });
         setLoading(false);
         return;
@@ -39,71 +51,63 @@ export const Login = () => {
       login(token);
 
       Swal.fire({
-        icon: 'success',
-        title: 'Welcome Back!',
-        text: 'Login successful.',
+        icon: "success",
+        title: "Welcome Back!",
+        text: "Login successful.",
         timer: 1500,
         showConfirmButton: false,
       });
 
-      
       let role = "";
-     try {
-  const decoded = jwtDecode(token);
+      try {
+        const decoded = jwtDecode(token);
 
- 
-  const dotNetRoleClaim =
-    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
-  const rawRoles = decoded[dotNetRoleClaim] || decoded.role || "";
-  role = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
+        const dotNetRoleClaim =
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        const rawRoles = decoded[dotNetRoleClaim] || decoded.role || "";
+        role = Array.isArray(rawRoles) ? rawRoles[0] : rawRoles;
 
-  
-  const userId = decoded.id;
-  if (userId) {
-    localStorage.setItem("userId", userId);
-  }
+        const userId = decoded.id;
+        if (userId) {
+          localStorage.setItem("userId", userId);
+        }
 
-  
-  const domainRes = await fetch(
-    `https://localhost:7157/api/profile/domain-id/${userId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+        const domainRes = await fetch(
+          `https://localhost:7157/api/profile/domain-id/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
 
-  if (!domainRes.ok) {
-    throw new Error("Failed to fetch domain ID");
-  }
+        if (!domainRes.ok) {
+          throw new Error("Failed to fetch domain ID");
+        }
 
-  const domainData = await domainRes.json();
+        const domainData = await domainRes.json();
 
-  
-  if (domainData.studentId) {
-    localStorage.setItem("studentId", domainData.studentId);
-  }
+        if (domainData.studentId) {
+          localStorage.setItem("studentId", domainData.studentId);
+        }
 
-  if (domainData.instructorId) {
-    localStorage.setItem("instructorId", domainData.instructorId);
-  }
+        if (domainData.instructorId) {
+          localStorage.setItem("instructorId", domainData.instructorId);
+        }
 
-  if (domainData.coordinatorId) {
-    localStorage.setItem("coordinatorId", domainData.coordinatorId);
-  }
-
-} catch (err) {
-  console.error("Token decoding / domain-id fetch failed:", err);
-}
-
-      toast.success("Login successful!");
+        if (domainData.coordinatorId) {
+          localStorage.setItem("coordinatorId", domainData.coordinatorId);
+        }
+      } catch (err) {
+        console.error("Token decoding / domain-id fetch failed:", err);
+      }
 
       // 5. Structured Navigation
       const dashboardRoutes = {
-        "Student": "/Studentdashboard",
-        "Admin": "/admin",
-        "Instructor": "/InstructorDashboard",
-        "Coordinator": "/coordinator/dashboard"
+        Student: "/Studentdashboard",
+        Admin: "/admin",
+        Instructor: "/InstructorDashboard",
+        Coordinator: "/coordinator/dashboard",
       };
 
       if (dashboardRoutes[role]) {
@@ -112,25 +116,37 @@ export const Login = () => {
         console.warn("Role not recognized:", role);
         navigate("/"); // Fallback to Home
       }
-
     } catch (err) {
-      console.error("Login Error:", err);
+      const message =
+        err.response?.data?.message || err.response?.data?.Message || "";
+
+      if (message === "Email not verified") {
+        await Swal.fire({
+          icon: "warning",
+          title: "Email Not Verified",
+          text: "Please verify your email to continue.",
+          confirmButtonColor: "#83f7bdff",
+        });
+
+        navigate("/verify-email", { state: { email } });
+        setLoading(false);
+        return;
+      }
+
       Swal.fire({
-        icon: 'error',
-        title: 'Authentication Failed',
-        text: err.response?.data?.message || 'Invalid credentials.',
-        background: '#0f172a',
-        color: '#f1f5f9',
-        confirmButtonColor: '#22d3ee', 
+        icon: "error",
+        title: "Authentication Failed",
+        text: message || "Invalid credentials.",
+        background: "#0f172a",
+        color: "#f1f5f9",
+        confirmButtonColor: "#22d3ee",
       });
-    } finally {
       setLoading(false);
     }
   };
 
   return (
     <div className="h-screen w-full bg-slate-950 flex flex-col items-center justify-center px-6 overflow-hidden relative">
-      
       {/* Background Decorative Shimmers */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-indigo-600/20 blur-[120px] rounded-full" />
@@ -138,7 +154,6 @@ export const Login = () => {
       </div>
 
       <div className="w-full max-w-[420px] z-10">
-        
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -151,13 +166,15 @@ export const Login = () => {
               </span>
             </Link>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-sm" style={{ color: '#22d3ee' }}>
-            Get started with EduTrack!{' '}
-            <Link to="/register" 
-              style={{color: '#94a3b8'}}
-              className="font-semibold hover:text-cyan-300 transition-colors ml-1">
+          <p className="text-sm" style={{ color: "#22d3ee" }}>
+            Get started with EduTrack!{" "}
+            <Link
+              to="/register"
+              style={{ color: "#94a3b8" }}
+              className="font-semibold hover:text-cyan-300 transition-colors ml-1"
+            >
               Create account
             </Link>
           </p>
@@ -166,9 +183,8 @@ export const Login = () => {
         {/* Login Card */}
         <div className="bg-[#0f172a]/70 backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-8 shadow-2xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            
             {/* Email Field */}
-            <div className="space-y-2" style={{ textAlign: 'left' }}>
+            <div className="space-y-2" style={{ textAlign: "left" }}>
               <label className="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-1">
                 Email Address
               </label>
@@ -178,22 +194,34 @@ export const Login = () => {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEmail(value);
+
+                    if (value && !value.toLowerCase().endsWith("@gmail.com")) {
+                      setEmailError("Only @gmail.com addresses are allowed");
+                    } else {
+                      setEmailError("");
+                    }
+                  }}
                   className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-12 pr-4 py-3 text-slate-200 outline-none focus:border-cyan-500/50 transition-all"
                   placeholder="name@company.com"
                 />
               </div>
+              {emailError && (
+                <p className="text-rose-400 text-sm mt-1 ml-1">{emailError}</p>
+              )}
             </div>
 
             {/* Password Field */}
-            <div className="space-y-2" style={{ textAlign: 'left' }}>
+            <div className="space-y-2" style={{ textAlign: "left" }}>
               <div className="flex justify-between px-1">
                 <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
                   Password
                 </label>
-                <Link 
-                  to="/forgot-password" 
-                  style={{color: '#94a3b8'}} 
+                <Link
+                  to="/forgot-password"
+                  style={{ color: "#94a3b8" }}
                   className="text-[10px] font-bold hover:text-cyan-400 transition-colors"
                 >
                   Forgot Password?
@@ -214,7 +242,11 @@ export const Login = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-400"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
