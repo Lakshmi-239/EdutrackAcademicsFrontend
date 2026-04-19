@@ -12,9 +12,8 @@ import {
   Award,
   Upload,
   ArrowRight,
-} 
-from "lucide-react";
-import { api } from "../../services/api";
+} from "lucide-react";
+import { api } from "../../services/Api";
 import toast from "react-hot-toast";
 
 export const CoordinatorRegistration = () => {
@@ -35,12 +34,38 @@ export const CoordinatorRegistration = () => {
     confirmPassword: "",
   });
 
+  const [fieldErrors, setFieldErrors] = useState({
+    CoordinatorName: "",
+    CoordinatorEmail: "",
+    CoordinatorPhone: "",
+    CoordinatorPassword: "",
+    CoordinatorResume: "",
+  });
+
   const qualifications = [
-    "Bachelor's Degree",
+    // Postgraduate Degrees
     "Master's Degree",
-    "PhD",
-    "MBA",
+    "Master of Arts (MA)",
+    "Master of Science (MSc)",
+    "Master of Commerce (MCom)",
+    "Master of Business Administration (MBA)",
+    "Master of Education (M.Ed)",
+    "Master of Public Administration (MPA)",
+    "Master of Human Resource Management (MHRM)",
+
+    // Doctoral & Research
+    "Doctor of Philosophy (PhD)",
+    "Post‑Doctoral Research",
+
+    // Education / Academic Administration
     "Education Management",
+    "Academic Administration Certification",
+    "Higher Education Administration",
+    "School Leadership Certification",
+
+    // Management & Professional Certifications
+    "Post Graduate Diploma in Management",
+    "Project Management Professional (PMP)",
   ];
 
   const genders = [
@@ -51,28 +76,118 @@ export const CoordinatorRegistration = () => {
     "Prefer Not To Say",
   ];
 
+  const validateField = (name, value) => {
+    switch (name) {
+      case "CoordinatorName":
+        if (value.trim().length < 3)
+          return "Name must be at least 3 characters";
+        break;
+
+      case "CoordinatorEmail":
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          return "Enter a valid email address";
+        if (!value.toLowerCase().endsWith("@gmail.com"))
+          return "Only @gmail.com addresses are allowed";
+        break;
+
+      case "CoordinatorPhone":
+        if (!/^[0-9]{10}$/.test(value))
+          return "Enter a valid 10-digit phone number";
+        break;
+
+      case "CoordinatorPassword":
+        if (
+          !/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,64}$/.test(value)
+        )
+          return "Password must contain uppercase, lowercase, number & special character";
+        break;
+
+      default:
+        return "";
+    }
+    return "";
+  };
+
+  const validateResume = (file) => {
+    if (!file) return "Resume is required";
+
+    const allowed = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowed.includes(file.type))
+      return "Only PDF, DOC, or DOCX files are allowed";
+
+    if (file.size > 5 * 1024 * 1024) return "Resume must be less than 5MB";
+
+    return "";
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     const finalValue =
       name === "CoordinatorExperience" ? parseInt(value, 10) || 0 : value;
+
     setFormData((prev) => ({ ...prev, [name]: finalValue }));
+
+    if (
+      [
+        "CoordinatorName",
+        "CoordinatorEmail",
+        "CoordinatorPhone",
+        "CoordinatorPassword",
+      ].includes(name)
+    ) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: validateField(name, value),
+      }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setResumeFile(file);
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      CoordinatorResume: validateResume(file),
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
+    if (
+      fieldErrors.CoordinatorName ||
+      fieldErrors.CoordinatorEmail ||
+      fieldErrors.CoordinatorPhone ||
+      fieldErrors.CoordinatorPassword ||
+      fieldErrors.CoordinatorResume
+    ) {
+      setError("Please fix the highlighted errors");
+      return;
+    }
+
     if (formData.CoordinatorPassword !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    if (!resumeFile) {
-      setError("Resume is required");
+    const resumeError = validateResume(resumeFile);
+    if (resumeError) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        CoordinatorResume: resumeError,
+      }));
       return;
     }
 
     setLoading(true);
+
     try {
       const { confirmPassword, ...submitData } = formData;
       await api.registerCoordinator({
@@ -89,7 +204,7 @@ export const CoordinatorRegistration = () => {
     }
   };
 
-  /* ===== Shared Styles (Same as Instructor) ===== */
+  /* ===== Shared Styles (Same as Coordinator) ===== */
   const inputClassName =
     "w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-4 h-[54px] " +
     "text-white placeholder:text-slate-600 outline-none transition-all " +
@@ -151,6 +266,11 @@ export const CoordinatorRegistration = () => {
                   onChange={handleChange}
                   className={inputClassName}
                 />
+                {fieldErrors.CoordinatorName && (
+                  <p className="text-rose-400 text-sm mt-1 ml-1">
+                    {fieldErrors.CoordinatorName}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -164,6 +284,11 @@ export const CoordinatorRegistration = () => {
                   onChange={handleChange}
                   className={inputClassName}
                 />
+                {fieldErrors.CoordinatorEmail && (
+                  <p className="text-rose-400 text-sm mt-1 ml-1">
+                    {fieldErrors.CoordinatorEmail}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -180,6 +305,11 @@ export const CoordinatorRegistration = () => {
                   onChange={handleChange}
                   className={inputClassName}
                 />
+                {fieldErrors.CoordinatorPhone && (
+                  <p className="text-rose-400 text-sm mt-1 ml-1">
+                    {fieldErrors.CoordinatorPhone}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -246,8 +376,14 @@ export const CoordinatorRegistration = () => {
                   type="file"
                   id="resume"
                   hidden
-                  onChange={(e) => setResumeFile(e.target.files[0])}
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx"
                 />
+                {fieldErrors.CoordinatorResume && (
+                  <p className="text-rose-400 text-sm mt-1 ml-1">
+                    {fieldErrors.CoordinatorResume}
+                  </p>
+                )}
                 <label
                   htmlFor="resume"
                   className="flex flex-col justify-center h-[54px] pl-12 pr-4 border-2 border-dashed
@@ -280,6 +416,11 @@ export const CoordinatorRegistration = () => {
                   onChange={handleChange}
                   className={`${inputClassName} pr-14`}
                 />
+                {fieldErrors.CoordinatorPassword && (
+                  <p className="text-rose-400 text-sm mt-1 ml-1">
+                    {fieldErrors.CoordinatorPassword}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
