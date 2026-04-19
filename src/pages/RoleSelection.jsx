@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, BookOpen, Award, ChevronRight, Check } from 'lucide-react';
-import { Unauthorized } from '../components/Unauthorized';
+import { useAuth } from '../context/AuthContext';
 export const RoleSelection = () => {
   const navigate = useNavigate();
-
+  const { user } = useAuth(); 
   const roles = [
     {
       id: 'student',
@@ -19,7 +19,7 @@ export const RoleSelection = () => {
       title: 'Instructor',
       description: 'Create content, manage students, and build your brand.',
       icon: BookOpen,
-      path: '/unauthorized',
+      path: user?.roles?.includes('Coordinator') ? '/register/instructor' :'/Unauthorized',
       features: ['Course Builder', 'Analytics', 'Student Management']
     },
     {
@@ -27,7 +27,7 @@ export const RoleSelection = () => {
       title: 'Coordinator',
       description: 'Oversee programs and manage academic excellence.',
       icon: Award,
-      path: '/unauthorized',
+      path: user?.roles?.includes('Admin') ? '/admin/register-coordinator' : '/Unauthorized',
       features: ['Program Management', 'Reports', 'Performance']
     },
   ];

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   Mail,
@@ -15,9 +15,13 @@ import {
 } from "lucide-react";
 import { api } from "../../services/Api";
 import toast from "react-hot-toast";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export const CoordinatorRegistration = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading, hasRole } = useAuth();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +79,13 @@ export const CoordinatorRegistration = () => {
     "Other",
     "Prefer Not To Say",
   ];
+
+  if (authLoading) return null; // or spinner
+
+  // ✅ Admin-only access
+  if (!user || !hasRole("Admin")) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   const validateField = (name, value) => {
     switch (name) {
@@ -206,12 +217,12 @@ export const CoordinatorRegistration = () => {
 
   /* ===== Shared Styles (Same as Coordinator) ===== */
   const inputClassName =
-    "w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-4 h-[54px] " +
+    "w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-4 h-[54px] leading-[54px]" +
     "text-white placeholder:text-slate-600 outline-none transition-all " +
     "focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/10";
 
   const selectClassName =
-    "w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-10 h-[54px] " +
+    "w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-10 h-[54px] leading-[54px] " +
     "text-white appearance-none outline-none transition-all cursor-pointer " +
     "focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/10 bg-no-repeat bg-[length:1.25rem] bg-[right_1rem_center]";
 
@@ -227,7 +238,7 @@ export const CoordinatorRegistration = () => {
   );
 
   const Icon = ({ icon: IconCmp }) => (
-    <IconCmp className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10 pointer-events-none" />
+    <IconCmp className="absolute left-4 top-[17px] w-5 h-5 text-slate-500 group-focus-within:text-teal-400 transition-colors z-10 pointer-events-none" />
   );
 
   return (
@@ -371,7 +382,7 @@ export const CoordinatorRegistration = () => {
             <div>
               <FieldLabel>Resume</FieldLabel>
               <div className="relative">
-                <Upload className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <Upload className="absolute left-4 top-[17px] w-5 h-5 text-slate-500 pointer-events-none" />
                 <input
                   type="file"
                   id="resume"
@@ -379,25 +390,24 @@ export const CoordinatorRegistration = () => {
                   onChange={handleFileChange}
                   accept=".pdf,.doc,.docx"
                 />
+
                 {fieldErrors.CoordinatorResume && (
                   <p className="text-rose-400 text-sm mt-1 ml-1">
                     {fieldErrors.CoordinatorResume}
                   </p>
                 )}
+
                 <label
                   htmlFor="resume"
-                  className="flex flex-col justify-center h-[54px] pl-12 pr-4 border-2 border-dashed
-                             border-slate-700 rounded-xl cursor-pointer text-slate-400
-                             hover:border-teal-500/40 hover:bg-teal-500/5 transition-all"
+                  className={`${inputClassName} flex items-center cursor-pointer`}
                 >
+                  <Upload className="absolute left-4 top-[17px] w-5 h-5 text-slate-500 pointer-events-none" />
+
                   <span className="text-sm text-slate-300 truncate">
-                    {resumeFile ? resumeFile.name : "Upload PDF / Word"}
+                    {resumeFile
+                      ? resumeFile.name
+                      : "Upload PDF / Word (MAX 5MB)"}
                   </span>
-                  {!resumeFile && (
-                    <span className="text-[10px] uppercase text-slate-600">
-                      MAX 5MB
-                    </span>
-                  )}
                 </label>
               </div>
             </div>
@@ -407,27 +417,32 @@ export const CoordinatorRegistration = () => {
           <div className="grid md:grid-cols-2 gap-8 pt-8 border-t border-slate-800">
             <div>
               <FieldLabel>Password</FieldLabel>
-              <div className="relative group">
-                <Icon icon={Lock} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="CoordinatorPassword"
-                  value={formData.CoordinatorPassword}
-                  onChange={handleChange}
-                  className={`${inputClassName} pr-14`}
-                />
+              <div className="space-y-2">
+                <div className="relative group">
+                  <Icon icon={Lock} />
+
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="CoordinatorPassword"
+                    value={formData.CoordinatorPassword}
+                    onChange={handleChange}
+                    className={`${inputClassName} pr-14`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-teal-400"
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </button>
+                </div>
+
                 {fieldErrors.CoordinatorPassword && (
-                  <p className="text-rose-400 text-sm mt-1 ml-1">
+                  <p className="text-rose-400 text-xs leading-snug pl-1">
                     {fieldErrors.CoordinatorPassword}
                   </p>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-teal-400"
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </button>
               </div>
             </div>
 
@@ -454,7 +469,13 @@ export const CoordinatorRegistration = () => {
                        text-white rounded-xl font-bold text-lg flex items-center
                        justify-center gap-2 transition-all"
           >
-            Register Coordinator <ArrowRight />
+            {loading ? (
+              "Registering..."
+            ) : (
+              <>
+                Register Coordinator <ArrowRight />
+              </>
+            )}
           </button>
         </form>
       </div>
