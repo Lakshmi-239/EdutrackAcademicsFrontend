@@ -5,6 +5,7 @@ import {
   FileText, Users
 } from 'lucide-react';
 import { api } from '../../services/Api';
+import toast from 'react-hot-toast';
 
 const AssessmentCard = ({ assessment, onRefresh }) => {
   const navigate = useNavigate();
@@ -17,8 +18,6 @@ const AssessmentCard = ({ assessment, onRefresh }) => {
     courseName = 'Course Name',
     maxMarks = 0,
     dueDate,
-    status: backendStatus = 'Open',
-    // Taking the displayStatus passed from the parent component
     displayStatus = 'Active' 
   } = assessment;
   
@@ -36,6 +35,28 @@ const AssessmentCard = ({ assessment, onRefresh }) => {
     if (assessmentId !== 'N/A') fetchStatus();
   }, [assessmentId]);
 
+  const handleDelete = async () => {
+    // 1. Browser confirmation first
+    if (!window.confirm("Permanently delete this assessment and all student submissions?")) return;
+
+    // 2. Start the loading toast
+    const t = toast.loading("Removing assessment...");
+    
+    try {
+      await api.deleteAssessment(assessmentId);
+      
+      // 3. Update the SAME toast to success
+      toast.success("Assessment deleted successfully!", { id: t });
+      
+      // 4. Trigger the UI refresh
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      // 5. Update the SAME toast to error
+      toast.error("Error deleting assessment. Please try again.", { id: t });
+      console.error("Delete Error:", err);
+    }
+  };
+
   const isClosed = displayStatus === 'Inactive';
   
   const theme = {
@@ -51,7 +72,7 @@ const AssessmentCard = ({ assessment, onRefresh }) => {
 
   const formatDateTime = (dateString) => {
     if (!dateString) return { d: "No Date", t: "No Time" };
-    const dt = new Date(dateString);
+    const dt = new Date(dateString.replace(' ', 'T'));
     return {
       d: dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       t: dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })
@@ -80,8 +101,15 @@ const AssessmentCard = ({ assessment, onRefresh }) => {
               <Award size={10} /> {maxMarks} PTS
             </div>
           </div>
-          <span className="course-code-text">{courseId}</span>
-          <p className="course-title-text">{courseName}</p>
+          <div className="d-flex align-items-center gap-2 mb-1">
+            <span className="course-code-text">{courseId}</span>
+            <span className="text-slate-500 font-bold" style={{ fontSize: '10px' }}>•</span>
+            <p className="course-title-text">{courseName}</p>
+          </div>
+
+          <span className="text-slate-400 font-mono" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
+            Assessment ID: {assessmentId}
+          </span>
         </div>
 
         {/* Middle Section: Progress */}
@@ -123,7 +151,7 @@ const AssessmentCard = ({ assessment, onRefresh }) => {
           
           <button 
             className="delete-link-btn" 
-            onClick={() => window.confirm("Permanently delete?") && api.deleteAssessment(assessmentId).then(onRefresh)}
+            onClick={handleDelete}
           >
             <Trash2 size={12} />
             <span>DELETE</span>

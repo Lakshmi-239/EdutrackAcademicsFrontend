@@ -1,17 +1,32 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; 
+import { Toaster } from "react-hot-toast";
+import { VerifyEmail } from './pages/VerifyEmail';
+
+// Page Imports
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
-import { VerifyOtp } from './pages/VerifyOtp';
 import { RoleSelection } from './pages/RoleSelection';
-import { StudentRegistration } from './components/registration/StudentRegistration';
-import {InstructorRegistration} from './components/registration/InstructorRegistration';
-import {CoordinatorRegistration} from './components/registration/CoordinatorRegistration';
 import { Unauthorized } from './components/Unauthorized';
-import { Toaster } from "react-hot-toast";
-//import CoordinatorDashboard from './pages/CoordinatorDashboard';
+
+// Registration Imports
+import { StudentRegistration } from './components/registration/StudentRegistration';
+import { InstructorRegistration } from './components/registration/InstructorRegistration';
+import { CoordinatorRegistration } from './components/registration/CoordinatorRegistration';
+
+// Admin Imports
+import AdminSidebar from "./components/Admin/AdminSidebar.jsx";
+import QualificationManager from "./components/Admin/QualificationManager.jsx";
+import ProgramManager from "./components/Admin/ProgramManager.jsx";
+import AcademicYearManager from "./components/Admin/AcademicYearManager.jsx";
+import AcademicRulesManager from './components/Admin/AcademicRulesManager.jsx';
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import NotificationAdmin from './components/Admin/NotificationAdmin.jsx';
+
+
+// Student Imports
 import Layout from "./components/Student/Layout";
 import StudentDashboard from "./pages/StudentDashboard";
 import {StudentProfile} from "./pages/StudentProfile";
@@ -48,8 +63,31 @@ import SubmissionsPage from './components/InstructorAssessment/SubmissionPage';
 import EditQuestionPage from './components/InstructorAssessment/EditQuestionPage';
 import AddQuestionPage from './components/InstructorAssessment/AddQuestionPage';
 import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
+import {Footer} from './components/Footer';
 
- function App() {
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Separate Admin Panel Component to keep App.js clean
+const AdminPanel = () => {
+  const [view, setView] = useState('qualifications');
+
+  return (
+    <div className="App" style={{ display: 'flex' }}>
+      <AdminSidebar onSelect={setView} activeView={view} />
+      <div style={{ flex: 1, padding: '20px' }}>
+        {view === 'dashboard' && <AdminDashboard />}
+        {view === 'qualifications' && <QualificationManager />}
+        {view === 'programs' && <ProgramManager />}
+        {view === 'academicYears' && <AcademicYearManager />}
+        {view === 'academicRules' && <AcademicRulesManager />}
+        {view === 'reports' && <AdminReportPage />}
+        {view === 'notifications' && <NotificationAdmin />}
+      </div>
+    </div>
+  );
+};
+
+function App() {
   return (
     <AuthProvider>
       <Toaster position="top-center" reverseOrder={false} />
@@ -64,26 +102,31 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
           <Route path="/admin/register-coordinator" element={<CoordinatorRegistration />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-                      <Route path="/instructor-performance" element={<InstructorReportPage />} />
                                   <Route path="/admin/performance" element={<AdminReportPage />} />
-
-
+ 
+ 
           <Route path="*" element={<div className="p-20 text-center">404 - Not Found</div>} />
-
+ 
           {/* Redirect base URL to the dashboard */}
           {/* <Route path="/" element={<Navigate to="/studentdashboard" />} /> */}
-
+ 
           {/* Routes WITH Sidebar/Navbar */}
-          <Route element={<Layout />}>
+          <Route 
+            element={
+              <AuthGuard>
+                <Layout />
+              </AuthGuard>
+            }
+          >
             <Route path="/studentdashboard" element={<StudentDashboard />} />
             <Route path="/student-profile" element={<StudentProfile />} />
             <Route path="/courses" element={<MyCourses />} />
             <Route path="/assignments" element={<StudentAssessmentPage />} />
             <Route path="/attendance" element={<Attendance />} />
-
-
+ 
+ 
             {/* PERFORMANCE */}
             {/* <Route path="/batch/:batchId" element={<BatchDetails/>}/> */}
           </Route>
@@ -110,8 +153,8 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
               </AuthGuard>
               }
             />
-
-
+ 
+ 
           <Route path="/" element={<Navigate to="/instructordashboard" />} />
           <Route element={<Lay_Out />}>
             <Route path="/instructordashboard" element={<InstructorDashboard />} />
@@ -120,17 +163,20 @@ import BatchStudentsPage from './components/InstructorCourse/BatchStudentsPage';
             <Route path="/Iassessments" element={<InstructorAssessmentPage />} />
             <Route path="/Iattendances" element={<InstructorAttendancePage />} />
             <Route path="/Inotifications" element={<InstructorNotificationPage />} />
+            <Route path="/instructor-performance" element={<InstructorReportPage />} />
             <Route path="/manage-questions/:id" element={<ManageQuestionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionsPage />} />
             <Route path="/edit-question/:questionId" element={<EditQuestionPage />} />
             <Route path="/assessment/:id/add-question" element={<AddQuestionPage />} />
             <Route path="/view-batch-students/:id" element={<BatchStudentsPage />} />
           </Route>
-
+ 
           {/* Route WITHOUT Sidebar/Navbar */}
-          
+         <Route path="/admin/*" element={<AdminPanel />} />
         </Routes>
+        
       </div>
+      <Footer />
     </AuthProvider>
   );
 }

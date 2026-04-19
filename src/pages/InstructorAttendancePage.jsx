@@ -4,6 +4,7 @@ import AttendanceCard from '../components/InstructorAttendance/AttendanceCard';
 import MarkAttendanceModal from '../components/InstructorAttendance/MarkAttendanceModal';
 import AttendanceDetailModal from '../components/InstructorAttendance/AttendanceDetailsModal';
 import { Search, Plus, RefreshCcw, Loader2, SearchX, CalendarCheck } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function InstructorAttendancePage() {
   const [summaries, setSummaries] = useState([]);
@@ -30,7 +31,11 @@ export default function InstructorAttendancePage() {
 
       setSummaries(combined);
       setFilteredData(combined);
+      
+      if (!loading) toast.success("Records synchronized", { duration: 2000 });
+      
     } catch (err) {
+      toast.error("Failed to sync attendance database.");
       console.error("Error fetching attendance data:", err);
     } finally {
       setLoading(false);
@@ -56,25 +61,50 @@ export default function InstructorAttendancePage() {
     setFilteredData(results);
   }, [searchTerm, summaries]);
 
+  // const handleBulkDelete = async (item) => {
+  //   const reason = window.prompt(`Enter reason for deleting Batch ${item.batchId}:`);
+  //   if (!reason) return;
+  //   try {
+  //     const res = await api.deleteBatchAttendance(item.batchId, item.sessionDate, reason);
+  //     alert(res.data);
+  //     fetchSummary(); 
+  //   } catch (err) {
+  //     alert(err.response?.data || "Deletion failed");
+  //   }
+  // };
+
+  // const handleBulkRestore = async (item) => {
+  //   try {
+  //     const res = await api.restoreBatchAttendance(item.batchId, item.sessionDate);
+  //     alert(res.data);
+  //     fetchSummary();
+  //   } catch (err) {
+  //     alert(err.response?.data || "Restore failed");
+  //   }
+  // };
+
   const handleBulkDelete = async (item) => {
     const reason = window.prompt(`Enter reason for deleting Batch ${item.batchId}:`);
     if (!reason) return;
+
+    const t = toast.loading(`Deleting Batch ${item.batchId} attendance...`);
     try {
       const res = await api.deleteBatchAttendance(item.batchId, item.sessionDate, reason);
-      alert(res.data);
+      toast.success(res.data || "Records moved to trash.", { id: t });
       fetchSummary(); 
     } catch (err) {
-      alert(err.response?.data || "Deletion failed");
+      toast.error(err.response?.data || "Deletion failed", { id: t });
     }
   };
 
   const handleBulkRestore = async (item) => {
+    const t = toast.loading(`Restoring Batch ${item.batchId}...`);
     try {
       const res = await api.restoreBatchAttendance(item.batchId, item.sessionDate);
-      alert(res.data);
+      toast.success(res.data || "Records restored successfully.", { id: t, icon: '♻️' });
       fetchSummary();
     } catch (err) {
-      alert(err.response?.data || "Restore failed");
+      toast.error(err.response?.data || "Restore failed", { id: t });
     }
   };
 

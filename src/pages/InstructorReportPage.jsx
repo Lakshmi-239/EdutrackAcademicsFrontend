@@ -32,7 +32,6 @@ const InstructorReportPage = () => {
     border: "#1e293b"
   };
 
-  // ... (Keep your animations and formatDate function exactly the same)
   const animations = `
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes barFill { from { width: 0%; } }
@@ -271,7 +270,7 @@ const InstructorReportPage = () => {
         </div>
       </header>
 
-      {/* SEARCH BAR REMOVED FROM HERE */}
+      
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '50px', color: colors.accent }}>Loading Report Data...</div>

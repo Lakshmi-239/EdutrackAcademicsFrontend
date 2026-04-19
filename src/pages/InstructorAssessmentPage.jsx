@@ -19,28 +19,42 @@ export default function InstructorAssessmentPage() {
       const rawData = Array.isArray(data) ? data : [data];
 
       const enhancedData = rawData.map(item => {
-  const idValue = item.assessmentId || item.assessmentID || item.id || 'N/A';
-  
-  // 1. Get status from backend (Open/Closed or Active/Inactive)
-  const rawStatus = (item.status || '').toLowerCase();
-  
-  // 2. Logic: If backend says 'closed' or 'inactive', it's Inactive. 
-  // Otherwise, check the date.
-  let finalStatus = 'Active';
-  if (rawStatus === 'closed' || rawStatus === 'inactive') {
-    finalStatus = 'Inactive';
-  } else {
-    // Fallback: If status isn't explicitly closed, check if the date has passed
-    const isPastDue = new Date(item.dueDate || item.date) < new Date();
-    if (isPastDue) finalStatus = 'Inactive';
-  }
+        const idValue = item.assessmentId || item.assessmentID || item.id || 'N/A';
+        
+        // 1. Get raw status from backend
+        const rawStatus = (item.status || '').toLowerCase();
+        
+        let finalStatus = 'Active';
 
-  return {
-    ...item,
-    assessmentID: String(idValue),
-    displayStatus: finalStatus // This now correctly handles inactive cards
-  };
-});
+        // 2. Priority 1: If backend says it's closed/inactive, it's Inactive.
+        if (rawStatus === 'closed' || rawStatus === 'inactive') {
+          finalStatus = 'Inactive';
+        } else {
+          // 3. Priority 2: Check the clock
+          const now = new Date(); // Current local time
+
+          // Ensure the date string is formatted correctly for local parsing
+          // We replace the space with 'T' to make it a standard ISO local string
+          const rawDateStr = item.dueDate || item.date || '';
+          const dateString = rawDateStr.includes('T') ? rawDateStr : rawDateStr.replace(' ', 'T');
+          
+          const targetDate = new Date(dateString);
+
+          // If the date is valid, compare strictly
+          if (!isNaN(targetDate.getTime())) {
+            // If the current time has passed the deadline
+            if (now > targetDate) {
+              finalStatus = 'Inactive';
+            }
+          }
+        }
+
+        return {
+          ...item,
+          assessmentID: String(idValue),
+          displayStatus: finalStatus 
+        };
+      });
       
       setAssessments(enhancedData);
       setFilteredData(enhancedData);
@@ -58,6 +72,14 @@ export default function InstructorAssessmentPage() {
   };
 
   useEffect(() => { fetchData(); }, []);
+  
+  useEffect(() => {
+    fetchData();
+
+    const interval = setInterval(fetchData, 30000); 
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const results = assessments.filter(item => {

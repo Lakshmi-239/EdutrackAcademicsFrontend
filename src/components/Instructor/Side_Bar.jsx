@@ -8,7 +8,7 @@ function Side_Bar({ collapsed, setCollapsed }) {
       style={{ width: collapsed ? "80px" : "260px" }}
     >
       <div className={`flex items-center mb-10 ${collapsed ? "justify-center" : "px-2"}`}>
-        <button
+        <button 
           className="p-2 rounded-xl transition-all bg-transparent border-0 shadow-none flex items-center justify-center group"
           onClick={() => setCollapsed(!collapsed)}
         >
@@ -28,7 +28,7 @@ function Side_Bar({ collapsed, setCollapsed }) {
         <MenuLink to="/Imodules" icon={<FaFileAlt />} label="Modules" collapsed={collapsed} />
         <MenuLink to="/Iassessments" icon={<FaClipboardList />} label="Assessments" collapsed={collapsed} />
         <MenuLink to="/Iattendances" icon={<FaGraduationCap />} label="Attendance" collapsed={collapsed} />
-        <MenuLink to="/Iperformance" icon={<FaChartBar />} label="Performance" collapsed={collapsed} />
+        <MenuLink to="/instructor-performance" icon={<FaChartBar />} label="Performance" collapsed={collapsed} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2, Info, CheckCircle2, List, AlignLeft, Target, X } from 'lucide-react';
 import { api } from '../../services/Api';
+import toast from 'react-hot-toast';
 
 const EditQuestionPage = ({ questionData, onClose, onRefresh }) => {
   const [isSaving, setIsSaving] = useState(false);
@@ -12,23 +13,60 @@ const EditQuestionPage = ({ questionData, onClose, onRefresh }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 1. Initialize the loading toast
+    const isSubjective = formData.questionType === 'Subjective';
+    
+    // Rule: Subjective >= 0, Others > 0
+    if (isSubjective) {
+      if (formData.marks < 0) {
+        return toast.error("Subjective marks must be 0 or greater.");
+      }
+    } else {
+      if (formData.marks <= 0) {
+        return toast.error(`${formData.questionType} marks must be greater than zero.`);
+      }
+    }
+    if (formData.marks > 100) { 
+      return toast.error("Marks cannot exceed the maximum limit of 100");
+    }
+    const t = toast.loading("Updating question record...");
     setIsSaving(true);
+
     try {
       const payload = { ...formData };
+      
+      // Auto-formatting logic for specific types
       if (payload.questionType === 'True/False') {
-        payload.optionA = 'True'; payload.optionB = 'False';
-        payload.optionC = ''; payload.optionD = '';
+        payload.optionA = 'True'; 
+        payload.optionB = 'False';
+        payload.optionC = ''; 
+        payload.optionD = '';
       } else if (payload.questionType === 'Subjective') {
-        payload.optionA = ''; payload.optionB = '';
-        payload.optionC = ''; payload.optionD = '';
+        payload.optionA = ''; 
+        payload.optionB = '';
+        payload.optionC = ''; 
+        payload.optionD = '';
         payload.correctOption = 'N/A';
       }
 
+      // 2. Call the API
       await api.updateQuestion(formData.questionId, payload);
+      
+      // 3. Success notification
+      toast.success("Question updated successfully!", { id: t });
+      
       onRefresh();
       onClose();
     } catch (err) {
-      alert("Error updating question.");
+      // 4. Error notification
+      const errorMessage = err.response?.data?.message || err.response?.data || "Failed to update question record.";
+      toast.error(errorMessage, { 
+        id: t, 
+        duration: 4000 
+      });
+      
+      console.error("Update error:", err);
     } finally {
       setIsSaving(false);
     }
@@ -125,6 +163,9 @@ const EditQuestionPage = ({ questionData, onClose, onRefresh }) => {
               <div className="info-box-premium border-indigo">
                 <Info size={18} className="text-indigo-400 mb-2" />
                 <p className="small text-slate-300 mb-0 px-2">Extended response enabled. Manual grading required.</p>
+                <div className="small text-slate-400 mt-1 px-2">
+                  <strong>Note:</strong> Marks can be 0 for descriptive-only tasks.
+                </div>
               </div>
             )}
           </div>

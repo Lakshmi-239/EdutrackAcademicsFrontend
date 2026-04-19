@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useRef } from "react";
 import { api } from "../services/Api";
 import { ChevronDown, ChevronUp, GraduationCap, Calendar, Download, Search, X } from "lucide-react";
@@ -184,11 +182,17 @@ const AdminReport = () => {
                 <div className="flex items-center justify-end gap-12 w-[50%]">
                   <div className="text-center">
                     <p className="text-[8px] text-slate-500 uppercase">Attendance</p>
-                    <p className="text-2xl font-black text-emerald-400">{batch.batchAverageAttendance}%</p>
+                    {/* Updated to use batchAverageAttendancePercentage if available */}
+                    <p className="text-2xl font-black text-emerald-400">
+                      {batch.batchAverageAttendancePercentage ?? batch.batchAverageAttendance ?? 0}%
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="text-[8px] text-slate-500 uppercase">Completion</p>
-                    <p className="text-2xl font-black text-teal-400">100%</p>
+                    {/* FIXED: Using your exact backend field name 'batchAverageCompletionPercentage' */}
+                    <p className="text-2xl font-black text-teal-400">
+                      {batch.batchAverageCompletionPercentage ?? 0}%
+                    </p>
                   </div>
 
                   <div className="flex flex-col gap-2 ml-4">
@@ -240,4 +244,3 @@ const AdminReport = () => {
 };
 
 export default AdminReport;
-

@@ -8,37 +8,43 @@ import {
 const StudentProfileModal = ({ studentId, isOpen, onClose }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
-    const fetchFullProfile = async () => {
-      if (!studentId || !isOpen) return;
-      try {
-        setLoading(true);
-        const [personalRes, programRes] = await Promise.all([
-          api.getStudentPersonalInfo(studentId),
-          api.getStudentProgramDetails(studentId)
-        ]);
+  const fetchFullProfile = async () => {
+    if (!studentId || !isOpen) return;
 
-        const personal = personalRes.data || {};
-        const program = programRes.data || {};
+    try {
+      setLoading(true);
 
-        setProfile({
-          studentName: personal.studentName || program.studentName,
-          studentEmail: personal.studentEmail || program.studentEmail,
-          studentPhone: (personal.studentPhone && personal.studentPhone !== 0) ? personal.studentPhone : program.studentPhone,
-          studentGender: personal.studentGender || program.studentGender,
-          studentQualification: program.studentQualification || personal.studentQualification,
-          studentProgram: program.studentProgram || personal.studentProgram,
-          studentAcademicYear: program.studentAcademicYear || personal.studentAcademicYear,
-        });
-      } catch (err) {
-        console.error("Error fetching student details:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFullProfile();
-  }, [studentId, isOpen]);
+      const [personalRes, programRes] = await Promise.all([
+        api.getStudentPersonalInfo(studentId),
+        api.getStudentProgramDetails(studentId)
+      ]);
+
+      const personal = personalRes?.data || {};
+      const program = programRes || {};
+
+      setProfile({
+        studentName: personal.studentName || program.studentName,
+        studentEmail: personal.studentEmail || program.studentEmail,
+        studentPhone:
+          personal.studentPhone && personal.studentPhone !== 0
+            ? personal.studentPhone
+            : program.studentPhone,
+        studentGender: personal.studentGender || program.studentGender,
+        studentQualification: program.studentQualification || personal.studentQualification,
+        studentProgram: program.studentProgram || personal.studentProgram,
+        studentAcademicYear: program.studentAcademicYear || personal.studentAcademicYear,
+      });
+
+    } catch (err) {
+      console.error("Error fetching student details:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchFullProfile();
+}, [studentId, isOpen]);
 
   if (!isOpen) return null;
 

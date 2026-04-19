@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Save, Loader2, Info, CheckCircle2, List, AlignLeft, Target, Hash, PlusCircle } from 'lucide-react';
 import { api } from '../../services/Api';
+import toast from 'react-hot-toast';
 
 const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
   const [isSaving, setIsSaving] = useState(false);
@@ -15,23 +16,58 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Initialize the loading toast
+    const isSubjective = formData.questionType === 'Subjective';
+
+    // Rule: Subjective >= 0, Others > 0
+    if (isSubjective) {
+      if (formData.marks < 0) {
+        return toast.error("Subjective marks must be 0 or greater.");
+      }
+    } else {
+      if (formData.marks <= 0) {
+        return toast.error(`${formData.questionType} marks must be greater than zero.`);
+      }
+    }
+    if (formData.marks > 100) {
+      return toast.error("Marks cannot exceed the maximum limit of 100");
+    }
+
+    // 1. Initialize loading toast
+    const t = toast.loading("Committing question to database...");
     setIsSaving(true);
+
     try {
       const payload = { ...formData };
+
+      // Formatting payload based on type
       if (payload.questionType === 'True/False') {
-        payload.optionA = 'True'; payload.optionB = 'False';
-        payload.optionC = ''; payload.optionD = '';
+        payload.optionA = 'True';
+        payload.optionB = 'False';
+        payload.optionC = '';
+        payload.optionD = '';
       } else if (payload.questionType === 'Subjective') {
-        payload.optionA = ''; payload.optionB = '';
-        payload.optionC = ''; payload.optionD = '';
+        payload.optionA = '';
+        payload.optionB = '';
+        payload.optionC = '';
+        payload.optionD = '';
         payload.correctOption = 'N/A';
       }
 
+      // 2. Execute API Call
       await api.addQuestion(payload);
+
+      // 3. Success notification
+      toast.success("Question added to assessment!", { id: t });
+
       onRefresh();
       onClose();
     } catch (err) {
-      alert("Maximum Marks limit exceeded or network error.");
+      // 4. Detailed error notification
+      const errorMessage = err.response?.data?.message || err.response?.data || "Maximum Marks limit exceeded or network error.";
+      toast.error(errorMessage, { id: t, duration: 4000 });
+      console.error("Submission error:", err);
     } finally {
       setIsSaving(false);
     }
@@ -40,20 +76,20 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
   return (
     <div className="premium-add-container">
       <form onSubmit={handleSubmit} className="premium-add-form">
-        
+
         {/* --- MINIMAL INFO BAR --- */}
         <div className="id-strip-premium d-flex align-items-center px-4 py-2 border-slate-bottom bg-slate-900">
           <PlusCircle size={14} className="text-teal-400 me-2" />
-          <span className="id-label text-slate-500">NEW_ENTRY_FOR_ASSESSMENT:</span>
+          <span className="id-label text-slate-500">NEW QUESTION FOR ASSESSMENT:</span>
           <span className="id-value text-teal-400 fw-black ms-2">{assessmentId}</span>
         </div>
 
         {/* --- SCROLLABLE BODY --- */}
         <div className="add-body-scroll px-4 py-4">
-          
+
           {/* Section 1: Type Selection */}
           <div className="section-container border-slate mb-4">
-            <label className="premium-label mb-3 text-indigo-400"><Hash size={14}/> CATEGORY SELECTION</label>
+            <label className="premium-label mb-3 text-indigo-400"><Hash size={14} /> CATEGORY SELECTION</label>
             <div className="d-flex gap-2 p-2 bg-slate-900 rounded-4 border-slate">
               {['MCQ', 'True/False', 'Subjective'].map((type) => {
                 const isActive = formData.questionType === type;
@@ -61,13 +97,12 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
                   <button
                     key={type}
                     type="button"
-                    className={`flex-fill py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 transition-all border-0 ${
-                      isActive 
-                      ? 'bg-indigo-600 text-white shadow-indigo border-indigo' 
-                      : 'bg-transparent text-slate-500 hover-slate'
-                    }`}
+                    className={`flex-fill py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 transition-all border-0 ${isActive
+                        ? 'bg-indigo-600 text-white shadow-indigo border-indigo'
+                        : 'bg-transparent text-slate-500 hover-slate'
+                      }`}
                     style={{ fontSize: '0.75rem' }}
-                    onClick={() => setFormData({...formData, questionType: type})}
+                    onClick={() => setFormData({ ...formData, questionType: type })}
                   >
                     {type === 'MCQ' && <List size={14} />}
                     {type === 'True/False' && <CheckCircle2 size={14} />}
@@ -82,12 +117,12 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
           {/* Section 2: Question Input */}
           <div className="section-container border-slate mb-4">
             <label className="premium-label mb-3 text-slate-400">CONTENT SPECIFICATION</label>
-            <textarea 
-              className="premium-textarea border-slate focus-indigo shadow-none" 
-              rows="4" 
+            <textarea
+              className="premium-textarea border-slate focus-indigo shadow-none"
+              rows="4"
               placeholder="Draft the core question content..."
               value={formData.questionText}
-              onChange={(e) => setFormData({...formData, questionText: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
               required
             />
           </div>
@@ -101,12 +136,12 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
                   <div key={l} className="col-md-6">
                     <div className="premium-input-group border-slate">
                       <span className="input-group-label border-end-slate text-indigo-400">{l}</span>
-                      <input 
-                        type="text" 
-                        className="premium-input border-0" 
+                      <input
+                        type="text"
+                        className="premium-input border-0"
                         placeholder={`Option ${l} value`}
                         value={formData[`option${l}`]}
-                        onChange={(e) => setFormData({...formData, [`option${l}`]: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, [`option${l}`]: e.target.value })}
                         required
                       />
                     </div>
@@ -129,7 +164,10 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
             {formData.questionType === 'Subjective' && (
               <div className="info-box-premium border-indigo">
                 <Info size={18} className="text-indigo-400 mb-2" />
-                <p className="small text-slate-300 mb-0 px-2">Extended text-response mode. System will bypass auto-key validation.</p>
+                <p className="small text-slate-300 mb-0 px-2">Extended text-response mode. System will bypass auto-key validation</p>
+                <div className="small text-slate-400 mt-1 px-2">
+                  <strong>Note:</strong> Marks can be 0 for descriptive-only tasks.
+                </div>
               </div>
             )}
           </div>
@@ -139,11 +177,11 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
             <div className="col-md-6">
               <div className="section-container border-slate h-100">
                 <label className="premium-label mb-2 text-slate-400">VALIDATION KEY</label>
-                <select 
+                <select
                   className="premium-select border-slate focus-teal"
                   disabled={formData.questionType === 'Subjective'}
                   value={formData.correctOption}
-                  onChange={(e) => setFormData({...formData, correctOption: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, correctOption: e.target.value })}
                 >
                   <option value="A">Choice A</option>
                   <option value="B">Choice B</option>
@@ -161,11 +199,11 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
                 <label className="premium-label mb-2 text-slate-400">
                   <Target size={14} className="text-teal-400 me-1" /> WEIGHTAGE (PTS)
                 </label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   className="premium-input-styled border-slate focus-teal text-center"
                   value={formData.marks}
-                  onChange={(e) => setFormData({...formData, marks: parseInt(e.target.value) || 0})}
+                  onChange={(e) => setFormData({ ...formData, marks: parseInt(e.target.value) || 0 })}
                   required
                 />
               </div>
@@ -183,7 +221,7 @@ const AddQuestionPage = ({ assessmentId, onClose, onRefresh }) => {
               {isSaving ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
-                <><Save size={18}/> Commit to Assessment</>
+                <><Save size={18} /> Commit to Assessment</>
               )}
             </button>
           </div>

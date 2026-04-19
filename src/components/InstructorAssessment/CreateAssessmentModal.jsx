@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/Api';
+import toast from 'react-hot-toast';
 import { X, Save, BookOpen, Calendar, Award, Layers, ChevronRight } from 'lucide-react';
 
 export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
@@ -12,6 +13,55 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
     maxMarks: 10,
     dueDate: ''
   });
+
+  // Helper to get local time + 24 hours in YYYY-MM-DDTHH:MM format
+  const getMinAdvanceDateTime = () => {
+    const minDate = new Date();
+    // Add 24 hours
+    minDate.setHours(minDate.getHours() + 24);
+    // Adjust for timezone to match input format
+    minDate.setMinutes(minDate.getMinutes() - minDate.getTimezoneOffset());
+    return minDate.toISOString().slice(0, 16);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const selectedDate = new Date(formData.dueDate);
+    const now = new Date();
+
+    const minAdvanceTime = new Date(now.getTime() + (24 * 60 * 60 * 1000));
+
+    if (selectedDate < minAdvanceTime) {
+      toast.error("Scheduling Error: Assessments must be scheduled at least 24 hours in advance.", {
+        duration: 4000,
+      });
+      return;
+    }
+
+    const t = toast.loading("Creating assessment...");
+    setLoading(true);
+
+    try {
+      await api.createAssessment(formData);
+      toast.success("Assessment scheduled successfully!", { id: t });
+
+      onRefresh();
+      onClose();
+
+      // Reset form
+      setFormData({
+        courseId: '',
+        type: 'Quiz',
+        maxMarks: 10,
+        dueDate: ''
+      });
+    } catch (err) {
+      toast.error(`Error: ${err.message}`, { id: t });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -27,27 +77,11 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
     }
   }, [isOpen]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true); // Added loading state trigger for UX
-    const payload = { ...formData, dueDate: formData.dueDate };
-    try {
-      await api.createAssessment(payload);
-      onRefresh();
-      onClose();
-    } catch (err) {
-      alert("Error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal-container animate-slide-up">
-        {/* Premium Header with Glassmorphism Accent */}
         <div className="modal-header-enterprise">
           <div className="d-flex align-items-center gap-3">
             <div className="header-icon-wrapper">
@@ -63,17 +97,17 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
 
         <form onSubmit={handleSubmit} className="p-4 bg-slate-900">
           <div className="row g-4">
-            
+
             {/* Course Selection */}
             <div className="col-12">
               <label className="form-label-enterprise">Select Course</label>
               <div className="input-group-enterprise">
                 <span className="input-icon"><BookOpen size={18} /></span>
-                <select 
+                <select
                   className="form-control-enterprise"
                   required
                   value={formData.courseId}
-                  onChange={(e) => setFormData({...formData, courseId: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
                 >
                   <option value="" className="bg-slate-800">Choose a course...</option>
                   {courses.map(course => (
@@ -88,14 +122,12 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
             {/* Assessment Type */}
             <div className="col-md-6">
               <label className="form-label-enterprise">Assessment Type</label>
-              <select 
+              <select
                 className="form-control-enterprise"
                 value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
                 <option value="Quiz" className="bg-slate-800">Quiz</option>
-                <option value="Assignment" className="bg-slate-800">Assignment</option>
-                <option value="Exam" className="bg-slate-800">Exam</option>
               </select>
             </div>
 
@@ -104,13 +136,13 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
               <label className="form-label-enterprise">Maximum Marks</label>
               <div className="input-group-enterprise">
                 <span className="input-icon"><Award size={18} /></span>
-                <input 
-                  type="number" 
-                  className="form-control-enterprise" 
-                  required 
+                <input
+                  type="number"
+                  className="form-control-enterprise"
+                  required
                   min="1"
                   value={formData.maxMarks}
-                  onChange={(e) => setFormData({...formData, maxMarks: parseInt(e.target.value)})}
+                  onChange={(e) => setFormData({ ...formData, maxMarks: parseInt(e.target.value) })}
                 />
               </div>
             </div>
@@ -120,12 +152,14 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
               <label className="form-label-enterprise">Submission Deadline</label>
               <div className="input-group-enterprise">
                 <span className="input-icon"><Calendar size={18} /></span>
-                <input 
-                  type="datetime-local" 
-                  className="form-control-enterprise" 
+                <input
+                  type="datetime-local"
+                  className="form-control-enterprise"
                   required
+                  min={getMinAdvanceDateTime()}
+                  onKeyDown={(e) => e.preventDefault()} 
                   value={formData.dueDate}
-                  onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                 />
               </div>
             </div>
@@ -136,8 +170,8 @@ export default function CreateAssessmentModal({ isOpen, onClose, onRefresh }) {
             <button type="button" onClick={onClose} className="btn-enterprise-secondary">
               Discard
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading}
               className="btn-enterprise-primary"
             >

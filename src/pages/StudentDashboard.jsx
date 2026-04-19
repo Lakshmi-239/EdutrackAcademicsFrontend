@@ -44,7 +44,12 @@ const StudentDashboard = () => {
            `${PROFILE_API}/Personal-Information/${studentId}`
         );
 
-        setStudentName(personalRes.data.studentName);
+        setStudentName(personalRes.data.studentName);        
+        localStorage.setItem(
+          "studentName",
+          personalRes.data.studentName
+        );
+        window.dispatchEvent(new Event("studentNameUpdated"));
         const credits = profileRes.data.totalCredits || 0;
 
         // 2️⃣ Enrolled Courses

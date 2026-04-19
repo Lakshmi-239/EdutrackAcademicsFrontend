@@ -62,6 +62,23 @@ export default function ModuleCard({ module, onRefresh }) {
     window.open(formattedUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this module?")) return;
+
+    const loadingToast = toast.loading("Deleting module...");
+    try {
+      await api.deleteModule(module.moduleID); // Make sure your API service has this
+      toast.success("Module deleted successfully!", { id: loadingToast });
+      
+      // THIS IS WHAT UPDATES THE PAGE WITHOUT A MANUAL REFRESH
+      onRefresh(); 
+      
+    } catch (error) {
+      toast.error("Failed to delete module.", { id: loadingToast });
+      console.error("Delete Error:",error);
+    }
+  };
+
   return (
     <>
       {showEditModal && (
@@ -151,8 +168,8 @@ export default function ModuleCard({ module, onRefresh }) {
                 <PlusCircle size={16} />
               </button>
               <button 
-                onClick={(e) => { e.stopPropagation(); window.confirm("Delete module?") && api.deleteModule(module.moduleID).then(onRefresh); }} 
-                className="btn btn-dark rounded-circle p-2 border-slate-700 hover:text-red-400 transition-all shadow-sm"
+                onClick={(e) => { e.stopPropagation(); handleDelete(); }} 
+                className="btn btn-dark rounded-circle p-2 border-slate-700 hover:text-red-400 transition-all shadow-sm" 
               >
                 <Trash2 size={16} />
               </button>
@@ -239,7 +256,24 @@ export default function ModuleCard({ module, onRefresh }) {
                       
                       <div className="d-flex gap-2 border-start ps-4 border-slate-800">
                         <button className="btn btn-dark p-2 rounded-circle border-slate-700 hover:text-teal-400" onClick={(e) => { e.stopPropagation(); handleEditContent(item); }}><Edit3 size={14} /></button>
-                        <button className="btn btn-dark p-2 rounded-circle border-slate-700 hover:text-red-400" onClick={(e) => { e.stopPropagation(); window.confirm("Remove?") && api.deleteContent(item.contentID).then(fetchContent); }}><Trash2 size={14} /></button>
+                        <button 
+                          className="btn btn-dark p-2 rounded-circle border-slate-700 hover:text-red-400" 
+                          onClick={async (e) => { 
+                            e.stopPropagation(); 
+                            if(window.confirm("Remove this resource?")) {
+                              const t = toast.loading("Removing resource...");
+                              try {
+                                await api.deleteContent(item.contentID);
+                                toast.success("Resource removed", { id: t });
+                                fetchContent(); 
+                              } catch (err) {
+                                toast.error("Failed to remove resource", { id: t });
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
                   </div>
