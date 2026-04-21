@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/Api";
-import toast from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 

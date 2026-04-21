@@ -82,7 +82,7 @@ export const CoordinatorRegistration = () => {
 
   if (authLoading) return null; // or spinner
 
-  // ✅ Admin-only access
+  //  Admin-only access
   if (!user || !hasRole("Admin")) {
     return <Navigate to="/unauthorized" replace />;
   }

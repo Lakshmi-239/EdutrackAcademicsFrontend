@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, GraduationCap, ChevronRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Menu, X, GraduationCap, ChevronRight } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,20 +9,19 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  
   useAuth();
 
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navLinks = [
-    { name: 'About', id: 'about' },
-    { name: 'Programs', id: 'programs' },
-    { name: 'Courses', id: 'courses' },
+    { name: "About", id: "about" },
+    { name: "Programs", id: "programs" },
+    { name: "Courses", id: "courses" },
   ];
 
   const scrollToSection = (sectionId) => {
@@ -36,7 +35,7 @@ export const Navbar = () => {
 
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
       setIsOpen(false);
     }
@@ -46,8 +45,8 @@ export const Navbar = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
         scrolled
-          ? 'bg-slate-900/90 backdrop-blur-md py-3 shadow-2xl'
-          : 'bg-slate-900 py-5'
+          ? "bg-slate-900/90 backdrop-blur-md py-3 shadow-2xl"
+          : "bg-slate-900 py-5"
       }`}
     >
       {/* Premium Shimmer Background */}
@@ -57,7 +56,6 @@ export const Navbar = () => {
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         <div className="flex justify-between items-center">
-
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
@@ -89,12 +87,13 @@ export const Navbar = () => {
             <div className="h-6 w-px bg-slate-700 mx-2" />
 
             <div className="flex items-center gap-4">
-            <Link
-                  to="/Login"
-                  className="relative group !text-slate-300 font-semibold hover:!text-white transition-all duration-300 px-4 py-2">
-                    Login
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
+              <Link
+                to="/Login"
+                className="relative group !text-slate-300 font-semibold hover:!text-white transition-all duration-300 px-4 py-2"
+              >
+                Login
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
               <Link
                 to="/register"
                 className="relative inline-flex items-center justify-center px-7 py-2.5 font-bold text-white bg-emerald-500 rounded-full hover:bg-emerald-600 transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
@@ -120,7 +119,9 @@ export const Navbar = () => {
       {/* Mobile Overlay */}
       <div
         className={`fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity md:hidden ${
-          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          isOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsOpen(false)}
       />
@@ -128,12 +129,15 @@ export const Navbar = () => {
       {/* Mobile Drawer */}
       <div
         className={`fixed top-0 right-0 h-full w-[280px] bg-slate-900 border-l border-slate-800 p-8 transform transition-transform duration-500 md:hidden ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           <div className="flex justify-end mb-8">
-            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-slate-400 hover:text-white"
+            >
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -153,17 +157,18 @@ export const Navbar = () => {
 
           <div className="mt-auto pt-8 border-t border-slate-800 space-y-4">
             <Link
-                to="/Login"
-                className="relative group !text-slate-300 font-semibold hover:!text-white transition-all duration-300 px-4 py-2">
-                Login
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
+              to="/Login"
+              className="relative group !text-slate-300 font-semibold hover:!text-white transition-all duration-300 px-4 py-2"
+            >
+              Login
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-teal-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               to="/register"
               onClick={() => setIsOpen(false)}
               className="block w-full py-3 text-center bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold rounded-xl"
             >
-            Get Started
+              Get Started
             </Link>
           </div>
         </div>
