@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Badge } from 'react-bootstrap';
 import { ClipboardList, Award, ChevronRight, Lock, CheckCircle, AlertCircle } from 'lucide-react';
-import { useOutletContext } from "react-router-dom"; // Important: Layout logic kosam
+import { useOutletContext } from "react-router-dom";
 import axios from 'axios';
 import ExamPage from "./ExamPage"; 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,7 +11,7 @@ const StudentAssessmentPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeExam, setActiveExam] = useState(null); 
     
-    // Layout nundi context function ni techukuntunnam
+   
     const { setIsExamActive } = useOutletContext();
     
     const studentId = localStorage.getItem("studentId"); 
@@ -95,7 +95,7 @@ const StudentAssessmentPage = () => {
         try {
             const res = await axios.get(`${SUB_API}/start-assessment?studentId=${studentId}&assessmentId=${item.assessmentID}`);
             
-            // Ikkada Layout ki signal pampali sidebar/topbar remove cheyamani
+            
             setIsExamActive(true); 
 
             setActiveExam({
@@ -114,7 +114,7 @@ const StudentAssessmentPage = () => {
                 examData={activeExam} 
                 studentId={studentId} 
                 onExit={() => {
-                    // Back vachinappudu malli Sidebar/Topbar ni thirigi techhesthunnam
+                    
                     setIsExamActive(false); 
                     setActiveExam(null);
                     fetchAssessments(); 

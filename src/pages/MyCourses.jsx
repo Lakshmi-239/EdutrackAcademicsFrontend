@@ -24,13 +24,13 @@ const MyCourses = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseModules, setCourseModules] = useState([]);
 
-  const [watchedProgress, setWatchedProgress] = useState({}); 
+   
   const [completedContentIds, setCompletedContentIds] = useState(new Set());
 
   const studentId = localStorage.getItem("studentId");
   const BASE_URL = "https://localhost:7157/api/Enrollment";
 
-  // --- LOGIC: REMAINS EXACTLY AS PROVIDED ---
+  
   useEffect(() => {
     const loadPageData = async () => {
       setLoading(true);
@@ -365,7 +365,7 @@ const MyCourses = () => {
         </div>
       </div>
 
-      {/* --- CONTENT WINDOW: NO OVERLAP WITH SIDEBAR/TOPBAR --- */}
+      
       {showModal && (
         <div className="w-full animate-in fade-in zoom-in duration-300">
            <div className="bg-[#0f172a] border border-slate-800 w-full min-h-screen rounded-t-[3rem] flex flex-col shadow-2xl overflow-hidden">
