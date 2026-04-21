@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Button, Form, Modal, Badge } from 'react-bootstrap';
 import axios from 'axios';
-import { useOutletContext } from 'react-router-dom';
+
 import { Award, ChevronRight, ChevronLeft, Send, CheckCircle } from 'lucide-react';
 
 const ExamPage = ({ examData, studentId, onExit }) => {
@@ -13,7 +13,7 @@ const ExamPage = ({ examData, studentId, onExit }) => {
     const [scoreResult, setScoreResult] = useState(null);
     const [feedback, setFeedback] = useState("");
 
-    const { setIsExamActive } = useOutletContext();
+   
 
     const questions = examData.questions;
     const currentQ = questions[currentIndex];
