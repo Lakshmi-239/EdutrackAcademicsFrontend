@@ -200,7 +200,7 @@ const StudentDashboard = () => {
                         {item.dueDate}
                       </div>
                     </td>
-                    <td className="p-6 text-right">
+                    <td className="p-6 text-sm">
                       <span className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border bg-amber-500/10 text-amber-400 border-amber-500/20">
                         {item.status.toUpperCase()}
                       </span>
