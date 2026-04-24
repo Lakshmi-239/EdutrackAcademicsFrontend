@@ -67,7 +67,7 @@ import {Footer} from './components/Footer';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Separate Admin Panel Component to keep App.js clean
+// 1.Separate Admin Panel Component to keep App.js clean
 const AdminPanel = () => {
   const [view, setView] = useState('qualifications');
 
@@ -89,12 +89,15 @@ const AdminPanel = () => {
 
 function App() {
   return (
+    // 2
     <AuthProvider>
+      {/* 3 */}
       <Toaster position="top-center" reverseOrder={false} />
       <div className="app-container">
         <Routes>
           {/* <Route path="/instructor-dashboard" element={<Dashboard/>}/> */}
          {/* <Route path="/batch/:id" element={<BatchDetails/>}/> */}
+         {/* 4 */}
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<RoleSelection />} />
           <Route path="/register/student" element={<StudentRegistration />} />
@@ -113,7 +116,7 @@ function App() {
           {/* Redirect base URL to the dashboard */}
           {/* <Route path="/" element={<Navigate to="/studentdashboard" />} /> */}
  
-          {/* Routes WITH Sidebar/Navbar */}
+          {/*5 Routes WITH Sidebar/Navbar */}
           <Route element={<Layout />}>
             <Route path="/studentdashboard" element={<StudentDashboard />} />
             <Route path="/student-profile" element={<StudentProfile />} />
@@ -129,6 +132,7 @@ function App() {
              <Route
               path="/coordinator/*"
               element={
+                // 6
                <AuthGuard>
                 <div className="d-flex">
                   <Sidebar />
@@ -149,7 +153,7 @@ function App() {
               }
             />
  
- 
+           {/* 7 */}
           <Route path="/" element={<Navigate to="/instructordashboard" />} />
           <Route element={<Lay_Out />}>
             <Route path="/instructordashboard" element={<InstructorDashboard />} />
@@ -165,7 +169,7 @@ function App() {
             <Route path="/view-batch-students/:id" element={<BatchStudentsPage />} />
           </Route>
  
-          {/* Route WITHOUT Sidebar/Navbar */}
+          {/* 8.Route WITHOUT Sidebar/Navbar */}
          <Route path="/admin/*" element={<AdminPanel />} />
         </Routes>
         

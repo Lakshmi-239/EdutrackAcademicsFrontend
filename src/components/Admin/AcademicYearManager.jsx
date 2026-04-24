@@ -238,7 +238,6 @@ const AcademicYearManager = () => {
         yearNumber: ''
     });
 
-    // Custom styles to match the screenshots
     const styles = {
         card: { backgroundColor: '#1a222b', borderRadius: '15px', color: '#fff', border: 'none' },
         headerText: { color: '#fff', fontSize: '2rem', fontWeight: 'bold' },
@@ -299,9 +298,15 @@ const AcademicYearManager = () => {
     };
 
     const handleSave = async () => {
-        if (!form.programId || !form.yearNumber) {
-            return alert("Please select a program and enter a year number!");
+        // --- VALIDATION ADDED ---
+        if (!form.qualificationId || !form.programId || !form.yearNumber) {
+            return alert("All fields are required! Please select Qualification, Program and Year.");
         }
+
+        if (parseInt(form.yearNumber) <= 0) {
+            return alert("Academic Year must be a positive number!");
+        }
+
         const payload = { programId: form.programId, yearNumber: parseInt(form.yearNumber) };
         try {
             if (isEditMode) {
@@ -346,39 +351,41 @@ const AcademicYearManager = () => {
                 {loading ? (
                     <div className="text-center p-5"><Spinner animation="border" variant="info" /></div>
                 ) : (
-                    <Table responsive variant="dark" style={{ backgroundColor: 'transparent' }}>
-                        <thead>
-                            <tr>
-                                <th style={styles.tableHeader}>Program Name</th>
-                                <th style={styles.tableHeader}>Year Number</th>
-                                <th style={{ ...styles.tableHeader, textAlign: 'right' }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {academicYears.length > 0 ? academicYears.map((item, idx) => (
-                                <tr key={idx} style={styles.tableRow}>
-                                    <td className="py-3">
-                                        <div className="d-flex align-items-center">
-                                            <div style={{ backgroundColor: '#2d3748', padding: '8px', borderRadius: '50%', marginRight: '15px' }}>
-                                                🎓
-                                            </div>
-                                            <strong>{item.programName || item.ProgramName || item.programId || item.ProgramId}</strong>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span style={{ color: '#1abc9c', marginRight: '8px' }}>🏷️</span>
-                                        {item.yearNumber || item.YearNumber}
-                                    </td>
-                                    <td className="text-end">
-                                        <button style={styles.editIcon} onClick={() => handleEdit(item)}>✏️</button>
-                                        <button style={styles.deleteIcon} onClick={() => handleDelete(item.yearNumber || item.YearNumber)}>🗑️</button>
-                                    </td>
+                    <div className="table-responsive">
+                        <Table responsive variant="dark" style={{ backgroundColor: 'transparent' }}>
+                            <thead>
+                                <tr>
+                                    <th style={styles.tableHeader}>Program Name</th>
+                                    <th style={styles.tableHeader}>Year Number</th>
+                                    <th style={{ ...styles.tableHeader, textAlign: 'right' }}>Actions</th>
                                 </tr>
-                            )) : (
-                                <tr><td colSpan="3" className="text-center p-4 text-muted">No academic years found.</td></tr>
-                            )}
-                        </tbody>
-                    </Table>
+                            </thead>
+                            <tbody>
+                                {academicYears.length > 0 ? academicYears.map((item, idx) => (
+                                    <tr key={idx} style={styles.tableRow}>
+                                        <td className="py-3">
+                                            <div className="d-flex align-items-center">
+                                                <div style={{ backgroundColor: '#2d3748', padding: '8px', borderRadius: '50%', marginRight: '15px' }}>
+                                                    🎓
+                                                </div>
+                                                <strong>{item.programName || item.ProgramName || item.programId || item.ProgramId}</strong>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style={{ color: '#1abc9c', marginRight: '8px' }}>🏷️</span>
+                                            {item.yearNumber || item.YearNumber}
+                                        </td>
+                                        <td className="text-end">
+                                            <button style={styles.editIcon} onClick={() => handleEdit(item)}>✏️</button>
+                                            <button style={styles.deleteIcon} onClick={() => handleDelete(item.yearNumber || item.YearNumber)}>🗑️</button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr><td colSpan="3" className="text-center p-4 text-muted">No academic years found.</td></tr>
+                                )}
+                            </tbody>
+                        </Table>
+                    </div>
                 )}
             </Card>
 
@@ -425,6 +432,7 @@ const AcademicYearManager = () => {
                             <Form.Label className="fw-bold">Year Number</Form.Label>
                             <Form.Control 
                                 type="number" 
+                                min="1" 
                                 className="bg-secondary text-white border-0"
                                 value={form.yearNumber} 
                                 onChange={(e) => setForm({...form, yearNumber: e.target.value})} 
